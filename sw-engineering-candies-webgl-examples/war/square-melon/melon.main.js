@@ -39,19 +39,12 @@ var BORDER_BOTTOM = 40;
  */
 var g_panelWidthWebGL;
 var g_panelHeightWebGL;
-var g_updateTimerImport;
-var g_updateTimerSimulation;
-var g_updateTimerWebGL;
 var g_scene;
 var g_cube_wireframe;
 var g_camera;
 var g_renderer;
 var g_control;
-var g_light;
-var g_container;
 var g_gui;
-var g_Message = '';
-var g_imported_data = false;
 var g_balloon;
 
 /**
@@ -60,8 +53,8 @@ var g_balloon;
 function initWebGL() {
 	"use strict";
 	// Container for WebGL rendering
-	g_container = document.getElementById('graphic-container');
-	g_container.style.background = "#000";
+	var container = document.getElementById('graphic-container');
+	container.style.background = "#000";
 
 	// Size of drawing
 	g_panelWidthWebGL = window.innerWidth - BORDER_RIGHT - BORDER_LEFT;
@@ -85,22 +78,17 @@ function initWebGL() {
 		g_renderer = new THREE.CanvasRenderer();
 	}
 	g_renderer.setSize(g_panelWidthWebGL, g_panelHeightWebGL);
-	g_container.appendChild(g_renderer.domElement);
-	initDatGui(g_container);
+	container.appendChild(g_renderer.domElement);
+	initDatGui(container);
 
-	// Create g_light front
-	g_light = new THREE.SpotLight(0xffffff, 1.25);
-	g_light.position.set(MELONE_SimulationOptions.SPHERE_RADIUS * 2,
-			MELONE_SimulationOptions.SPHERE_RADIUS * 2, 0);
-	g_light.target.position.set(0, 0, 0);
-	g_light.castShadow = true;
-	g_scene.add(g_light);
+	// LIGHTS
+	var light = new THREE.DirectionalLight( 0xffffff, 1.475 );
+	light.position.set( -1000, 1000, 1000 );
+	g_scene.add( light );
 
-	// Create light near the center
-	var hemiLight = new THREE.HemisphereLight(0x000fff, 0xfff000, 0.6);
-	hemiLight.groundColor.setHSL(0.095, 1, 0.75);
-	hemiLight.position.set(0, 200, 0);
-	g_scene.add(hemiLight);
+	var hemiLight = new THREE.HemisphereLight( 0xffffff, 0xffffff, 0.3 );
+	hemiLight.position.set( 0, 5000, 0 );
+	g_scene.add( hemiLight );
 
 	// Support window resize
 	var resizeCallback = function() {
@@ -136,10 +124,13 @@ function initWebGL() {
 	var loader = new THREE.TextureLoader();
 	loader.load('melon.jpg', function(texture) {
 		var geometry = new THREE.SphereGeometry(600, 16, 16);
-		var material = new THREE.MeshBasicMaterial({
+		var material = new THREE.MeshLambertMaterial({
 			map : texture,
 			depthTest : true,
-			overdraw : true
+			overdraw : true,
+			castShadow : true,
+			shininess: 20,
+			shading : THREE.SmoothShading
 		});
 		g_balloon = new THREE.Mesh(geometry, material);
 		g_balloon.geometry.dynamic = true;
@@ -162,9 +153,7 @@ function animate() {
 	requestAnimationFrame(animate);
 
 	g_control.update();
-
-	updateLightPosition();
-
+	
 	// simulate forces
 	if (MELONE_SimulationOptions.RUN_SIMULATION) {
 		MELONE_NBodySimulator.simulateAllForces();
@@ -260,8 +249,7 @@ function renderNodeSphere(node) {
 		node.sphere.position.z = node.z;
 		node.sphere.position.y = node.y;
 		node.sphere.visible = !MELONE_SimulationOptions.SHOW_MELONE;
-		node.sphere.material.color.setHex((node.masterNode == null) ? 0x00FF00
-				: 0x0000FF);
+		node.sphere.material.color.setHex(0x0000FF);
 	} else {
 		// Create sphere
 		var material = new THREE.MeshLambertMaterial({
@@ -308,7 +296,8 @@ function renderLineElementForLink(link) {
 		var line_material = new THREE.LineBasicMaterial({
 			depthTest : true,
 			transparent : true,
-			opacity : 1.0
+			opacity : 1.0,
+			color: 0x00006A
 		});
 		line_material.transparent = true;
 		var line = new THREE.Line(line_geometry, line_material);
@@ -319,24 +308,11 @@ function renderLineElementForLink(link) {
 	}
 }
 
-/**
- * Move light dependent on the position of the camera. The rotation of the
- * graphic is done by movement of the camera and not the rotation of the scene
- */
-
-function updateLightPosition() {
-	"use strict";
-	g_light.position.x = g_control.object.position.x - 500;
-	g_light.position.y = g_control.object.position.y - 500;
-	g_light.position.z = g_control.object.position.z;
-	g_light.target.position.set(0, 0, 0);
-}
-
 function resetCamera() {
 	"use strict";
-	g_camera.position.x = MELONE_SimulationOptions.SPHERE_RADIUS * 3;
-	g_camera.position.y = MELONE_SimulationOptions.SPHERE_RADIUS * 3;
-	g_camera.position.z = MELONE_SimulationOptions.SPHERE_RADIUS * 6;
+	g_camera.position.x = MELONE_SimulationOptions.SPHERE_RADIUS * 2.5;
+	g_camera.position.y = MELONE_SimulationOptions.SPHERE_RADIUS * 2.5;
+	g_camera.position.z = MELONE_SimulationOptions.SPHERE_RADIUS * 4;
 	g_camera.lookAt(new THREE.Vector3(0, 0, 0));
 }
 
@@ -366,6 +342,8 @@ function initDatGui(container) {
 			'Spring Link');
 	f3.add(MELONE_SimulationOptions, 'CHARGE', 5, 80).step(1.0).name('Charge');
 	f3.open();
+	
+	g_gui.close();
 
 	container.appendChild(g_gui.domElement);
 }

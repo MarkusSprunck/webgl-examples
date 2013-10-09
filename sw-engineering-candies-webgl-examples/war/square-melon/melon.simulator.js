@@ -35,7 +35,7 @@ function SimulationOptions() {
     return {
 		RUN_SIMULATION: true,
         SPHERE_RADIUS: 1200.0,
-        SPHERE_RADIUS_MINIMUM: 15.0,
+        SPHERE_RADIUS_MINIMUM: 25.0,
         CHARGE: 30.0,
 		THETA: 0.6,
         SPRING: 5.0,
