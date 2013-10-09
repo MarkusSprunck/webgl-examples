@@ -135,7 +135,7 @@ function initWebGL() {
 
     // create melone with texture
     var loader = new THREE.TextureLoader();
-    loader.load('melone.jpg', function (texture) {
+    loader.load('melon.jpg', function (texture) {
         var geometry = new THREE.SphereGeometry(600, 16, 16);
         var material = new THREE.MeshBasicMaterial({
             map: texture,
