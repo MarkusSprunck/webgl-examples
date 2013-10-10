@@ -38,7 +38,7 @@ function SimulationOptions() {
         SPHERE_RADIUS_MINIMUM: 25.0,
         CHARGE: 30.0,
 		THETA: 0.6,
-        SPRING: 5.0,
+        SPRING: 7.0,
 
         // Parameters for rendering
         SHOW_MELONE: true,       

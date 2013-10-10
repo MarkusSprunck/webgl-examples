@@ -5,59 +5,38 @@
 <style type="text/css">
 <!--
 .main {
-	background: #000000;
+	background: #252525;
 	padding: 0px;
-}
-
-.main_title {
-	color: #CCC;
-	text-align: left;
-	font: 17px 'Lucida Grande', sans-serif;
-	font-weight: normal;
-	padding-left: 10px;
-	padding-right: 10px;
-	padding-bottom: 4px;
 }
 
 .text {
 	color: #CCC;
-	font: 12px 'Lucida Grande', sans-serif;
-	font-weight: normal;
+	font: 14px 'Lucida Grande', sans-serif;
 	padding-left: 10px;
 	padding-right: 10px;
 	padding-top: 4px;
 }
 
-.status_line {
-	color: #1ed36f;
-	text-align: left;
-	font: 12px 'Lucida Grande', sans-serif;
-	padding-left: 10px;
-	padding-right: 10px;
-}
-
-.status_line_warning {
-	color: #d36f1e;
-	text-align: left;
-	font: 12px 'Lucida Grande', sans-serif;
-	padding-left: 10px;
-	padding-right: 10px;
-}
-
 a {
 	color: #009de9;
-	font: 12px 'Lucida Grande', sans-serif;
+	font: 14px 'Lucida Grande', sans-serif;
 	text-align: right;
 }
 -->
 </style>
-	<title>Square Watermelon</title>
+<title>Square Watermelon</title>
 </head>
 
 <body class="main">
-	
+
+	<div align="right" class='text'>
+		N-Body Simulation of a Growing Water Melon in a Box, <a
+			href="https://plus.google.com/u/0/117292523089281814301?rel=author">by
+			Markus Sprunck</a>
+	</div>
+
 	<div id="graphic-container"></div>
-	
+
 	<script type="text/javascript" src="lib/dat.gui.min.js"></script>
 	<script type="text/javascript" src="lib/detector.js"></script>
 	<script type="text/javascript" src="lib/three.min.js"></script>
@@ -65,11 +44,10 @@ a {
 	<script type="text/javascript" src="lib/trackballcontrols.js"></script>
 	<script type="text/javascript" src="./melon.simulator.js"></script>
 	<script type="text/javascript" src="./melon.main.js"></script>
-	
+
 	<div align="right" class='text'>
-		N-Body Simulation of a Growing Water Melon in a Box, 
-		<a href="https://plus.google.com/u/0/117292523089281814301?rel=author">by Markus Sprunck</a>	
-	</div>	
+		find sources on <a href="https://github.com/SPM2OT/sw-engineering-candies-webgl-examples.git">GitHub</a>
+	</div>
 
 </body>
 </html>

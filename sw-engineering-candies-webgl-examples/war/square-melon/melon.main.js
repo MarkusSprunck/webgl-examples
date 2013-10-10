@@ -32,7 +32,7 @@
 var BORDER_LEFT = 10;
 var BORDER_TOP = 10;
 var BORDER_RIGHT = 10;
-var BORDER_BOTTOM = 40;
+var BORDER_BOTTOM = 60;
 
 /**
  * Global variables for rendering
@@ -54,8 +54,9 @@ function initWebGL() {
 	"use strict";
 	// Container for WebGL rendering
 	var container = document.getElementById('graphic-container');
-	container.style.background = "#000";
-
+	container.style.background = "#252525";
+	initDatGui(container);
+	
 	// Size of drawing
 	g_panelWidthWebGL = window.innerWidth - BORDER_RIGHT - BORDER_LEFT;
 	g_panelHeightWebGL = window.innerHeight - BORDER_BOTTOM - BORDER_TOP;
@@ -75,11 +76,12 @@ function initWebGL() {
 			antialias : true
 		});
 	} else {
-		g_renderer = new THREE.CanvasRenderer();
+		container.appendChild(Detector.getWebGLErrorMessage());
+		return;
 	}
 	g_renderer.setSize(g_panelWidthWebGL, g_panelHeightWebGL);
 	container.appendChild(g_renderer.domElement);
-	initDatGui(container);
+
 
 	// LIGHTS
 	var light = new THREE.DirectionalLight( 0xffffff, 1.475 );
@@ -123,7 +125,7 @@ function initWebGL() {
 	// create melone with texture
 	var loader = new THREE.TextureLoader();
 	loader.load('melon.jpg', function(texture) {
-		var geometry = new THREE.SphereGeometry(600, 16, 16);
+		var geometry = new THREE.SphereGeometry(800, 15, 20);
 		var material = new THREE.MeshLambertMaterial({
 			map : texture,
 			depthTest : true,
@@ -156,7 +158,9 @@ function animate() {
 	
 	// simulate forces
 	if (MELONE_SimulationOptions.RUN_SIMULATION) {
-		MELONE_NBodySimulator.simulateAllForces();
+		for (var i = 0; i < 5; i++) {
+			MELONE_NBodySimulator.simulateAllForces();
+		}
 	}
 
 	// update position of the melone
@@ -249,14 +253,14 @@ function renderNodeSphere(node) {
 		node.sphere.position.z = node.z;
 		node.sphere.position.y = node.y;
 		node.sphere.visible = !MELONE_SimulationOptions.SHOW_MELONE;
-		node.sphere.material.color.setHex(0x0000FF);
 	} else {
 		// Create sphere
 		var material = new THREE.MeshLambertMaterial({
 			reflectivity : 0.9,
 			ambient : 0x3A3A3A,
 			depthTest : true,
-			transparent : true
+			transparent : true,
+			color : 0xAAAAAA
 		});
 		node.sphere = new THREE.Mesh(new THREE.SphereGeometry(
 				MELONE_SimulationOptions.SPHERE_RADIUS_MINIMUM), material);
@@ -297,7 +301,7 @@ function renderLineElementForLink(link) {
 			depthTest : true,
 			transparent : true,
 			opacity : 1.0,
-			color: 0x00006A
+			color: 0xAAAAAA
 		});
 		line_material.transparent = true;
 		var line = new THREE.Line(line_geometry, line_material);
@@ -335,7 +339,7 @@ function initDatGui(container) {
 			});
 	f1.add(MELONE_SimulationOptions, 'DISPLAY_CUBE').name('Show Box');
 	f1.open();
-
+	
 	f3 = g_gui.addFolder('N-Body Simulation');
 	f3.add(MELONE_SimulationOptions, 'RUN_SIMULATION').name('Run');
 	f3.add(MELONE_SimulationOptions, 'SPRING', 1.0, 20.0).step(0.1).name(
@@ -343,8 +347,6 @@ function initDatGui(container) {
 	f3.add(MELONE_SimulationOptions, 'CHARGE', 5, 80).step(1.0).name('Charge');
 	f3.open();
 	
-	g_gui.close();
-
 	container.appendChild(g_gui.domElement);
 }
 
