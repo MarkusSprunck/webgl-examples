@@ -45,7 +45,7 @@ var g_camera;
 var g_renderer;
 var g_control;
 var g_gui;
-var g_balloon;
+var g_melon;
 
 /**
  * Initialize WebGL
@@ -125,7 +125,7 @@ function initWebGL() {
 	// create melone with texture
 	var loader = new THREE.TextureLoader();
 	loader.load('melon.jpg', function(texture) {
-		var geometry = new THREE.SphereGeometry(800, 15, 20);
+		var geometry = new THREE.SphereGeometry(800, 20, 20);
 		var material = new THREE.MeshLambertMaterial({
 			map : texture,
 			depthTest : true,
@@ -134,12 +134,12 @@ function initWebGL() {
 			shininess: 20,
 			shading : THREE.SmoothShading
 		});
-		g_balloon = new THREE.Mesh(geometry, material);
-		g_balloon.geometry.dynamic = true;
-		if (MELONE_SimulationOptions.SHOW_MELONE) {
-			g_scene.add(g_balloon);
+		g_melon = new THREE.Mesh(geometry, material);
+		g_melon.geometry.dynamic = true;
+		if (MELONE_SimulationOptions.SHOW_MELON_TEXTURE) {
+			g_scene.add(g_melon);
 		}
-		MELONE_NBodySimulator.createModelFromSphere(g_balloon);
+		MELONE_NBodySimulator.createModelFromSphere(g_melon);
 	});
 
 	// Start animation
@@ -158,14 +158,14 @@ function animate() {
 	
 	// simulate forces
 	if (MELONE_SimulationOptions.RUN_SIMULATION) {
-		for (var i = 0; i < 5; i++) {
+		for (var i = 0; i < 3; i++) {
 			MELONE_NBodySimulator.simulateAllForces();
 		}
 	}
 
 	// update position of the melone
-	if (null != g_balloon) {
-		MELONE_NBodySimulator.updateBalloon(g_balloon);
+	if (null != g_melon) {
+		MELONE_NBodySimulator.updateMelon(g_melon);
 	}
 
 	// re-draw the box
@@ -252,7 +252,7 @@ function renderNodeSphere(node) {
 		node.sphere.position.x = node.x;
 		node.sphere.position.z = node.z;
 		node.sphere.position.y = node.y;
-		node.sphere.visible = !MELONE_SimulationOptions.SHOW_MELONE;
+		node.sphere.visible = !MELONE_SimulationOptions.SHOW_MELON_TEXTURE;
 	} else {
 		// Create sphere
 		var material = new THREE.MeshLambertMaterial({
@@ -291,7 +291,7 @@ function renderLineElementForLink(link) {
 		link.threeElement.geometry.vertices[0] = source_position;
 		link.threeElement.geometry.vertices[1] = target_position;
 		link.threeElement.geometry.verticesNeedUpdate = true;
-		link.threeElement.visible = !MELONE_SimulationOptions.SHOW_MELONE;
+		link.threeElement.visible = !MELONE_SimulationOptions.SHOW_MELON_TEXTURE;
 	} else {
 		// Create line
 		var line_geometry = new THREE.Geometry();
@@ -329,12 +329,12 @@ function initDatGui(container) {
 	});
 
 	f1 = g_gui.addFolder('Render Options');
-	f1.add(MELONE_SimulationOptions, 'SHOW_MELONE').name('Melone Texture')
+	f1.add(MELONE_SimulationOptions, 'SHOW_MELON_TEXTURE').name('Show Texture')
 			.onChange(function(value) {
 				if (value) {
-					g_scene.add(g_balloon);
+					g_scene.add(g_melon);
 				} else {
-					g_scene.remove(g_balloon);
+					g_scene.remove(g_melon);
 				}
 			});
 	f1.add(MELONE_SimulationOptions, 'DISPLAY_CUBE').name('Show Box');
@@ -342,9 +342,9 @@ function initDatGui(container) {
 	
 	f3 = g_gui.addFolder('N-Body Simulation');
 	f3.add(MELONE_SimulationOptions, 'RUN_SIMULATION').name('Run');
-	f3.add(MELONE_SimulationOptions, 'SPRING', 1.0, 20.0).step(0.1).name(
+	f3.add(MELONE_SimulationOptions, 'SPRING', 5.0, 20.0).step(1.0).name(
 			'Spring Link');
-	f3.add(MELONE_SimulationOptions, 'CHARGE', 5, 80).step(1.0).name('Charge');
+	f3.add(MELONE_SimulationOptions, 'CHARGE', 5, 40).step(1.0).name('Charge');
 	f3.open();
 	
 	container.appendChild(g_gui.domElement);
