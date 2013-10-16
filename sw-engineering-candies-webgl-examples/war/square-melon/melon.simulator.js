@@ -36,9 +36,9 @@ function SimulationOptions() {
 		RUN_SIMULATION : true,
 		SPHERE_RADIUS : 1200.0,
 		SPHERE_RADIUS_MINIMUM : 25.0,
-		CHARGE : 15.0,
+		CHARGE : 25.0,
 		THETA : 0.8,
-		SPRING : 6.0,
+		SPRING : 8.0,
 
 		// Parameters for rendering
 		SHOW_MELON_TEXTURE : true,
