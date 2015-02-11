@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>three.js webgl - simple gui</title>
+<meta charset="utf-8">
+<style>
+body {
+	margin: 0px;
+	background-color: #222222;
+	overflow: hidden;
+}
+
+.absoluteInput {
+	position: absolute;
+	top: 50%;
+	right: 0px;
+	height: 50px;
+	cursor: none;
+}
+
+.absoluteTitle {
+	position: absolute;
+	top: 0px;
+	right: 0px;
+	color: #FFF;
+	font-family: Helvetica;
+	font-size: 10pt;
+	text-align: left;
+	padding-left: 10px;
+	padding-right: 10px;
+	padding-bottom: 3px;
+}
+</style>
+</head>
+<body>
+<div class="absoluteInput">
+<form><input type="text" id="mytext" style="opacity: 0; width: 2px;" /></form>
+</div>
+<script src="./lib/three.min.js"></script>
+<script src="./lib/TrackballControls.js"></script>
+<!-- 
+     Imports for THREE.SimpleDatGui | START -->
+<script src="./lib/helvetiker_regular.typeface.js"></script>
+<script src="./THREE.SimpleDatGui.js"></script>
+<!-- Imports for THREE.SimpleDatGui | END   
+-->
+<div class="absoluteTitle">
+<h3>Demo of THREE.SimpleDatGui</h3> <a href="https://plus.google.com/u/0/117292523089281814301?rel=author">by Markus Sprunck</a>
+<p>This interactive GUI is rendered based on THREE.js without any other 3rd party library. The Look & feel is like DAT.GUI but rendered within the scene so that it works also for transformations. You may read more <a href="http://www.sw-engineering-candies.com/"> here</a>.
+</p></div>
+<script>
+    function focusInput() {
+        var element = document.getElementById('mytext').focus();
+    }
+
+    function blurInput() {
+        var element = document.getElementById('mytext').blur();
+    }
+
+    var camera;
+    var scene;
+    var renderer;
+    var mesh;
+    var gui;
+    var trackbarControl;
+
+    // CREATE OPTIONS FOR GUI | START
+    function myOptionsDefinition() {
+        "use strict";
+        return {
+                    RENDER_TEXT: "Hello",
+                    OPACITY_AUTOMATIC: false,
+                    ROTATION_SPEED: 10,
+                    OPACITY: 100
+        };
+    }
+    var myOptions = myOptionsDefinition();
+    // CREATE OPTIONS FOR GUI | END
+
+    init();
+    animate();
+
+    function init() {
+
+        renderer = new THREE.WebGLRenderer({
+            antialias: true
+        });
+        renderer.setClearColor(0x222222);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 10000);
+        camera.position.z = 450;
+
+        scene = new THREE.Scene();
+
+        var light = new THREE.PointLight(0xAAAAFF);
+        light.position.set(-200, 200, camera.position.z);
+        scene.add(light);
+
+        trackbarControl = new THREE.TrackballControls(camera, renderer.domElement);
+        trackbarControl.target.set(0, 0, 0);
+        trackbarControl.rotateSpeed = 1.0;
+        trackbarControl.zoomSpeed = 1.2;
+        trackbarControl.panSpeed = 0.8;
+        trackbarControl.staticMoving = false;
+        trackbarControl.dynamicDampingFactor = 0.15;
+
+        addRotatingText(scene, myOptions.RENDER_TEXT);
+
+        var objFunctions = {
+            RESET_EVENT: function() {
+                myOptions.RENDER_TEXT = "Hello";
+                myOptions.ROTATION_ACTIVE = true;
+                myOptions.OPACITY_AUTOMATIC = false;
+                myOptions.ROTATION_SPEED = 10;
+                myOptions.OPACITY = 100;
+                camera.position.x = 0;
+                camera.position.z = 500;
+                camera.position.y = 0;
+                camera.rotation.x = 0;
+                camera.rotation.y = 0;
+                camera.rotation.z = 0;
+                camera.lookAt(new THREE.Vector3(0, 0, 0));
+                trackbarControl.reset();
+            }
+        };
+
+        // CREATE GUI | START
+        gui = new THREE.SimpleDatGui(scene, camera, renderer);
+
+        var folder1 = gui.addFolder("Animation Options");
+        folder1.add(objFunctions, 'RESET_EVENT').name('Reset');
+        folder1.add(myOptions, 'ROTATION_SPEED', 0, 40).step(5).name('Rotation Speed');
+        folder1.open();
+
+        var folder2 = gui.addFolder("Opacity");
+        folder2.add(myOptions, 'OPACITY_AUTOMATIC').name('Animate');
+        folder2.add(myOptions, 'OPACITY', 20, 100).step(20).name('Current Value');
+        folder2.open();
+
+        var folder3 = gui.addFolder("Content");
+        folder3.add(myOptions, 'RENDER_TEXT').name('Render Text').onChange(function(value) {
+            addRotatingText(scene, myOptions.RENDER_TEXT);
+        });
+        folder3.open();
+        // CREATE GUI | END
+
+        window.addEventListener('resize', onWindowResize, false);
+    }
+
+    function addRotatingText(scene, value) {
+        var oldRotationX = 0;
+        if (typeof mesh !== "undefined") {
+            oldRotationX = mesh.rotation.x;
+            scene.remove(mesh);
+        }
+        var geometry = new THREE.TextGeometry(myOptions.RENDER_TEXT, {
+                    height: 20.0,
+                    size: 160.0,
+                    bevelSize: 1.5,
+                    bevelThickness: 1.2,
+                    bevelSegments: 4,
+                    bevelEnabled: true
+        });
+        var material = new THREE.MeshPhongMaterial({
+            color: 0xdddddd
+        });
+        mesh = new THREE.Mesh(geometry, material);
+        mesh.rotation.x = oldRotationX;
+        geometry.computeBoundingBox();
+        geometry.textWidth = geometry.boundingBox.max.x - geometry.boundingBox.min.x;
+        mesh.translateX(-geometry.textWidth / 2);
+        scene.add(mesh);
+    }
+
+    function onWindowResize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+    function animate() {
+        requestAnimationFrame(animate);
+
+        if (myOptions.OPACITY_AUTOMATIC) {
+            myOptions.OPACITY = Math.round(40 + 30 * (1 + Math.sin(mesh.rotation.x)));
+        }
+
+        // CREATE UPDATE | START      
+        gui.setOpacity(myOptions.OPACITY);
+        gui.update();
+        // CREATE UPDATE | END
+
+        mesh.rotation.x += 0.0005 * myOptions.ROTATION_SPEED;
+
+        trackbarControl.update();
+
+        renderer.render(scene, camera);
+    }
+</script>
+</body>
+</html>
