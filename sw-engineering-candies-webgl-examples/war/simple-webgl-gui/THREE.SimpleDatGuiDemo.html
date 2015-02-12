@@ -27,6 +27,7 @@ body {
 <body>
 <script src="./lib/three.min.js"></script>
 <script src="./lib/TrackballControls.js"></script>
+<script src="./lib/stats.min.js"></script>
 <!-- 
      Imports for THREE.SimpleDatGui | START -->
 <script src="./lib/helvetiker_regular.typeface.js"></script>
@@ -36,13 +37,7 @@ body {
 <div class="absoluteTitle">THREE.SimpleDatGui - rendering with pure WebGL based on three.js without any other 3rd party libraries. You may find the source code in <a href="https://github.com/MarkusSprunck/webgl-examples">GitHub</a>.
 </div>
 <script>
-   
-    var camera;
-    var scene;
-    var renderer;
-    var mesh;
-    var gui;
-    var trackbarControl;
+    var camera, stats, scene, renderer, mesh, gui, trackbarControl, container;
 
     // CREATE OPTIONS FOR GUI | START
     function myOptionsDefinition() {
@@ -62,6 +57,9 @@ body {
 
     function init() {
 
+        container = document.createElement( 'div' );
+		document.body.appendChild( container );
+		
         renderer = new THREE.WebGLRenderer({
             antialias: true
         });
@@ -135,6 +133,12 @@ body {
                 objFunctions.RESET_EVENT();
             }
         });
+        
+        stats = new Stats();
+		stats.domElement.style.position = 'absolute';
+		stats.domElement.style.top = '0px';
+		stats.domElement.style.zIndex = 100;
+		container.appendChild( stats.domElement );
     }
 
     function addRotatingText(scene, value) {
@@ -183,6 +187,7 @@ body {
         mesh.rotation.x += 0.0005 * myOptions.ROTATION_SPEED;
 
         trackbarControl.update();
+        stats.update();
 
         renderer.render(scene, camera);
     }

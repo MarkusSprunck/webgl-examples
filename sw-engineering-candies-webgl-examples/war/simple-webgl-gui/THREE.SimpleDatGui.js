@@ -37,6 +37,7 @@ THREE.SimpleDatGui = function(scene, camera, renderer, parameters) {
     // TODO Support floats in slider control
     // TODO Implement save & restore of values
     // TODO Implement copy & paste for text control
+    // TODO Implement controls without folder
 
     // CALCULATE RENDERING OPTIONS
     parameters = parameters || {};
