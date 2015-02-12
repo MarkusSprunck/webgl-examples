@@ -6,7 +6,7 @@
 <style>
 body {
 	margin: 0px;
-	background-color: #8258FA;
+	background-color: #222222;
 	overflow: hidden;
 }
 
@@ -14,7 +14,7 @@ body {
 	position: absolute;
 	bottom: 0px;
 	left: 0px;
-	color: #000;
+	color: #eee;
 	font-family: Arial;
 	font-size: 10pt;
 	text-align: left;
@@ -28,24 +28,24 @@ body {
 <script src="./lib/three.min.js"></script>
 <script src="./lib/TrackballControls.js"></script>
 <script src="./lib/stats.min.js"></script>
-<!-- 
-     Imports for THREE.SimpleDatGui | START -->
+<!-- Imports for THREE.SimpleDatGui | START -->
 <script src="./lib/helvetiker_regular.typeface.js"></script>
 <script src="./THREE.SimpleDatGui.js"></script>
-<!-- Imports for THREE.SimpleDatGui | END   
--->
-<div class="absoluteTitle">THREE.SimpleDatGui is rendered in WebGL based on three.js without any other 3rd party libraries. You may find the source code in <a href="https://github.com/MarkusSprunck/webgl-examples">GitHub</a>.
+<!-- Imports for THREE.SimpleDatGui | END   -->
+<div class="absoluteTitle">THREE.SimpleDatGui is rendered in WebGL based on three.js without any other 3rd party libraries. You may find the source code on <a href="https://github.com/MarkusSprunck/webgl-examples">GitHub</a>
 </div>
 <script>
-    var camera, stats, scene, renderer, mesh, gui, trackbarControl, container;
+    var camera, stats, scene, renderer, mesh, gui, trackbarControl, container, hemiLight;
 
     // CREATE OPTIONS FOR GUI | START
     function myOptionsDefinition() {
         "use strict";
         return {
-                    RENDER_TEXT: "Hello World!",
-                    OPACITY_AUTOMATIC: true,
+                    RENDER_TEXT: "Hello!",
+                    OPACITY_AUTOMATIC: false,
                     ROTATION_SPEED: 10,
+                    ROTATION_X_AXIS: true,
+                    ROTATION_Y_AXIS: true,
                     OPACITY: 100
         };
     }
@@ -56,44 +56,48 @@ body {
     animate();
 
     function init() {
+        "use strict";
 
-        container = document.createElement( 'div' );
-		document.body.appendChild( container );
-		
+        // Prepare scene 
+
         renderer = new THREE.WebGLRenderer({
             antialias: true
         });
 
-        renderer.setClearColor(0x8258FA);
+        renderer.setClearColor(0x222222);
         renderer.setPixelRatio(window.devicePixelRatio);
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(renderer.domElement);
 
         camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 10000);
-        camera.position.z = 400;
+        camera.position.z = 420;
 
         scene = new THREE.Scene();
 
-        var blueLight = new THREE.PointLight(0xAAAAFF);
+        // Add lights
+
+        hemiLight = new THREE.HemisphereLight(0xffffff, 0xffffff, 0.6);
+        hemiLight.color.setHSL(0.6, 1, 0.6);
+        hemiLight.groundColor.setHSL(0.095, 1, 0.75);
+        hemiLight.position.set(0, 500, -camera.position.z);
+        scene.add(hemiLight);
+
+        var blueLight = new THREE.PointLight(0x1111FF);
         blueLight.position.set(-100, 100, camera.position.z);
         scene.add(blueLight);
 
-        var yellowLight = new THREE.PointLight(0xFFFFAA);
-        yellowLight.position.set(-400, 400, -camera.position.z);
+        var yellowLight = new THREE.PointLight(0x666600);
+        yellowLight.position.set(0, 0, 2 * camera.position.z);
         scene.add(yellowLight);
 
-        trackbarControl = new THREE.TrackballControls(camera, renderer.domElement);
-        trackbarControl.target.set(0, 0, 0);
-        trackbarControl.rotateSpeed = 1.0;
-        trackbarControl.zoomSpeed = 1.2;
-        trackbarControl.panSpeed = 0.8;
-        trackbarControl.staticMoving = false;
-        trackbarControl.dynamicDampingFactor = 0.15;
+        // Add content 
 
-        addRotatingText(scene, myOptions.RENDER_TEXT);
+        addOrUpdateRotatingText(scene, myOptions.RENDER_TEXT);
 
         var objFunctions = {
             RESET_EVENT: function() {
+                mesh.rotation.x = 0;
+                mesh.rotation.y = 0;
                 camera.position.x = 0;
                 camera.position.z = 500;
                 camera.position.y = 0;
@@ -105,17 +109,20 @@ body {
             }
         };
 
-        // CREATE GUI | START
+        // Add GUI
+
         gui = new THREE.SimpleDatGui(scene, camera, renderer, {
-                    width: 250,
-                    position: new THREE.Vector3(-150, 100, 150)
+                    width: 280,
+                    position: new THREE.Vector3(-120, 130, 150)
         });
 
         var folder1 = gui.addFolder("General Options");
         folder1.add(objFunctions, 'RESET_EVENT').name('Reset Position');
+        folder1.add(myOptions, 'ROTATION_X_AXIS').name('Rotate X');
+        folder1.add(myOptions, 'ROTATION_Y_AXIS').name('Rotate Y');
         folder1.add(myOptions, 'ROTATION_SPEED', 0, 40).step(5).name('Rotation Speed');
         folder1.add(myOptions, 'RENDER_TEXT').name('Render Text').onChange(function(value) {
-            addRotatingText(scene, myOptions.RENDER_TEXT);
+            addOrUpdateRotatingText(scene, myOptions.RENDER_TEXT);
         });
         folder1.open();
 
@@ -123,30 +130,46 @@ body {
         folder2.add(myOptions, 'OPACITY_AUTOMATIC').name('Run Animation');
         folder2.add(myOptions, 'OPACITY', 10, 100).step(10).name('Value');
         folder2.open();
-        // CREATE GUI | END
 
+        // Add event listener
         window.addEventListener('resize', onWindowResize, false);
 
-        // RIGHT MOUSE CLICK WILL RESET POSITION
         renderer.domElement.addEventListener('mousedown', function(event) {
             if (event.which == 3) {
-                objFunctions.RESET_EVENT();
+                objFunctions.RESET_EVENT(); // RIGHT MOUSE CLICK WILL RESET POSITION                
             }
         });
-        
+
+        trackbarControl = new THREE.TrackballControls(camera, renderer.domElement);
+        trackbarControl.target.set(0, 0, 0);
+        trackbarControl.rotateSpeed = 1.0;
+        trackbarControl.zoomSpeed = 1.2;
+        trackbarControl.panSpeed = 0.8;
+        trackbarControl.staticMoving = false;
+        trackbarControl.dynamicDampingFactor = 0.15;
+
+        // Add performance display
+
         stats = new Stats();
-		stats.domElement.style.position = 'absolute';
-		stats.domElement.style.top = '0px';
-		stats.domElement.style.zIndex = 100;
-		container.appendChild( stats.domElement );
+        stats.domElement.style.position = 'absolute';
+        stats.domElement.style.top = '0px';
+        stats.domElement.style.zIndex = 100;
+        document.body.appendChild(stats.domElement);
+
     }
 
-    function addRotatingText(scene, value) {
+    function addOrUpdateRotatingText(scene, value) {
+        "use strict";
+
         var oldRotationX = 0;
+        var oldRotationY = 0;
+
         if (typeof mesh !== "undefined") {
             oldRotationX = mesh.rotation.x;
+            oldRotationY = mesh.rotation.y;
             scene.remove(mesh);
         }
+
         var geometry = new THREE.TextGeometry(myOptions.RENDER_TEXT, {
                     height: 20.0,
                     size: 160.0,
@@ -159,24 +182,31 @@ body {
             color: 0xdddddd
         });
         mesh = new THREE.Mesh(geometry, material);
+
         mesh.rotation.x = oldRotationX;
-        geometry.computeBoundingBox();
-        geometry.textWidth = geometry.boundingBox.max.x - geometry.boundingBox.min.x;
-        mesh.translateX(-geometry.textWidth / 2);
+        mesh.rotation.y = oldRotationY;
+
         scene.add(mesh);
     }
 
     function onWindowResize() {
+        "use strict";
+
         camera.aspect = window.innerWidth / window.innerHeight;
         camera.updateProjectionMatrix();
         renderer.setSize(window.innerWidth, window.innerHeight);
     }
 
+    var xyz = 0;
+
     function animate() {
+        "use strict";
+
         requestAnimationFrame(animate);
 
         if (myOptions.OPACITY_AUTOMATIC) {
-            myOptions.OPACITY = 10 * Math.round(10 * (2 + Math.sin(mesh.rotation.x)) / 3);
+            xyz += 0.005;
+            myOptions.OPACITY = 10 * Math.round(2 + 4 * (1 + Math.sin(xyz)));
         }
 
         // UPDATE | START      
@@ -184,7 +214,13 @@ body {
         gui.update();
         // UPDATE | END
 
-        mesh.rotation.x += 0.0005 * myOptions.ROTATION_SPEED;
+        if (myOptions.ROTATION_X_AXIS) {
+            mesh.rotation.x += 0.0005 * myOptions.ROTATION_SPEED;
+        }
+
+        if (myOptions.ROTATION_Y_AXIS) {
+            mesh.rotation.y += 0.0005 * myOptions.ROTATION_SPEED;
+        }
 
         trackbarControl.update();
         stats.update();
