@@ -34,7 +34,6 @@ THREE.SimpleDatGui = function(scene, camera, renderer, parameters) {
 
     // TODO Implement control color picker
     // TODO Implement control combo box
-    // TODO Fix mouse pointer in text edit control
     // TODO Support floats in slider control
     // TODO Implement save & restore of values
     // TODO Implement copy & paste for text control
@@ -232,14 +231,14 @@ THREE.SimpleDatGui.prototype.onMouseEvt = function(event) {
                     // FIND NEW CURSOR this.options.POSITION
                     var cursorMinimalX = _element.wValueTextField.position.x - this.options.TEXT_FIELD_SIZE.x / 2;
                     var deltaX = intersects[0].point.x - cursorMinimalX;
-                    if (deltaX > _element.possibleCursorPositons[_element.possibleCursorPositons.length - 1].x) {
+                    if (deltaX > _element.textHelper.possibleCursorPositons[_element.textHelper.possibleCursorPositons.length - 1].x) {
                         _element.textHelper.end = value.length - 1;
                         _element.textHelper.cursor = value.length;
                         _element.textHelper.calculateAlignTextLastCall(value);
                     } else {
-                        for (var i = 0; i < _element.possibleCursorPositons.length - 1; i++) {
-                            var minX = _element.possibleCursorPositons[i].x;
-                            var maxX = _element.possibleCursorPositons[i + 1].x;
+                        for (var i = 0; i < _element.textHelper.possibleCursorPositons.length - 1; i++) {
+                            var minX = _element.textHelper.possibleCursorPositons[i].x;
+                            var maxX = _element.textHelper.possibleCursorPositons[i + 1].x;
                             if (deltaX > minX && deltaX <= maxX) {
                                 _element.textHelper.cursor = i + _element.textHelper.start;
                             }
@@ -377,7 +376,7 @@ THREE.SimpleDatGuiControl = function(object, property, minValue, maxValue, paren
 
     var WEBGL_LABEL_OFFSET_X = 10;
     var WEBGL_CLOSE_LABEL_OFFSET_X = 30;
-    var WEBGL_LABEL_OFFSET_Y = 3;
+    var WEBGL_LABEL_OFFSET_Y = 4;
 
     var that = this;
 
@@ -396,7 +395,6 @@ THREE.SimpleDatGuiControl = function(object, property, minValue, maxValue, paren
 
     // MANAGE TEXT INPUT
     this.textHelper = new THREE.SimpleDatGuiTextHelper(this.options);
-    this.possibleCursorPositons = [];
 
     // STATE
     this.isFolderCollapsed = true;
@@ -655,15 +653,6 @@ THREE.SimpleDatGuiControl = function(object, property, minValue, maxValue, paren
         var fontshapes = THREE.FontUtils.generateShapes(that.textHelper.truncated, {
             size: this.options.FONT_SIZE
         });
-        that.possibleCursorPositons = [];
-        that.possibleCursorPositons.push({
-            x: 0
-        });
-        for (var i = 0; i < fontshapes.length; i++) {
-            that.possibleCursorPositons.push({
-                x: fontshapes[i].getBoundingBox().maxX
-            });
-        }
         var _geometry = new THREE.ShapeGeometry(fontshapes, {
             curveSegments: 2
         });
@@ -718,7 +707,7 @@ THREE.SimpleDatGuiControl = function(object, property, minValue, maxValue, paren
         that.wCursor = new THREE.Mesh(_geometry, _material);
 
         that.wCursor.updateRendering = function(index) {
-            var possiblePositon = that.possibleCursorPositons[that.textHelper.cursor - that.textHelper.start];
+            var possiblePositon = that.textHelper.possibleCursorPositons[that.textHelper.cursor - that.textHelper.start];
             if (typeof possiblePositon !== "undefined") {
                 that.wCursor.position.x = that.options.POSITION.x + that.options.LABEL_TAB_1.x
                             + that.textHelper.residiumX + possiblePositon.x + 0.25;
@@ -1013,6 +1002,33 @@ THREE.SimpleDatGuiTextHelper = function(options) {
     this.residiumX = 0.0;
     this.isLastCallLeft = false;
     this.isTruncated = false;
+    this.possibleCursorPositons = [];
+}
+
+/**
+ * This is a workaround for the not always correct size of characters in the
+ * font shapes. Replace all not working characters with similar size characters.
+ */
+THREE.SimpleDatGuiTextHelper.prototype.createFontShapes = function(value) {
+    var valueNew = value
+    valueNew = valueNew.split(" ").join("]");
+    valueNew = valueNew.split('"').join("°");
+    valueNew = valueNew.split("%").join("W");
+    valueNew = valueNew.split("!").join(",");
+    valueNew = valueNew.split(":").join(",");
+    valueNew = valueNew.split("|").join("2");
+    valueNew = valueNew.split(";").join(",");
+    valueNew = valueNew.split("?").join("s");
+    valueNew = valueNew.split("ö").join("s");
+    valueNew = valueNew.split("ä").join("s");
+    valueNew = valueNew.split("ü").join("s");
+    valueNew = valueNew.split("ß").join("s");
+    valueNew = valueNew.split("i").join("I");
+    valueNew = valueNew.split("j").join("l");
+    valueNew = valueNew.split("k").join("h");
+    return THREE.FontUtils.generateShapes(valueNew, {
+        size: this.options.FONT_SIZE
+    });
 }
 
 THREE.SimpleDatGuiTextHelper.prototype.calculateRightAlignText = function(value) {
@@ -1024,30 +1040,37 @@ THREE.SimpleDatGuiTextHelper.prototype.calculateRightAlignText = function(value)
     this.residiumX = 0;
     this.end = value.length - 1;
 
-    var fontshapesAll = THREE.FontUtils.generateShapes(value, {
-        size: this.options.FONT_SIZE
-    });
+    var fontshapesAll = this.createFontShapes(value);
     var size = this.options.TEXT_FIELD_SIZE.x;
     for (var i = fontshapesAll.length - 1; i > 1; i--) {
         var boundingBox2 = fontshapesAll[i].getBoundingBox();
         var boundingBox1 = fontshapesAll[i - 1].getBoundingBox();
         var charWidth = boundingBox2.maxX - boundingBox1.maxX;
         size -= charWidth;
-        if (size <= 12 && !this.isTruncated) {
+        if (size < 20 && !this.isTruncated) {
             this.isTruncated = true;
             this.start = i - 2;
             this.truncated = value.substring(this.start, this.end + 1);
         }
     }
 
-    var fontshapesTruncated = THREE.FontUtils.generateShapes(this.truncated, {
-        size: this.options.FONT_SIZE
-    });
+    var fontshapesTruncated = this.createFontShapes(this.truncated);
     if (fontshapesTruncated.length > 0) {
         this.residiumX = this.options.TEXT_FIELD_SIZE.x
                     - fontshapesTruncated[fontshapesTruncated.length - 1].getBoundingBox().maxX;
     } else {
         this.residiumX = 0;
+    }
+
+    // ALL CURSOR POSITIONS
+    this.possibleCursorPositons = [];
+    this.possibleCursorPositons.push({
+        x: 0
+    });
+    for (var i = 0; i < fontshapesTruncated.length; i++) {
+        this.possibleCursorPositons.push({
+            x: fontshapesTruncated[i].getBoundingBox().maxX
+        });
     }
 
     this.isLastCallLeft = false;
@@ -1061,18 +1084,29 @@ THREE.SimpleDatGuiTextHelper.prototype.calculateLeftAlignText = function(value) 
     // Start with the complete string
     this.isTruncated = false;
     this.truncated = value;
-    this.residiumX = 0;
+    this.residiumX = 2;
+    this.end = 0;
 
-    var fontshapesAll = THREE.FontUtils.generateShapes(value, {
-        size: this.options.FONT_SIZE
-    });
+    var fontshapesAll = this.createFontShapes(value);
     for (var i = 0; i < fontshapesAll.length - 1; i++) {
         var boundingBox1 = fontshapesAll[i].getBoundingBox();
-        if ((this.options.TEXT_FIELD_SIZE.x - boundingBox1.maxX) < 12 && !this.isTruncated) {
+        if ((this.options.TEXT_FIELD_SIZE.x - boundingBox1.maxX) <= this.residiumX && !this.isTruncated) {
             this.isTruncated = true;
             this.end = i;
             this.truncated = value.substring(this.start, this.end);
         }
+    }
+
+    // ALL CURSOR POSITIONS
+    var fontshapesTruncated = this.createFontShapes(this.truncated);
+    this.possibleCursorPositons = [];
+    this.possibleCursorPositons.push({
+        x: 0
+    });
+    for (var i = 0; i < fontshapesTruncated.length; i++) {
+        this.possibleCursorPositons.push({
+            x: fontshapesTruncated[i].getBoundingBox().maxX
+        });
     }
 
     this.isLastCallLeft = true;
