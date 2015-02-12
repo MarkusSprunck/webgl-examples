@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<title>three.js webgl - simple gui</title>
+<title>THREE.SimpleDatGui Demo</title>
 <meta charset="utf-8">
 <style>
 body {
@@ -15,20 +15,19 @@ body {
 	top: 50%;
 	right: 0px;
 	height: 50px;
-	cursor: none;
 }
 
 .absoluteTitle {
 	position: absolute;
-	top: 0px;
-	right: 0px;
-	color: #FFF;
+	bottom: 0px;
+	left: 0px;
+	color: #000;
 	font-family: Helvetica;
-	font-size: 10pt;
+	font-size: 9pt;
 	text-align: left;
 	padding-left: 10px;
 	padding-right: 10px;
-	padding-bottom: 3px;
+	padding-bottom: 10px;
 }
 </style>
 </head>
@@ -44,10 +43,8 @@ body {
 <script src="./THREE.SimpleDatGui.js"></script>
 <!-- Imports for THREE.SimpleDatGui | END   
 -->
-<div class="absoluteTitle">
-<h3>Demo of THREE.SimpleDatGui</h3> <a href="https://plus.google.com/u/0/117292523089281814301?rel=author">by Markus Sprunck</a>
-<p>This interactive GUI is rendered based on THREE.js without any other 3rd party library. The Look & feel is like DAT.GUI but rendered within the scene so that it works also for transformations. You may read more <a href="http://www.sw-engineering-candies.com/"> here</a>.
-</p></div>
+<div class="absoluteTitle">THREE.SimpleDatGui - rendering with pure WebGL based on three.js without any other 3rd party libraries. You may find the source code in <a href="https://github.com/MarkusSprunck/webgl-examples">GitHub</a>.
+</div>
 <script>
     function focusInput() {
         var element = document.getElementById('mytext').focus();
@@ -68,8 +65,8 @@ body {
     function myOptionsDefinition() {
         "use strict";
         return {
-                    RENDER_TEXT: "Hello",
-                    OPACITY_AUTOMATIC: false,
+                    RENDER_TEXT: "Hello World!",
+                    OPACITY_AUTOMATIC: true,
                     ROTATION_SPEED: 10,
                     OPACITY: 100
         };
@@ -85,19 +82,24 @@ body {
         renderer = new THREE.WebGLRenderer({
             antialias: true
         });
-        renderer.setClearColor(0x222222);
+
+        renderer.setClearColor(0xBCA9F5);
         renderer.setPixelRatio(window.devicePixelRatio);
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(renderer.domElement);
 
         camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 10000);
-        camera.position.z = 450;
+        camera.position.z = 400;
 
         scene = new THREE.Scene();
 
-        var light = new THREE.PointLight(0xAAAAFF);
-        light.position.set(-200, 200, camera.position.z);
-        scene.add(light);
+        var blueLight = new THREE.PointLight(0xAAAAFF);
+        blueLight.position.set(-100, 100, camera.position.z);
+        scene.add(blueLight);
+
+        var yellowLight = new THREE.PointLight(0xFFFFAA);
+        yellowLight.position.set(-400, 400, -camera.position.z);
+        scene.add(yellowLight);
 
         trackbarControl = new THREE.TrackballControls(camera, renderer.domElement);
         trackbarControl.target.set(0, 0, 0);
@@ -111,11 +113,6 @@ body {
 
         var objFunctions = {
             RESET_EVENT: function() {
-                myOptions.RENDER_TEXT = "Hello";
-                myOptions.ROTATION_ACTIVE = true;
-                myOptions.OPACITY_AUTOMATIC = false;
-                myOptions.ROTATION_SPEED = 10;
-                myOptions.OPACITY = 100;
                 camera.position.x = 0;
                 camera.position.z = 500;
                 camera.position.y = 0;
@@ -128,26 +125,33 @@ body {
         };
 
         // CREATE GUI | START
-        gui = new THREE.SimpleDatGui(scene, camera, renderer);
+        gui = new THREE.SimpleDatGui(scene, camera, renderer, {
+                    width: 300,
+                    position: new THREE.Vector3(-150, 100, 150)
+        });
 
-        var folder1 = gui.addFolder("Animation Options");
-        folder1.add(objFunctions, 'RESET_EVENT').name('Reset');
+        var folder1 = gui.addFolder("General Options");
+        folder1.add(objFunctions, 'RESET_EVENT').name('Reset Position');
         folder1.add(myOptions, 'ROTATION_SPEED', 0, 40).step(5).name('Rotation Speed');
-        folder1.open();
-
-        var folder2 = gui.addFolder("Opacity");
-        folder2.add(myOptions, 'OPACITY_AUTOMATIC').name('Animate');
-        folder2.add(myOptions, 'OPACITY', 20, 100).step(20).name('Current Value');
-        folder2.open();
-
-        var folder3 = gui.addFolder("Content");
-        folder3.add(myOptions, 'RENDER_TEXT').name('Render Text').onChange(function(value) {
+        folder1.add(myOptions, 'RENDER_TEXT').name('Render Text').onChange(function(value) {
             addRotatingText(scene, myOptions.RENDER_TEXT);
         });
-        folder3.open();
+        folder1.open();
+
+        var folder2 = gui.addFolder("Opacity Options");
+        folder2.add(myOptions, 'OPACITY_AUTOMATIC').name('Run Animation');
+        folder2.add(myOptions, 'OPACITY', 10, 100).step(10).name('Value');
+        folder2.open();
         // CREATE GUI | END
 
         window.addEventListener('resize', onWindowResize, false);
+
+        // RIGHT MOUSE CLICK WILL RESET POSITION
+        renderer.domElement.addEventListener('mousedown', function(event) {
+            if (event.which == 3) {
+                objFunctions.RESET_EVENT();
+            }
+        });
     }
 
     function addRotatingText(scene, value) {
@@ -185,13 +189,13 @@ body {
         requestAnimationFrame(animate);
 
         if (myOptions.OPACITY_AUTOMATIC) {
-            myOptions.OPACITY = Math.round(40 + 30 * (1 + Math.sin(mesh.rotation.x)));
+            myOptions.OPACITY = 10 * Math.round(10 * (2 + Math.sin(mesh.rotation.x)) / 3);
         }
 
-        // CREATE UPDATE | START      
+        // UPDATE | START      
         gui.setOpacity(myOptions.OPACITY);
         gui.update();
-        // CREATE UPDATE | END
+        // UPDATE | END
 
         mesh.rotation.x += 0.0005 * myOptions.ROTATION_SPEED;
 
