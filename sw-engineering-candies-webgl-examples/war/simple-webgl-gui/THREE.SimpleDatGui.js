@@ -30,11 +30,11 @@
  */
 THREE.SimpleDatGui = function(scene, camera, renderer, parameters) {
     "use strict";
-    console.log('THREE.SimpleDatGui v0.5 (alpha)');
+    console.log('THREE.SimpleDatGui v0.51 (alpha)');
 
     // TODO Implement control color picker
     // TODO Implement control combo box
-    // TODO Support floats in slider control
+    // TODO Implement support floats in slider control
     // TODO Implement save & restore of values
     // TODO Implement copy & paste for text control
     // TODO Implement controls without folder
@@ -259,7 +259,11 @@ THREE.SimpleDatGui.prototype.onKeyPressEvt = function(event) {
     "use strict";
     if (this.focus !== null) {
         var value = this.focus.object[this.focus.property];
-        var newCharacter = String.fromCharCode(event.keyCode);
+
+        event = event || window.event;
+        var charCode = (typeof event.which == "number") ? event.which : event.keyCode;
+
+        var newCharacter = String.fromCharCode(charCode);
         var newValue = value.substring(0, this.focus.textHelper.cursor) + newCharacter
                     + value.substring(this.focus.textHelper.cursor, value.length);
 
@@ -280,25 +284,28 @@ THREE.SimpleDatGui.prototype.onKeyEvt = function(event) {
         document.getElementById('simple_dat_gui_dummy_text_input').blur();
     }
 
+    event = event || window.event;
+    var charCode = (typeof event.which == "number") ? event.which : event.keyCode;
+
     "use strict";
     if (this.focus !== null) {
         var value = this.focus.object[this.focus.property];
 
-        if (event.keyCode === 9 /* TAB */|| event.keyCode === 13 /* ENTER */) {
+        if (charCode === 9 /* TAB */|| charCode === 13 /* ENTER */) {
             this.focus = null;
 
             // Workaround to deactivate keyboard on iOS
             blurDummyTextInputToHideKeyboard()();
 
-        } else if (event.keyCode === 36 /* POS1 */) {
+        } else if (charCode === 36 /* POS1 */) {
             this.focus.textHelper.cursor = 0;
             this.focus.textHelper.start = 0;
             this.focus.textHelper.calculateAlignTextLastCall(value);
-        } else if (event.keyCode === 35 /* END */) {
+        } else if (charCode === 35 /* END */) {
             this.focus.textHelper.cursor = value.length;
             this.focus.textHelper.end = value.length - 1;
             this.focus.textHelper.calculateAlignTextLastCall(value);
-        } else if (event.keyCode === 37 /* LEFT */) {
+        } else if (charCode === 37 /* LEFT */) {
             if (this.focus.textHelper.cursor > 0) {
                 this.focus.textHelper.cursor -= 1;
             }
@@ -308,12 +315,12 @@ THREE.SimpleDatGui.prototype.onKeyEvt = function(event) {
                 }
                 this.focus.textHelper.calculateAlignTextLastCall(value);
             }
-        } else if (event.keyCode === 39/* RIGHT */&& this.focus.textHelper.cursor < value.length) {
+        } else if (charCode === 39/* RIGHT */&& this.focus.textHelper.cursor < value.length) {
             this.focus.textHelper.cursor += 1;
             if (this.focus.textHelper.cursor > this.focus.textHelper.end) {
                 this.focus.textHelper.calculateAlignTextLastCall(value);
             }
-        } else if (event.keyCode === 46 /* ENTF */) {
+        } else if (charCode === 46 /* ENTF */) {
             var value = this.focus.object[this.focus.property];
             var valueNew = value.substring(0, this.focus.textHelper.cursor)
                         + value.substring(this.focus.textHelper.cursor + 1, value.length);
@@ -324,7 +331,7 @@ THREE.SimpleDatGui.prototype.onKeyEvt = function(event) {
             this.focus.object[this.focus.property] = valueNew;
             this.focus.executeCallback();
 
-        } else if (event.keyCode === 8 /* BACK_SPACE */) {
+        } else if (charCode === 8 /* BACK_SPACE */) {
             // prevent default behaviour
             event.preventDefault();
 
