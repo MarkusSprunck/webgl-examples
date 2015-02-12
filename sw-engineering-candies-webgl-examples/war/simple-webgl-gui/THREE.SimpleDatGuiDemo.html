@@ -6,7 +6,7 @@
 <style>
 body {
 	margin: 0px;
-	background-color: #222222;
+	background-color: #6AA121;
 	overflow: hidden;
 }
 
@@ -32,25 +32,27 @@ body {
 <script src="./lib/helvetiker_regular.typeface.js"></script>
 <script src="./THREE.SimpleDatGui.js"></script>
 <!-- Imports for THREE.SimpleDatGui | END   -->
-<div class="absoluteTitle">THREE.SimpleDatGui is rendered in WebGL based on three.js without any other 3rd party libraries. You may find the source code on <a href="https://github.com/MarkusSprunck/webgl-examples">GitHub</a>
+<div class="absoluteTitle">THREE.SimpleDatGui developed by <a href="https://plus.google.com/u/0/117292523089281814301?rel=author"> Markus Sprunck</a> is rendered in WebGL based on three.js without any other 3rd party libraries. You find the source code on 
+<a href="https://github.com/MarkusSprunck/webgl-examples/tree/master/sw-engineering-candies-webgl-examples/war/simple-webgl-gui">GitHub</a>
 </div>
 <script>
-    var camera, stats, scene, renderer, mesh, gui, trackbarControl, container, hemiLight;
-
-    // CREATE OPTIONS FOR GUI | START
+    // CREATE OPTIONS WITH DEFAULT VALUES
     function myOptionsDefinition() {
         "use strict";
         return {
-                    RENDER_TEXT: "Hello!",
+                    RENDER_TEXT: "Edit here",
                     OPACITY_AUTOMATIC: false,
-                    ROTATION_SPEED: 10,
+                    ROTATION_SPEED: 20,
+                    FONT_SIZE: 175,
                     ROTATION_X_AXIS: true,
-                    ROTATION_Y_AXIS: true,
+                    ROTATION_Y_AXIS: false,
                     OPACITY: 100
         };
     }
     var myOptions = myOptionsDefinition();
-    // CREATE OPTIONS FOR GUI | END
+
+    var camera, stats, scene, renderer, mesh, gui, trackbarControl, container, hemiLight;
+    var opacityAnimationFactor = 0;
 
     init();
     animate();
@@ -63,26 +65,19 @@ body {
         renderer = new THREE.WebGLRenderer({
             antialias: true
         });
-
-        renderer.setClearColor(0x222222);
+        renderer.setClearColor(0x6AA121);
         renderer.setPixelRatio(window.devicePixelRatio);
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(renderer.domElement);
 
         camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 10000);
-        camera.position.z = 420;
+        camera.position.z = 400;
 
         scene = new THREE.Scene();
 
         // Add lights
 
-        hemiLight = new THREE.HemisphereLight(0xffffff, 0xffffff, 0.6);
-        hemiLight.color.setHSL(0.6, 1, 0.6);
-        hemiLight.groundColor.setHSL(0.095, 1, 0.75);
-        hemiLight.position.set(0, 500, -camera.position.z);
-        scene.add(hemiLight);
-
-        var blueLight = new THREE.PointLight(0x1111FF);
+        var blueLight = new THREE.PointLight(0x5820A1);
         blueLight.position.set(-100, 100, camera.position.z);
         scene.add(blueLight);
 
@@ -113,7 +108,7 @@ body {
 
         gui = new THREE.SimpleDatGui(scene, camera, renderer, {
                     width: 280,
-                    position: new THREE.Vector3(-120, 130, 150)
+                    position: new THREE.Vector3(-130, 110, 140)
         });
 
         var folder1 = gui.addFolder("General Options");
@@ -121,17 +116,20 @@ body {
         folder1.add(myOptions, 'ROTATION_X_AXIS').name('Rotate X');
         folder1.add(myOptions, 'ROTATION_Y_AXIS').name('Rotate Y');
         folder1.add(myOptions, 'ROTATION_SPEED', 0, 40).step(5).name('Rotation Speed');
+        folder1.add(myOptions, 'FONT_SIZE', 50, 250).step(25).name('Render Font Size').onChange(function(value) {
+            addOrUpdateRotatingText(scene, myOptions.RENDER_TEXT);
+        });
+        ;
         folder1.add(myOptions, 'RENDER_TEXT').name('Render Text').onChange(function(value) {
             addOrUpdateRotatingText(scene, myOptions.RENDER_TEXT);
         });
         folder1.open();
-
         var folder2 = gui.addFolder("Opacity Options");
         folder2.add(myOptions, 'OPACITY_AUTOMATIC').name('Run Animation');
         folder2.add(myOptions, 'OPACITY', 10, 100).step(10).name('Value');
         folder2.open();
 
-        // Add event listener
+        // Add event listeners
         window.addEventListener('resize', onWindowResize, false);
 
         renderer.domElement.addEventListener('mousedown', function(event) {
@@ -158,6 +156,43 @@ body {
 
     }
 
+    function onWindowResize() {
+        "use strict";
+
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+    function animate() {
+        "use strict";
+
+        requestAnimationFrame(animate);
+
+        if (myOptions.OPACITY_AUTOMATIC) {
+            opacityAnimationFactor += 0.005;
+            myOptions.OPACITY = 10 * Math.round(2 + 4 * (1 + Math.sin(opacityAnimationFactor)));
+        }
+
+        // UPDATE | START      
+        gui.setOpacity(myOptions.OPACITY);
+        gui.update();
+        // UPDATE | END
+
+        if (myOptions.ROTATION_X_AXIS) {
+            mesh.rotation.x += 0.0005 * myOptions.ROTATION_SPEED;
+        }
+
+        if (myOptions.ROTATION_Y_AXIS) {
+            mesh.rotation.y -= 0.0005 * myOptions.ROTATION_SPEED;
+        }
+
+        trackbarControl.update();
+        stats.update();
+
+        renderer.render(scene, camera);
+    }
+
     function addOrUpdateRotatingText(scene, value) {
         "use strict";
 
@@ -171,8 +206,8 @@ body {
         }
 
         var geometry = new THREE.TextGeometry(myOptions.RENDER_TEXT, {
-                    height: 20.0,
-                    size: 160.0,
+                    height: myOptions.FONT_SIZE / 10,
+                    size: myOptions.FONT_SIZE,
                     bevelSize: 1.5,
                     bevelThickness: 1.2,
                     bevelSegments: 4,
@@ -186,46 +221,11 @@ body {
         mesh.rotation.x = oldRotationX;
         mesh.rotation.y = oldRotationY;
 
+        geometry.computeBoundingBox();
+        geometry.textWidth = geometry.boundingBox.max.x - geometry.boundingBox.min.x;
+        mesh.translateX(-geometry.textWidth / 2);
+
         scene.add(mesh);
-    }
-
-    function onWindowResize() {
-        "use strict";
-
-        camera.aspect = window.innerWidth / window.innerHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(window.innerWidth, window.innerHeight);
-    }
-
-    var xyz = 0;
-
-    function animate() {
-        "use strict";
-
-        requestAnimationFrame(animate);
-
-        if (myOptions.OPACITY_AUTOMATIC) {
-            xyz += 0.005;
-            myOptions.OPACITY = 10 * Math.round(2 + 4 * (1 + Math.sin(xyz)));
-        }
-
-        // UPDATE | START      
-        gui.setOpacity(myOptions.OPACITY);
-        gui.update();
-        // UPDATE | END
-
-        if (myOptions.ROTATION_X_AXIS) {
-            mesh.rotation.x += 0.0005 * myOptions.ROTATION_SPEED;
-        }
-
-        if (myOptions.ROTATION_Y_AXIS) {
-            mesh.rotation.y += 0.0005 * myOptions.ROTATION_SPEED;
-        }
-
-        trackbarControl.update();
-        stats.update();
-
-        renderer.render(scene, camera);
     }
 </script>
 </body>
