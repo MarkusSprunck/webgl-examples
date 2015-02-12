@@ -32,12 +32,21 @@ THREE.SimpleDatGui = function(scene, camera, renderer, parameters) {
     "use strict";
     console.log('THREE.SimpleDatGui v0.51 (alpha)');
 
-    // TODO Implement control color picker
-    // TODO Implement control combo box
+    // TODO Limit scroll bar in the case the value exceeds the limits
+    // TODO Execute the callback just in the case the focus leaves the control
+    // TODO Add controls without a folder directly to the root
     // TODO Implement support floats in slider control
-    // TODO Implement save & restore of values
+    // TODO Implement triangle indicators on folder like in DAT.GUI
+    // TODO Implement nicer symbol (check mark) in check box control
+    // TODO Support of on screen position as HUD
+    // TODO Implement control combo box
     // TODO Implement copy & paste for text control
-    // TODO Implement controls without folder
+    // TODO Improve DAT.GUI API compatibility, e.g. min() function
+    // TODO Enable more rendering options, e.g. thickness, font size
+    // TODO Implement control color picker
+    // TODO Implement save & restore of values
+    // TODO Implement some basic unit tests
+    // TODO Implement dynamic removal of single controls
 
     // CALCULATE RENDERING OPTIONS
     parameters = parameters || {};
