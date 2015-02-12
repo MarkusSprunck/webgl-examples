@@ -34,7 +34,6 @@ THREE.SimpleDatGui = function(scene, camera, renderer, parameters) {
 
     // TODO Implement control color picker
     // TODO Implement control combo box
-    // TODO Workaround to show keyboard on iOS
     // TODO Fix mouse pointer in text edit control
     // TODO Support floats in slider control
     // TODO Implement save & restore of values
@@ -165,6 +164,25 @@ THREE.SimpleDatGui.prototype.updateCloseButtonText = function() {
 THREE.SimpleDatGui.prototype.onMouseEvt = function(event) {
     "use strict";
 
+    var createDummyTextInputToShowKeyboard = function(positionY) {
+        var element = document.getElementById('simple_dat_gui_dummy_text_input');
+        if (element == null) {
+            var _div = document.createElement("div");
+            _div.setAttribute("id", "div_simple_dat_gui_dummy_text_input");
+            var _form = document.createElement("form");
+            _div.appendChild(_form);
+            var _input = document.createElement("input");
+            _input.setAttribute("type", "text");
+            _input.setAttribute("id", "simple_dat_gui_dummy_text_input");
+            _input.setAttribute("style", "opacity: 0; width: 1px; cursor: pointer");
+            _form.appendChild(_input);
+            document.body.appendChild(_div);
+        }
+        document.getElementById('div_simple_dat_gui_dummy_text_input').setAttribute("style",
+                    "position: absolute; top: " + positionY + "px; right: 0px;");
+        document.getElementById('simple_dat_gui_dummy_text_input').focus();
+    }
+
     // DECODE MOUSE EVENTS
     var mouse = {};
     mouse.x = ((event.clientX) / (window.innerWidth - this.domElement.offsetLeft)) * 2 - 1;
@@ -208,9 +226,8 @@ THREE.SimpleDatGui.prototype.onMouseEvt = function(event) {
                     var value = this.focus.object[this.focus.property];
                     this.focus.intersectX = intersects[0].point.x;
 
-                    // Workaround to activate keyboard on iOS | START
-                    focusInput();
-                    // Workaround to activate keyboard on iOS | END
+                    // Workaround to activate keyboard on iOS
+                    createDummyTextInputToShowKeyboard(event.clientY);
 
                     // FIND NEW CURSOR this.options.POSITION
                     var cursorMinimalX = _element.wValueTextField.position.x - this.options.TEXT_FIELD_SIZE.x / 2;
@@ -258,6 +275,11 @@ THREE.SimpleDatGui.prototype.onKeyPressEvt = function(event) {
 }
 
 THREE.SimpleDatGui.prototype.onKeyEvt = function(event) {
+
+    var blurDummyTextInputToHideKeyboard = function() {
+        document.getElementById('simple_dat_gui_dummy_text_input').blur();
+    }
+
     "use strict";
     if (this.focus !== null) {
         var value = this.focus.object[this.focus.property];
@@ -265,9 +287,8 @@ THREE.SimpleDatGui.prototype.onKeyEvt = function(event) {
         if (event.keyCode === 9 /* TAB */|| event.keyCode === 13 /* ENTER */) {
             this.focus = null;
 
-            // Workaround to activate keyboard on iOS | START
-            blurInput();
-            // Workaround to activate keyboard on iOS | END
+            // Workaround to deactivate keyboard on iOS
+            blurDummyTextInputToHideKeyboard()();
 
         } else if (event.keyCode === 36 /* POS1 */) {
             this.focus.textHelper.cursor = 0;

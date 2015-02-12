@@ -10,13 +10,6 @@ body {
 	overflow: hidden;
 }
 
-.absoluteInput {
-	position: absolute;
-	top: 50%;
-	right: 0px;
-	height: 50px;
-}
-
 .absoluteTitle {
 	position: absolute;
 	bottom: 0px;
@@ -32,9 +25,6 @@ body {
 </style>
 </head>
 <body>
-<div class="absoluteInput">
-<form><input type="text" id="mytext" style="opacity: 0; width: 2px;" /></form>
-</div>
 <script src="./lib/three.min.js"></script>
 <script src="./lib/TrackballControls.js"></script>
 <!-- 
@@ -46,14 +36,7 @@ body {
 <div class="absoluteTitle">THREE.SimpleDatGui - rendering with pure WebGL based on three.js without any other 3rd party libraries. You may find the source code in <a href="https://github.com/MarkusSprunck/webgl-examples">GitHub</a>.
 </div>
 <script>
-    function focusInput() {
-        var element = document.getElementById('mytext').focus();
-    }
-
-    function blurInput() {
-        var element = document.getElementById('mytext').blur();
-    }
-
+   
     var camera;
     var scene;
     var renderer;
