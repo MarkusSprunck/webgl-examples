@@ -32,7 +32,6 @@ THREE.SimpleDatGui = function(scene, camera, renderer, parameters) {
     "use strict";
     console.log('THREE.SimpleDatGui v0.52 (alpha)');
 
-    // TODO Limit scroll bar in the case the value exceeds the limits
     // TODO Execute the callback just in the case the focus leaves the control
     // TODO Add controls without a folder directly to the root
     // TODO Implement support floats in slider control
@@ -942,6 +941,7 @@ THREE.SimpleDatGuiControl.prototype.listenInternal = function() {
         if (that.isSliderControl()) {
             if (that.lastValue !== that.object[that.property]) {
                 var newValue = that.object[that.property];
+                newValue = Math.min(Math.max(newValue, that.minValue), that.maxValue);
                 that.createValue(newValue);
                 that.scaling = (newValue - that.minValue) / (that.maxValue - that.minValue);
                 that.createValueSliderBar(that.scaling);
