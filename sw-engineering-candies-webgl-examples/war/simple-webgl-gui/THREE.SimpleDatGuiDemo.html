@@ -41,7 +41,7 @@ body {
         return {
                     RENDER_TEXT: "Edit here",
                     OPACITY_AUTOMATIC: false,
-                    ROTATION_SPEED: 20,
+                    ROTATION_SPEED: 2.5,
                     FONT_SIZE: 175,
                     ROTATION_X_AXIS: true,
                     ROTATION_Y_AXIS: false,
@@ -77,7 +77,6 @@ body {
         camera.rotation.y = 0;
         camera.rotation.z = 0;
         camera.lookAt(new THREE.Vector3(0, 0, 0));
-        
 
         scene = new THREE.Scene();
 
@@ -121,7 +120,7 @@ body {
         folder1.add(objFunctions, 'RESET_EVENT').name('Reset Position');
         folder1.add(myOptions, 'ROTATION_X_AXIS').name('Rotate X');
         folder1.add(myOptions, 'ROTATION_Y_AXIS').name('Rotate Y');
-        folder1.add(myOptions, 'ROTATION_SPEED', 0, 40).step(5).name('Rotation Speed');
+        folder1.add(myOptions, 'ROTATION_SPEED', -5, 5).step(0.5).name('Rotation Speed');
         folder1.add(myOptions, 'FONT_SIZE', 50, 250).step(25).name('Render Font Size').onChange(function(value) {
             addOrUpdateRotatingText(scene, myOptions.RENDER_TEXT);
         });
@@ -186,11 +185,11 @@ body {
         // UPDATE | END
 
         if (myOptions.ROTATION_X_AXIS) {
-            mesh.rotation.x += 0.0005 * myOptions.ROTATION_SPEED;
+            mesh.rotation.x += 0.005 * myOptions.ROTATION_SPEED;
         }
 
         if (myOptions.ROTATION_Y_AXIS) {
-            mesh.rotation.y -= 0.0005 * myOptions.ROTATION_SPEED;
+            mesh.rotation.y -= 0.005 * myOptions.ROTATION_SPEED;
         }
 
         trackbarControl.update();

@@ -34,7 +34,6 @@ THREE.SimpleDatGui = function(scene, camera, renderer, parameters) {
 
     // TODO Execute the callback just in the case the focus leaves the control
     // TODO Add controls without a folder directly to the root
-    // TODO Implement support floats in slider control
     // TODO Implement triangle indicators on folder like in DAT.GUI
     // TODO Implement nicer symbol (check mark) in check box control
     // TODO Support of on screen position as HUD
@@ -593,7 +592,9 @@ THREE.SimpleDatGuiControl = function(object, property, minValue, maxValue, paren
         if (typeof that.wValue !== "undefined") {
             that.parent.scene.remove(that.wValue);
         }
-        var fontshapes = THREE.FontUtils.generateShapes(value, {
+        var newValue = (typeof value === "number") ? value : 0;
+        var digits = (parseInt(newValue) == newValue) ? 0 : 1;
+        var fontshapes = THREE.FontUtils.generateShapes(newValue.toFixed(digits), {
             size: this.opt.FONT
         });
         var _geometry = new THREE.ShapeGeometry(fontshapes, {
@@ -757,7 +758,6 @@ THREE.SimpleDatGuiControl = function(object, property, minValue, maxValue, paren
         this.object = object;
         this.property = property;
     } else if (this.isSliderControl()) {
-        this.createValue("");
         this.createValueField();
         this.createValueSliderField();
         this.createValueSliderBar();
