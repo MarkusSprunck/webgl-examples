@@ -34,7 +34,6 @@ THREE.SimpleDatGui = function(scene, camera, renderer, parameters) {
 
     console.log('THREE.SimpleDatGui v0.6');
 
-    // TODO Implement improve slider control (not just incremental)
     // TODO Implement nicer symbol (check mark) in check box control
     // TODO Implement control combo box
     // TODO Support of on screen position as HUD
@@ -366,15 +365,19 @@ THREE.SimpleDatGui.__internals.prototype.onMouseEvt = function(event) {
                 } else if (_element.isSliderControl()) {
                     var _sliderType = intersects[0].object.sliderType;
                     var _increment = (_element.step == null) ? 1 : _element.step;
-                    if (_sliderType === "bar") {
-                        _element.object[_element.property] -= _increment;
-                        _element.object[_element.property] = Math.max(_element.object[_element.property],
-                                    _element.minValue);
-                    } else if (_sliderType === "field") {
-                        _element.object[_element.property] += _increment;
-                        _element.object[_element.property] = Math.min(_element.object[_element.property],
-                                    _element.maxValue);
+
+                    var cursorMinimalX = _element.wValueSliderField.position.x - this.gui.opt.SLIDER.x / 2;
+                    var deltaX = intersects[0].point.x - cursorMinimalX - 3;
+                    var newValue = _element.minValue + deltaX / this.gui.opt.SLIDER.x
+                                * (_element.maxValue - _element.minValue);
+
+                    for (var value = _element.minValue; value <= _element.maxValue; value += _element.step) {
+                        if (value >= newValue) {
+                            _element.object[_element.property] = value;
+                            value = _element.maxValue + 1;
+                        }
                     }
+
                 } else if (_element.isTextControl()) {
                     this.gui.selected = _element;
                     var value = this.gui.focus.object[this.gui.focus.property];
