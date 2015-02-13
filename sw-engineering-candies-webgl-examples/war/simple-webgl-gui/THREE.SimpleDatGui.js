@@ -32,7 +32,6 @@ THREE.SimpleDatGui = function(scene, camera, renderer, parameters) {
     "use strict";
     console.log('THREE.SimpleDatGui v0.52 (alpha)');
 
-    // TODO Implement triangle indicators on folder like in DAT.GUI
     // TODO Implement nicer symbol (check mark) in check box control
     // TODO Support of on screen position as HUD
     // TODO Implement control combo box
@@ -94,7 +93,7 @@ THREE.SimpleDatGui.__internals.prototype.createOptions = function(position, widt
 
     var area_size = new THREE.Vector3(width, 20, 2.0);
     var delta_z_order = 0.1;
-    var font_size = 8;
+    var font_size = 7;
     var rightBorder = 4;
     var text_offset_x = 2;
     var text_field_size = new THREE.Vector3(0.6 * area_size.x - rightBorder, 14, delta_z_order);
@@ -277,10 +276,7 @@ THREE.SimpleDatGui.__internals.prototype.onMouseEvt = function(event) {
                         _element.object[_element.property] += _increment;
                         _element.object[_element.property] = Math.min(_element.object[_element.property],
                                     _element.maxValue);
-                    } else {
-                        console.warn("unexpected sliderType ");
                     }
-
                 } else if (_element.isTextControl()) {
                     this.gui.selected = _element;
                     var value = this.gui.focus.object[this.gui.focus.property];
@@ -507,6 +503,38 @@ THREE.SimpleDatGuiControl = function(object, property, minValue, maxValue, paren
         that.parent.scene.add(that.wMarker);
     }
 
+    this.createLabelMarker = function() {
+
+        var _geometry = new THREE.Geometry();
+        var v1 = new THREE.Vector3(-2, 2, this.opt.MARKER.z);
+        var v3 = new THREE.Vector3(2, 2, this.opt.MARKER.z);
+        var v2 = new THREE.Vector3(2, -2, this.opt.MARKER.z);
+        _geometry.vertices.push(v1);
+        _geometry.vertices.push(v2);
+        _geometry.vertices.push(v3);
+        _geometry.faces.push(new THREE.Face3(0, 1, 2));
+        _geometry.computeFaceNormals();
+        var _material = new THREE.MeshBasicMaterial({
+                    transparent: true,
+                    color: 0xFFFFFF
+        });
+        that.wLabelMarker = new THREE.Mesh(_geometry, _material);
+        that.wLabelMarker.updateRendering = function(index) {
+            that.wLabelMarker.position.x = that.opt.POSITION.x + 10;
+            that.wLabelMarker.position.y = that.opt.POSITION.y - that.opt.AREA.y / 2 - that.opt.AREA.y * index;
+            that.wLabelMarker.position.z = that.opt.POSITION.z + that.opt.AREA.z / 2 + that.opt.DELTA_Z;
+            that.wLabelMarker.material.opacity = that.parent.opacityGui * 0.01;
+            that.wLabelMarker.material.visible = that.isVisible() && !that.isClosed;
+
+            if (that.folderIsHidden) {
+                that.wLabelMarker.rotation.z = -Math.PI / 4 * 3;
+            } else {
+                that.wLabelMarker.rotation.z = -0.7853981;
+            }
+        };
+        that.parent.scene.add(that.wLabelMarker);
+    }
+
     this.createLabel = function(name) {
         if (typeof that.wLabel !== "undefined") {
             that.parent.scene.remove(that.wLabel);
@@ -521,9 +549,12 @@ THREE.SimpleDatGuiControl = function(object, property, minValue, maxValue, paren
             transparent: true
         }));
         that.wLabel.updateRendering = function(index) {
+
+            var folderOffset = (that.isElementFolder) ? 8 : 0;
+
             that.wLabel.position.x = that.opt.POSITION.x
                         + ((that.isCloseButton) ? (that.opt.AREA.x / 2 - WEBGL_CLOSE_LABEL_OFFSET_X)
-                                    : WEBGL_LABEL_OFFSET_X);
+                                    : (WEBGL_LABEL_OFFSET_X + folderOffset));
             that.wLabel.position.y = that.opt.POSITION.y + that.opt.AREA.y * (-0.5 - index) - WEBGL_LABEL_OFFSET_Y;
             that.wLabel.position.z = that.opt.POSITION.z + that.opt.AREA.z + that.opt.DELTA_Z;
             that.wLabel.material.opacity = that.parent.opacityGui * 0.01;
@@ -752,8 +783,9 @@ THREE.SimpleDatGuiControl = function(object, property, minValue, maxValue, paren
     if (!this.isCloseButton) {
         this.createFrame();
     }
-
-    if (this.isFunctionControl()) {
+    if (this.isElementFolder && !this.isCloseButton) {
+        this.createLabelMarker();
+    } else if (this.isFunctionControl()) {
         this.onChangeCallback = object[property];
     } else if (this.isCheckBoxControl()) {
         this.createCheckBoxes();
@@ -794,7 +826,9 @@ THREE.SimpleDatGuiControl.prototype.updateRendering = function(index, isClosed) 
         this.wFrame.updateRendering(index);
     }
 
-    if (this.isCheckBoxControl()) {
+    if (this.isElementFolder && !this.isCloseButton) {
+        this.wLabelMarker.updateRendering(index);
+    } else if (this.isCheckBoxControl()) {
         this.wBoxChecked.updateRendering(index);
         this.wBoxUnChecked.updateRendering(index);
     } else if (this.isSliderControl()) {
