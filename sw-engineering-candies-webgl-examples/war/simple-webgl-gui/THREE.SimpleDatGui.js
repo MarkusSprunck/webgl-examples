@@ -20,28 +20,29 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
-/**
- * Implement a simple rendering with pure WebGL based on three.js without any
- * other 3rd party libraries. The look & feel should be like in the Chrome
- * Experiment DAT.GUI (see
- * http://workshop.chromeexperiments.com/examples/gui/#1--Basic-Usage). This is
- * an early development stage, so some features are missing and/or not 100%
- * tested.
- */
+// *****************************************************************************
+// THREE.SimpleDatGui CONSTRUCTOR
+//
+// Implement a simple rendering with pure WebGL based on three.js without any
+// other 3rd party libraries. The look & feel should be like in the Chrome
+// Experiment DAT.GUI (see http://workshop.chromeexperiments.com
+// /examples/gui/#1--Basic-Usage). This is an early development stage, so some
+// features are missing and/or not 100% tested.
+//
 THREE.SimpleDatGui = function(scene, camera, renderer, parameters) {
     "use strict";
-    console.log('THREE.SimpleDatGui v0.52 (alpha)');
 
+    console.log('THREE.SimpleDatGui v0.6');
+
+    // TODO Implement improve slider control (not just incremental)
     // TODO Implement nicer symbol (check mark) in check box control
-    // TODO Support of on screen position as HUD
     // TODO Implement control combo box
-    // TODO Implement copy & paste for text control
+    // TODO Support of on screen position as HUD
     // TODO Improve DAT.GUI API compatibility, e.g. min() function
-    // TODO Enable more rendering options, e.g. thickness, font size
     // TODO Implement control color picker
     // TODO Implement save & restore of values
-    // TODO Implement some basic unit tests
-    // TODO Implement dynamic removal of single controls
+    // TODO Implement copy & paste for text control
+    // TODO Enable more rendering options, e.g. thickness, font size
 
     // This is used for internal functions
     this._private = new THREE.SimpleDatGui.__internals(this);
@@ -85,6 +86,100 @@ THREE.SimpleDatGui = function(scene, camera, renderer, parameters) {
 
 };
 
+// *****************************************************************************
+// THREE.SimpleDatGui PUBLIC
+
+THREE.SimpleDatGui.prototype.addFolder = function(name) {
+    "use strict";
+    var result = new THREE.SimpleDatGuiControl(null, name, 0, 0, this, false, false, this.opt);
+    this.children.push(result);
+    return result;
+}
+
+THREE.SimpleDatGui.prototype.add = function(object, property, minValue, maxValue) {
+    "use strict";
+    var result = new THREE.SimpleDatGuiControl(object, property, minValue, maxValue, this, false, true, this.opt);
+    this.children.push(result);
+    return result;
+}
+
+THREE.SimpleDatGui.prototype.close = function() {
+    "use strict";
+    this.closed = true;
+    this._internal.updateCloseButtonText();
+    return this;
+}
+
+/**
+ * Difference to DAT.GUI - Because all the rendering is done in the scene this
+ * method should be called before the rendering. In this function for each
+ * element there happens the update of visibility, color and sensitivity to
+ * mouse events.
+ */
+THREE.SimpleDatGui.prototype.update = function() {
+    "use strict";
+
+    // UPDATE RENDERING OF ALL CONTROLS
+    var that = this;
+    var indexOfVisibleControls = -1;
+    this.children.forEach(function(child) {
+        if (!child.isElementHidden) {
+            indexOfVisibleControls++;
+        }
+        child.updateRendering(indexOfVisibleControls, that.closed);
+
+        child.children.forEach(function(element) {
+            if (!element.isElementHidden) {
+                indexOfVisibleControls++;
+            }
+            element.updateRendering(indexOfVisibleControls, that.closed);
+        });
+    });
+    this.closeButton.updateRendering((that.closed) ? 0 : (indexOfVisibleControls + 1), false);
+
+    // JUST VISIBLE CONTROLS INTERACT WITH MOUSE
+    var that = this;
+    this.mouseSensitiveObjects = [];
+    if (!this.closed) {
+        this.children.forEach(function(child) {
+            // ALL VISIBLE FOLDER
+            if (!child.isElementHidden) {
+                if (!that.isElementFolder && child.isSliderControl()) {
+                    that.mouseSensitiveObjects.push(child.wValueSliderBar);
+                    that.mouseSensitiveObjects.push(child.wValueSliderField);
+                } else {
+                    that.mouseSensitiveObjects.push(child.wArea);
+                }
+            }
+            // ALL CONTROLS
+            child.children.forEach(function(element) {
+                if (!element.isElementHidden) {
+                    if (!that.isElementFolder && element.isSliderControl()) {
+                        that.mouseSensitiveObjects.push(element.wValueSliderBar);
+                        that.mouseSensitiveObjects.push(element.wValueSliderField);
+                    } else {
+                        that.mouseSensitiveObjects.push(element.wArea);
+                    }
+                }
+            });
+        });
+    }
+    that.mouseSensitiveObjects.push(this.closeButton.wArea);
+};
+
+/**
+ * Difference to DAT.GUI - the opacity makes the complete interface transparent.
+ * This is just an optional feature which is helpful in some situations.
+ */
+THREE.SimpleDatGui.prototype.setOpacity = function(opacity) {
+    "use strict";
+    this.opacityGui = Math.max(20, Math.min(100, opacity));
+    return this;
+}
+
+// *****************************************************************************
+// THREE.SimpleDatGui INTERNALS
+
 THREE.SimpleDatGui.__internals = function(gui) {
     this.gui = gui;
 };
@@ -117,12 +212,15 @@ THREE.SimpleDatGui.__internals.prototype.createOptions = function(position, widt
                 SLIDER: slider_field_size,
                 TAB_1: labelTab1,
                 TAB_2: labelTab2,
-                TEXT: text_field_size
+                TEXT: text_field_size,
+                LABEL_OFFSET_Y: 4,
+                COLOR_VALUE_FIELD: '0x303030'
+
     }
 }
 
 THREE.SimpleDatGui.__internals.prototype.updateCloseButtonText = function() {
-    this.gui.closeButton.createLabel(this.gui.closed ? "Open Controls" : "Close Controls");
+    this.gui.closeButton._private.createLabel(this.gui.closed ? "Open Controls" : "Close Controls");
 }
 
 THREE.SimpleDatGui.__internals.prototype.onKeyPressEvt = function(event) {
@@ -140,7 +238,7 @@ THREE.SimpleDatGui.__internals.prototype.onKeyPressEvt = function(event) {
         this.gui.focus.textHelper.cursor = this.gui.focus.textHelper.cursor + 1;
         this.gui.focus.textHelper.calculateAlignTextLastCall(this.gui.focus.newValue);
 
-        this.gui.focus.createTextValue(this.gui.focus.textHelper.truncated);
+        this.gui.focus._private.createTextValue(this.gui.focus.textHelper.truncated);
     }
 }
 
@@ -213,7 +311,7 @@ THREE.SimpleDatGui.__internals.prototype.onKeyEvt = function(event) {
             }
         }
         if (this.gui.focus != null) {
-            this.gui.focus.createTextValue(this.gui.focus.textHelper.truncated);
+            this.gui.focus._private.createTextValue(this.gui.focus.textHelper.truncated);
         }
     }
 }
@@ -312,107 +410,15 @@ THREE.SimpleDatGui.__internals.prototype.onMouseEvt = function(event) {
     return true;
 }
 
-/**
- * Difference to DAT.GUI - Because all the rendering is done in the scene this
- * method should be called before the rendering. In this function for each
- * element there happens the update of visibility, color and sensitivity to
- * mouse events.
- */
-THREE.SimpleDatGui.prototype.update = function() {
-    "use strict";
-
-    // UPDATE RENDERING OF ALL CONTROLS
-    var that = this;
-    var indexOfVisibleControls = -1;
-    this.children.forEach(function(child) {
-        if (!child.isElementHidden) {
-            indexOfVisibleControls++;
-        }
-        child.updateRendering(indexOfVisibleControls, that.closed);
-
-        child.children.forEach(function(element) {
-            if (!element.isElementHidden) {
-                indexOfVisibleControls++;
-            }
-            element.updateRendering(indexOfVisibleControls, that.closed);
-        });
-    });
-    this.closeButton.updateRendering((that.closed) ? 0 : (indexOfVisibleControls + 1), false);
-
-    // JUST VISIBLE CONTROLS INTERACT WITH MOUSE
-    var that = this;
-    this.mouseSensitiveObjects = [];
-    if (!this.closed) {
-        this.children.forEach(function(child) {
-            // ALL VISIBLE FOLDER
-            if (!child.isElementHidden) {
-                if (!that.isElementFolder && child.isSliderControl()) {
-                    that.mouseSensitiveObjects.push(child.wValueSliderBar);
-                    that.mouseSensitiveObjects.push(child.wValueSliderField);
-                } else {
-                    that.mouseSensitiveObjects.push(child.wArea);
-                }
-            }
-            // ALL CONTROLS
-            child.children.forEach(function(element) {
-                if (!element.isElementHidden) {
-                    if (!that.isElementFolder && element.isSliderControl()) {
-                        that.mouseSensitiveObjects.push(element.wValueSliderBar);
-                        that.mouseSensitiveObjects.push(element.wValueSliderField);
-                    } else {
-                        that.mouseSensitiveObjects.push(element.wArea);
-                    }
-                }
-            });
-        });
-    }
-    that.mouseSensitiveObjects.push(this.closeButton.wArea);
-};
-
-/**
- * Difference to DAT.GUI - the opacity makes the complete interface transparent.
- * This is just an optional feature which is helpful in some situations.
- */
-THREE.SimpleDatGui.prototype.setOpacity = function(opacity) {
-    "use strict";
-    this.opacityGui = Math.max(20, Math.min(100, opacity));
-    return this;
-}
-
-THREE.SimpleDatGui.prototype.addFolder = function(name) {
-    "use strict";
-    var result = new THREE.SimpleDatGuiControl(null, name, 0, 0, this, false, false, this.opt);
-    this.children.push(result);
-    return result;
-}
-
-THREE.SimpleDatGui.prototype.add = function(object, property, minValue, maxValue) {
-    "use strict";
-    var result = new THREE.SimpleDatGuiControl(object, property, minValue, maxValue, this, false, true, this.opt);
-    this.children.push(result);
-    return result;
-}
-
-THREE.SimpleDatGui.prototype.close = function() {
-    "use strict";
-    this.closed = true;
-    this._internal.updateCloseButtonText();
-    return this;
-}
-
-// /////////////////////////////////////////////////////////////////////////////
+// *****************************************************************************
+// THREE.SimpleDatGuiControl CONSTRUCTOR
 
 THREE.SimpleDatGuiControl = function(object, property, minValue, maxValue, parent, isCloseButton, isRootControl,
             options) {
     "use strict";
 
-    var COLOR_BODER = '0x2c2c2c';
-    var COLOR_VALUE_FIELD = '0x303030';
-    var COLOR_NUMBER_FIELD = '0x2fa1d6';
-
-    var WEBGL_LABEL_OFFSET_X = 10;
-    var WEBGL_CLOSE_LABEL_OFFSET_X = 30;
-    var WEBGL_LABEL_OFFSET_Y = 4;
+    // This is used for internal functions
+    this._private = new THREE.SimpleDatGuiControl.__internals(this);
 
     var that = this;
 
@@ -448,160 +454,329 @@ THREE.SimpleDatGuiControl = function(object, property, minValue, maxValue, paren
     this.intersectX = 0;
     this.isClosed = false;
 
-    // LISTER
+    // LISTEN WITH A TIMER
     this.updateTimer;
     this.lastValue;
 
-    this.createArea = function() {
-        var _geometry = new THREE.BoxGeometry(this.opt.AREA.x, this.opt.AREA.y, this.opt.AREA.z);
-        var _material = new THREE.MeshBasicMaterial({
-            transparent: true
-        });
-        that.wArea = new THREE.Mesh(_geometry, _material);
-        that.wArea.WebGLElement = that;
-        that.wArea.updateRendering = function(index) {
-            that.wArea.position.x = that.opt.POSITION.x + that.opt.AREA.x / 2;
-            that.wArea.position.y = that.opt.POSITION.y - that.opt.AREA.y / 2 - that.opt.AREA.y * index;
-            that.wArea.position.z = that.opt.POSITION.z + that.opt.AREA.z / 2;
-            that.wArea.material.opacity = that.parent.opacityGui * 0.01;
-            that.wArea.material.visible = that.isVisible() && !that.isClosed;
-        };
-        that.parent.scene.add(that.wArea);
+    // CREATE NEEDED CONTROLS
+    this._private.createArea();
+    this._private.createMarker();
+    this._private.createLabel(this.label);
+
+    if (!this.isCloseButton) {
+        this._private.createFrame();
+    }
+    if (this.isElementFolder && !this.isCloseButton) {
+        this._private.createLabelMarker();
+    } else if (this.isFunctionControl()) {
+        this.onChangeCallback = object[property];
+    } else if (this.isCheckBoxControl()) {
+        this.object = object;
+        this.property = property;
+        this._private.createCheckBoxes();
+    } else if (this.isSliderControl()) {
+        this.object = object;
+        this.property = property;
+        this.minValue = minValue;
+        this.maxValue = maxValue;
+        this._private.createNumberValue(object[property]);
+        this._private.createValueField();
+        this._private.createValueSliderField();
+        this._private.createValueSliderBar();
+    } else if (this.isTextControl()) {
+        this.object = object;
+        this.property = property;
+        this.newValue = object[property];
+        this.textHelper.calculateLeftAlignText(this.newValue);
+        this._private.createTextValue(this.newValue);
+        this._private.createValueTextField();
+        this._private.createCursor();
     }
 
-    this.createFrame = function() {
-        var _geometryBox = new THREE.BoxGeometry(this.opt.AREA.x, this.opt.AREA.y, 0.1);
-        var _geometry = cubeGeometry2LineGeometry(_geometryBox);
-        that.wFrame = new THREE.Line(_geometry, new THREE.LineBasicMaterial({
-                    color: 0x161616,
-                    transparent: true
-        }));
-        that.wFrame.material.color.setHex(COLOR_BODER);
-        that.wFrame.updateRendering = function(index) {
-            that.wFrame.position.x = that.opt.POSITION.x + that.opt.AREA.x / 2 - 0.1;
-            that.wFrame.position.y = that.opt.POSITION.y - that.opt.AREA.y / 2 - that.opt.AREA.y * index;
-            that.wFrame.position.z = that.opt.POSITION.z + that.opt.AREA.z + that.opt.DELTA_Z;
-            that.wFrame.material.opacity = that.parent.opacityGui * 0.01;
-            that.wFrame.material.visible = that.isVisible() && !that.isClosed;
-        };
-        that.parent.scene.add(that.wFrame);
+    this.listenInternal();
+}
+
+// *****************************************************************************
+// THREE.SimpleDatGuiControl INTERNALS
+
+THREE.SimpleDatGuiControl.__internals = function(control) {
+    this.control = control;
+};
+
+THREE.SimpleDatGuiControl.__internals.prototype.createValueSliderBar = function(scaling) {
+    "use strict";
+    var that = this.control;
+
+    if (typeof that.wValueSliderBar !== "undefined") {
+        that.parent.scene.remove(that.wValueSliderBar);
+    }
+    var _geometry = new THREE.BoxGeometry(that.opt.SLIDER.x * scaling, that.opt.SLIDER.y, that.opt.SLIDER.z);
+    var _material = new THREE.MeshBasicMaterial({
+        transparent: true
+    });
+    that.wValueSliderBar = new THREE.Mesh(_geometry, _material);
+    that.wValueSliderBar.sliderType = "bar";
+    that.wValueSliderBar.WebGLElement = that;
+    that.wValueSliderBar.updateRendering = function(index) {
+        that.wValueSliderBar.position.x = that.opt.POSITION.x + that.opt.TAB_1.x + that.opt.SLIDER.x / 2
+                    - that.opt.SLIDER.x * (1 - that.scaling) / 2;
+        that.wValueSliderBar.position.y = that.opt.POSITION.y + that.opt.AREA.y * (-0.5 - index);
+        that.wValueSliderBar.position.z = that.opt.POSITION.z + that.opt.AREA.z + that.opt.DELTA_Z * 2;
+        that.wValueSliderBar.material.opacity = that.parent.opacityGui * 0.01;
+        that.wValueSliderBar.visible = that.isSliderControl() && that.isVisible()
+                    && (that.object[that.property] > that.minValue) && !that.isClosed;
+    };
+    that.parent.scene.add(that.wValueSliderBar);
+}
+
+THREE.SimpleDatGuiControl.__internals.prototype.createTextValue = function(value) {
+    "use strict";
+    var that = this.control;
+
+    if (typeof that.wTextValue !== "undefined") {
+        that.parent.scene.remove(that.wTextValue);
     }
 
-    this.createMarker = function() {
-        var _geometry = new THREE.BoxGeometry(this.opt.MARKER.x, this.opt.MARKER.y, this.opt.MARKER.z);
-        var _material = new THREE.MeshBasicMaterial({
-            transparent: true
-        });
-        that.wMarker = new THREE.Mesh(_geometry, _material);
-        that.wMarker.updateRendering = function(index) {
-            that.wMarker.position.x = that.opt.POSITION.x + that.opt.MARKER.x / 2 - 0.1;
-            that.wMarker.position.y = that.opt.POSITION.y - that.opt.AREA.y / 2 - that.opt.AREA.y * index;
-            that.wMarker.position.z = that.opt.POSITION.z + that.opt.AREA.z / 2 + that.opt.DELTA_Z;
-            that.wMarker.material.opacity = that.parent.opacityGui * 0.01;
-            that.wMarker.material.visible = that.isVisible() && !that.isClosed;
-        };
-        that.parent.scene.add(that.wMarker);
+    var fontshapes = THREE.FontUtils.generateShapes(that.textHelper.truncated, {
+        size: that.opt.FONT
+    });
+    var _geometry = new THREE.ShapeGeometry(fontshapes, {
+        curveSegments: 2
+    });
+    that.wTextValue = new THREE.Mesh(_geometry, new THREE.MeshBasicMaterial({
+                color: 0x1ed36f,
+                transparent: true,
+    }));
+    that.wTextValue.updateRendering = function(index) {
+        that.wTextValue.position.x = that.opt.POSITION.x + that.opt.TAB_1.x + that.textHelper.residiumX;
+        that.wTextValue.position.y = that.opt.POSITION.y + that.opt.AREA.y * (-0.5 - index) - that.opt.LABEL_OFFSET_Y;
+        that.wTextValue.position.z = that.opt.POSITION.z + that.opt.AREA.z + that.opt.DELTA_Z * 2;
+        that.wTextValue.material.opacity = that.parent.opacityGui * 0.01;
+        that.wTextValue.visible = that.isVisible() && that.isTextControl() && !that.isClosed;
+    };
+    that.parent.scene.add(that.wTextValue);
+}
+
+THREE.SimpleDatGuiControl.__internals.prototype.createValueTextField = function(event) {
+    "use strict";
+    var that = this.control;
+    var _geometry = new THREE.BoxGeometry(that.opt.TEXT.x, that.opt.TEXT.y, that.opt.TEXT.z);
+    var _material = new THREE.MeshBasicMaterial({
+        transparent: true
+    });
+    _material.color.setHex(that.opt.COLOR_VALUE_FIELD);
+    that.wValueTextField = new THREE.Mesh(_geometry, _material);
+    that.wValueTextField.visible = false;
+    that.wValueTextField.WebGLElement = that;
+    that.wValueTextField.updateRendering = function(index) {
+        that.wValueTextField.position.x = that.opt.POSITION.x + that.opt.TAB_1.x + that.opt.TEXT.x / 2;
+        that.wValueTextField.position.y = that.opt.POSITION.y + that.opt.AREA.y * (-0.5 - index);
+        that.wValueTextField.position.z = that.opt.POSITION.z + that.opt.AREA.z + that.opt.DELTA_Z;
+        that.wValueTextField.material.opacity = that.parent.opacityGui * 0.01;
+        that.wValueTextField.visible = that.isVisible() && that.isTextControl() && !that.isClosed;
+    };
+    that.parent.scene.add(that.wValueTextField);
+}
+
+THREE.SimpleDatGuiControl.__internals.prototype.createValueSliderField = function(event) {
+    "use strict";
+
+    var that = this.control;
+    var _geometry = new THREE.BoxGeometry(that.opt.SLIDER.x, that.opt.SLIDER.y, that.opt.SLIDER.z);
+    var _material = new THREE.MeshBasicMaterial({
+        transparent: true
+    });
+    _material.color.setHex(that.opt.COLOR_VALUE_FIELD);
+    that.wValueSliderField = new THREE.Mesh(_geometry, _material);
+    that.wValueSliderField.sliderType = "field";
+    that.wValueSliderField.WebGLElement = that;
+    that.wValueSliderField.updateRendering = function(index) {
+        that.wValueSliderField.position.x = that.opt.POSITION.x + that.opt.TAB_1.x + that.opt.SLIDER.x / 2;
+        that.wValueSliderField.position.y = that.opt.POSITION.y + that.opt.AREA.y * (-0.5 - index);
+        that.wValueSliderField.position.z = that.opt.POSITION.z + that.opt.AREA.z + that.opt.DELTA_Z;
+        that.wValueSliderField.material.opacity = that.parent.opacityGui * 0.01;
+        that.wValueSliderField.visible = that.isSliderControl() && that.isVisible() && !that.isClosed;
+    };
+    that.parent.scene.add(that.wValueSliderField);
+}
+
+THREE.SimpleDatGuiControl.__internals.prototype.createValueField = function(event) {
+    "use strict";
+
+    var that = this.control;
+    var _geometry = new THREE.BoxGeometry(that.opt.NUMBER.x, that.opt.NUMBER.y, that.opt.NUMBER.z);
+    var _material = new THREE.MeshBasicMaterial({
+        transparent: true
+    });
+    _material.color.setHex(that.opt.COLOR_VALUE_FIELD);
+    that.wValueField = new THREE.Mesh(_geometry, _material);
+    that.wValueField.updateRendering = function(index) {
+        that.wValueField.position.x = that.opt.POSITION.x + that.opt.TAB_2.x + that.opt.NUMBER.x / 2;
+        that.wValueField.position.y = that.opt.POSITION.y + that.opt.AREA.y * (-0.5 - index);
+        that.wValueField.position.z = that.opt.POSITION.z + that.opt.AREA.z + that.opt.DELTA_Z;
+        that.wValueField.material.opacity = that.parent.opacityGui * 0.01;
+        that.wValueField.visible = that.isSliderControl() && that.isVisible() && !that.isClosed;
+    };
+    that.parent.scene.add(that.wValueField);
+}
+
+THREE.SimpleDatGuiControl.__internals.prototype.createNumberValue = function(value) {
+    "use strict";
+
+    var that = this.control;
+    if (typeof that.wValue !== "undefined") {
+        that.parent.scene.remove(that.wValue);
     }
+    var newValue = (typeof value === "number") ? value : 0;
+    var digits = (parseInt(newValue) == newValue) ? 0 : 1;
+    var fontshapes = THREE.FontUtils.generateShapes(newValue.toFixed(digits), {
+        size: that.opt.FONT
+    });
+    var _geometry = new THREE.ShapeGeometry(fontshapes, {
+        curveSegments: 2
+    });
+    that.wValue = new THREE.Mesh(_geometry, new THREE.MeshBasicMaterial({
+        transparent: true
+    }));
+    that.wValue.updateRendering = function(index) {
+        that.wValue.position.x = that.opt.POSITION.x + that.opt.TAB_2.x + that.opt.OFFSET_X;
+        that.wValue.position.y = that.opt.POSITION.y + that.opt.AREA.y * (-0.5 - index) - that.opt.LABEL_OFFSET_Y;
+        that.wValue.position.z = that.opt.POSITION.z + that.opt.AREA.z + that.opt.DELTA_Z * 2;
+        that.wValue.material.opacity = that.parent.opacityGui * 0.01;
+        that.wValue.visible = that.isSliderControl() && that.isVisible() && !that.isClosed;
+    };
+    that.parent.scene.add(that.wValue);
+}
 
-    this.createLabelMarker = function() {
+THREE.SimpleDatGuiControl.__internals.prototype.createCheckBoxes = function(event) {
+    "use strict";
 
-        var _geometry = new THREE.Geometry();
-        var v1 = new THREE.Vector3(-2, 2, this.opt.MARKER.z);
-        var v3 = new THREE.Vector3(2, 2, this.opt.MARKER.z);
-        var v2 = new THREE.Vector3(2, -2, this.opt.MARKER.z);
-        _geometry.vertices.push(v1);
-        _geometry.vertices.push(v2);
-        _geometry.vertices.push(v3);
-        _geometry.faces.push(new THREE.Face3(0, 1, 2));
-        _geometry.computeFaceNormals();
-        var _material = new THREE.MeshBasicMaterial({
-                    transparent: true,
-                    color: 0xFFFFFF
-        });
-        that.wLabelMarker = new THREE.Mesh(_geometry, _material);
-        that.wLabelMarker.updateRendering = function(index) {
-            that.wLabelMarker.position.x = that.opt.POSITION.x + 10;
-            that.wLabelMarker.position.y = that.opt.POSITION.y - that.opt.AREA.y / 2 - that.opt.AREA.y * index;
-            that.wLabelMarker.position.z = that.opt.POSITION.z + that.opt.AREA.z / 2 + that.opt.DELTA_Z;
-            that.wLabelMarker.material.opacity = that.parent.opacityGui * 0.01;
-            that.wLabelMarker.material.visible = that.isVisible() && !that.isClosed;
+    var that = this.control;
+    // CREATE CHECKBOX AREA
+    var _geometry = new THREE.BoxGeometry(that.opt.CHECKBOX.x, that.opt.CHECKBOX.y, that.opt.CHECKBOX.z);
+    var _material = new THREE.MeshBasicMaterial({
+        transparent: true
+    });
+    that.wBoxUnChecked = new THREE.Mesh(_geometry, _material);
+    that.wBoxUnChecked.visible = false;
+    that.wBoxUnChecked.updateRendering = function(index) {
+        that.wBoxUnChecked.position.x = that.opt.POSITION.x + that.opt.TAB_1.x + that.opt.CHECKBOX.x / 2;
+        that.wBoxUnChecked.position.y = that.opt.POSITION.y + that.opt.AREA.y * (-0.5 - index);
+        that.wBoxUnChecked.position.z = that.opt.POSITION.z + that.opt.AREA.z + that.opt.DELTA_Z;
+        that.wBoxUnChecked.material.opacity = that.parent.opacityGui * 0.01;
+    };
+    that.parent.scene.add(that.wBoxUnChecked);
 
-            if (that.folderIsHidden) {
-                that.wLabelMarker.rotation.z = -Math.PI / 4 * 3;
-            } else {
-                that.wLabelMarker.rotation.z = -0.7853981;
-            }
-        };
-        that.parent.scene.add(that.wLabelMarker);
+    // CREATE CHECKBOX MARKER
+    var fontshapes = THREE.FontUtils.generateShapes("X", {
+        size: 7
+    });
+    var _geometry = new THREE.ShapeGeometry(fontshapes, {
+        curveSegments: 2
+    });
+    var _material = new THREE.MeshLambertMaterial({
+                color: 0x000000,
+                depthTest: true,
+                transparent: true
+    });
+    that.wBoxChecked = new THREE.Mesh(_geometry, _material);
+    that.wBoxChecked.visible = false;
+    that.wBoxChecked.updateRendering = function(index) {
+        that.wBoxChecked.position.x = that.opt.POSITION.x + that.opt.TAB_1.x + that.opt.CHECKBOX.x / 2 - 3;
+        that.wBoxChecked.position.y = that.opt.POSITION.y + that.opt.AREA.y * (-0.5 - index) - 3.5;
+        that.wBoxChecked.position.z = that.opt.POSITION.z + that.opt.AREA.z + that.opt.DELTA_Z * 2;
+        that.wBoxChecked.material.opacity = that.parent.opacityGui * 0.01;
+    };
+    that.parent.scene.add(that.wBoxChecked);
+}
+
+THREE.SimpleDatGuiControl.__internals.prototype.createLabel = function(name) {
+    "use strict";
+
+    var that = this.control;
+    if (typeof that.wLabel !== "undefined") {
+        that.parent.scene.remove(that.wLabel);
     }
+    var fontshapes = THREE.FontUtils.generateShapes(name, {
+        size: that.opt.FONT
+    });
+    var _geometry = new THREE.ShapeGeometry(fontshapes, {
+        curveSegments: 2
+    });
+    that.wLabel = new THREE.Mesh(_geometry, new THREE.MeshBasicMaterial({
+        transparent: true
+    }));
+    that.wLabel.updateRendering = function(index) {
+        var WEBGL_CLOSE_LABEL_OFFSET_X = 30;
+        var LABEL_OFFSET_X = 10;
+        var folderOffset = (that.isElementFolder) ? 8 : 0;
+        that.wLabel.position.x = that.opt.POSITION.x
+                    + ((that.isCloseButton) ? (that.opt.AREA.x / 2 - WEBGL_CLOSE_LABEL_OFFSET_X)
+                                : (LABEL_OFFSET_X + folderOffset));
+        that.wLabel.position.y = that.opt.POSITION.y + that.opt.AREA.y * (-0.5 - index) - that.opt.LABEL_OFFSET_Y;
+        that.wLabel.position.z = that.opt.POSITION.z + that.opt.AREA.z + that.opt.DELTA_Z;
+        that.wLabel.material.opacity = that.parent.opacityGui * 0.01;
+        that.wLabel.material.visible = that.isVisible() && !that.isClosed;
+    };
+    that.parent.scene.add(that.wLabel);
+}
 
-    this.createLabel = function(name) {
-        if (typeof that.wLabel !== "undefined") {
-            that.parent.scene.remove(that.wLabel);
+THREE.SimpleDatGuiControl.__internals.prototype.createLabelMarker = function() {
+    "use strict";
+
+    var that = this.control;
+    var _geometry = new THREE.Geometry();
+    var v1 = new THREE.Vector3(-2, 2, that.opt.MARKER.z);
+    var v3 = new THREE.Vector3(2, 2, that.opt.MARKER.z);
+    var v2 = new THREE.Vector3(2, -2, that.opt.MARKER.z);
+    _geometry.vertices.push(v1);
+    _geometry.vertices.push(v2);
+    _geometry.vertices.push(v3);
+    _geometry.faces.push(new THREE.Face3(0, 1, 2));
+    _geometry.computeFaceNormals();
+    var _material = new THREE.MeshBasicMaterial({
+                transparent: true,
+                color: 0xFFFFFF
+    });
+    that.wLabelMarker = new THREE.Mesh(_geometry, _material);
+    that.wLabelMarker.updateRendering = function(index) {
+        that.wLabelMarker.position.x = that.opt.POSITION.x + 10;
+        that.wLabelMarker.position.y = that.opt.POSITION.y - that.opt.AREA.y / 2 - that.opt.AREA.y * index;
+        that.wLabelMarker.position.z = that.opt.POSITION.z + that.opt.AREA.z / 2 + that.opt.DELTA_Z;
+        that.wLabelMarker.material.opacity = that.parent.opacityGui * 0.01;
+        that.wLabelMarker.material.visible = that.isVisible() && !that.isClosed;
+
+        if (that.folderIsHidden) {
+            that.wLabelMarker.rotation.z = -Math.PI / 4 * 3;
+        } else {
+            that.wLabelMarker.rotation.z = -0.7853981;
         }
-        var fontshapes = THREE.FontUtils.generateShapes(name, {
-            size: this.opt.FONT
-        });
-        var _geometry = new THREE.ShapeGeometry(fontshapes, {
-            curveSegments: 2
-        });
-        that.wLabel = new THREE.Mesh(_geometry, new THREE.MeshBasicMaterial({
-            transparent: true
-        }));
-        that.wLabel.updateRendering = function(index) {
+    };
+    that.parent.scene.add(that.wLabelMarker);
+}
+THREE.SimpleDatGuiControl.__internals.prototype.createMarker = function() {
+    "use strict";
 
-            var folderOffset = (that.isElementFolder) ? 8 : 0;
+    var that = this.control;
+    var _geometry = new THREE.BoxGeometry(that.opt.MARKER.x, that.opt.MARKER.y, that.opt.MARKER.z);
+    var _material = new THREE.MeshBasicMaterial({
+        transparent: true
+    });
+    that.wMarker = new THREE.Mesh(_geometry, _material);
+    that.wMarker.updateRendering = function(index) {
+        that.wMarker.position.x = that.opt.POSITION.x + that.opt.MARKER.x / 2 - 0.1;
+        that.wMarker.position.y = that.opt.POSITION.y - that.opt.AREA.y / 2 - that.opt.AREA.y * index;
+        that.wMarker.position.z = that.opt.POSITION.z + that.opt.AREA.z / 2 + that.opt.DELTA_Z;
+        that.wMarker.material.opacity = that.parent.opacityGui * 0.01;
+        that.wMarker.material.visible = that.isVisible() && !that.isClosed;
+    };
+    that.parent.scene.add(that.wMarker);
+}
 
-            that.wLabel.position.x = that.opt.POSITION.x
-                        + ((that.isCloseButton) ? (that.opt.AREA.x / 2 - WEBGL_CLOSE_LABEL_OFFSET_X)
-                                    : (WEBGL_LABEL_OFFSET_X + folderOffset));
-            that.wLabel.position.y = that.opt.POSITION.y + that.opt.AREA.y * (-0.5 - index) - WEBGL_LABEL_OFFSET_Y;
-            that.wLabel.position.z = that.opt.POSITION.z + that.opt.AREA.z + that.opt.DELTA_Z;
-            that.wLabel.material.opacity = that.parent.opacityGui * 0.01;
-            that.wLabel.material.visible = that.isVisible() && !that.isClosed;
-        };
-        that.parent.scene.add(that.wLabel);
-    }
+THREE.SimpleDatGuiControl.__internals.prototype.createFrame = function() {
+    "use strict";
 
-    this.createCheckBoxes = function() {
-        // CREATE CHECKBOX AREA
-        var _geometry = new THREE.BoxGeometry(this.opt.CHECKBOX.x, that.opt.CHECKBOX.y, this.opt.CHECKBOX.z);
-        var _material = new THREE.MeshBasicMaterial({
-            transparent: true
-        });
-        that.wBoxUnChecked = new THREE.Mesh(_geometry, _material);
-        that.wBoxUnChecked.visible = false;
-        that.wBoxUnChecked.updateRendering = function(index) {
-            that.wBoxUnChecked.position.x = that.opt.POSITION.x + that.opt.TAB_1.x + that.opt.CHECKBOX.x / 2;
-            that.wBoxUnChecked.position.y = that.opt.POSITION.y + that.opt.AREA.y * (-0.5 - index);
-            that.wBoxUnChecked.position.z = that.opt.POSITION.z + that.opt.AREA.z + that.opt.DELTA_Z;
-            that.wBoxUnChecked.material.opacity = that.parent.opacityGui * 0.01;
-        };
-        that.parent.scene.add(that.wBoxUnChecked);
-
-        // CREATE CHECKBOX MARKER
-        var fontshapes = THREE.FontUtils.generateShapes("X", {
-            size: 7
-        });
-        var _geometry = new THREE.ShapeGeometry(fontshapes, {
-            curveSegments: 2
-        });
-        var _material = new THREE.MeshLambertMaterial({
-                    color: 0x000000,
-                    depthTest: true,
-                    transparent: true
-        });
-        that.wBoxChecked = new THREE.Mesh(_geometry, _material);
-        that.wBoxChecked.visible = false;
-        that.wBoxChecked.updateRendering = function(index) {
-            that.wBoxChecked.position.x = that.opt.POSITION.x + that.opt.TAB_1.x + that.opt.CHECKBOX.x / 2 - 3;
-            that.wBoxChecked.position.y = that.opt.POSITION.y + that.opt.AREA.y * (-0.5 - index) - 3.5;
-            that.wBoxChecked.position.z = that.opt.POSITION.z + that.opt.AREA.z + that.opt.DELTA_Z * 2;
-            that.wBoxChecked.material.opacity = that.parent.opacityGui * 0.01;
-        };
-        that.parent.scene.add(that.wBoxChecked);
-    }
-
+    var COLOR_BODER = '0x2c2c2c';
     var cubeGeometry2LineGeometry = function(input) {
         "use strict";
         var _geometry = new THREE.Geometry();
@@ -620,204 +795,74 @@ THREE.SimpleDatGuiControl = function(object, property, minValue, maxValue, paren
         return _geometry;
     }
 
-    this.createValue = function(value) {
+    var that = this.control;
+    var _geometryBox = new THREE.BoxGeometry(that.opt.AREA.x, that.opt.AREA.y, 0.1);
+    var _geometry = cubeGeometry2LineGeometry(_geometryBox);
+    that.wFrame = new THREE.Line(_geometry, new THREE.LineBasicMaterial({
+                color: 0x161616,
+                transparent: true
+    }));
+    that.wFrame.material.color.setHex(COLOR_BODER);
+    that.wFrame.updateRendering = function(index) {
+        that.wFrame.position.x = that.opt.POSITION.x + that.opt.AREA.x / 2 - 0.1;
+        that.wFrame.position.y = that.opt.POSITION.y - that.opt.AREA.y / 2 - that.opt.AREA.y * index;
+        that.wFrame.position.z = that.opt.POSITION.z + that.opt.AREA.z + that.opt.DELTA_Z;
+        that.wFrame.material.opacity = that.parent.opacityGui * 0.01;
+        that.wFrame.material.visible = that.isVisible() && !that.isClosed;
+    };
+    that.parent.scene.add(that.wFrame);
+}
 
-        if (typeof that.wValue !== "undefined") {
-            that.parent.scene.remove(that.wValue);
+THREE.SimpleDatGuiControl.__internals.prototype.createArea = function() {
+    "use strict";
+
+    var that = this.control;
+    var _geometry = new THREE.BoxGeometry(that.opt.AREA.x, that.opt.AREA.y, that.opt.AREA.z);
+    var _material = new THREE.MeshBasicMaterial({
+        transparent: true
+    });
+    that.wArea = new THREE.Mesh(_geometry, _material);
+    that.wArea.WebGLElement = that;
+    that.wArea.updateRendering = function(index) {
+        that.wArea.position.x = that.opt.POSITION.x + that.opt.AREA.x / 2;
+        that.wArea.position.y = that.opt.POSITION.y - that.opt.AREA.y / 2 - that.opt.AREA.y * index;
+        that.wArea.position.z = that.opt.POSITION.z + that.opt.AREA.z / 2;
+        that.wArea.material.opacity = that.parent.opacityGui * 0.01;
+        that.wArea.material.visible = that.isVisible() && !that.isClosed;
+    };
+    that.parent.scene.add(that.wArea);
+}
+
+THREE.SimpleDatGuiControl.__internals.prototype.createCursor = function() {
+    "use strict";
+
+    var that = this.control;
+    var _geometry = new THREE.BoxGeometry(0.5, that.opt.TEXT.y * 0.8, 0.1);
+    var _material = new THREE.MeshBasicMaterial({
+        transparent: true
+    });
+    this.control.wCursor = new THREE.Mesh(_geometry, _material);
+    this.control.wCursor.updateRendering = function(index) {
+        var possiblePositon = that.textHelper.possibleCursorPositons[that.textHelper.cursor - that.textHelper.start];
+        if (typeof possiblePositon !== "undefined") {
+            that.wCursor.position.x = that.opt.POSITION.x + that.opt.TAB_1.x + that.textHelper.residiumX
+                        + possiblePositon.x + 0.25;
+            that.wCursor.position.y = that.opt.POSITION.y + that.opt.AREA.y * (-0.5 - index);
+            that.wCursor.position.z = that.opt.POSITION.z + that.opt.AREA.z + that.opt.DELTA_Z * 2;
+            that.wCursor.material.opacity = that.parent.opacityGui * 0.01;
+            that.wCursor.material.visible = that.isVisible() && that.isTextControl() && (that.parent.focus === that)
+                        && !that.isClosed;
+        } else {
+            that.wCursor.material.visible = false;
         }
-        var newValue = (typeof value === "number") ? value : 0;
-        var digits = (parseInt(newValue) == newValue) ? 0 : 1;
-        var fontshapes = THREE.FontUtils.generateShapes(newValue.toFixed(digits), {
-            size: this.opt.FONT
-        });
-        var _geometry = new THREE.ShapeGeometry(fontshapes, {
-            curveSegments: 2
-        });
-        that.wValue = new THREE.Mesh(_geometry, new THREE.MeshBasicMaterial({
-            transparent: true
-        }));
-        that.wValue.updateRendering = function(index) {
-            that.wValue.position.x = that.opt.POSITION.x + that.opt.TAB_2.x + that.opt.OFFSET_X;
-            that.wValue.position.y = that.opt.POSITION.y + that.opt.AREA.y * (-0.5 - index) - WEBGL_LABEL_OFFSET_Y;
-            that.wValue.position.z = that.opt.POSITION.z + that.opt.AREA.z + that.opt.DELTA_Z * 2;
-            that.wValue.material.opacity = that.parent.opacityGui * 0.01;
-            that.wValue.visible = that.isSliderControl() && that.isVisible() && !that.isClosed;
-        };
-        that.parent.scene.add(that.wValue);
-    }
-
-    this.createValueField = function() {
-        var _geometry = new THREE.BoxGeometry(this.opt.NUMBER.x, this.opt.NUMBER.y, this.opt.NUMBER.z);
-        var _material = new THREE.MeshBasicMaterial({
-            transparent: true
-        });
-        _material.color.setHex(COLOR_VALUE_FIELD);
-        that.wValueField = new THREE.Mesh(_geometry, _material);
-        that.wValueField.updateRendering = function(index) {
-            that.wValueField.position.x = that.opt.POSITION.x + that.opt.TAB_2.x + that.opt.NUMBER.x / 2;
-            that.wValueField.position.y = that.opt.POSITION.y + that.opt.AREA.y * (-0.5 - index);
-            that.wValueField.position.z = that.opt.POSITION.z + that.opt.AREA.z + that.opt.DELTA_Z;
-            that.wValueField.material.opacity = that.parent.opacityGui * 0.01;
-            that.wValueField.visible = that.isSliderControl() && that.isVisible() && !that.isClosed;
-        };
-        that.parent.scene.add(that.wValueField);
-    }
-
-    this.createValueSliderField = function() {
-        var _geometry = new THREE.BoxGeometry(this.opt.SLIDER.x, this.opt.SLIDER.y, this.opt.SLIDER.z);
-        var _material = new THREE.MeshBasicMaterial({
-            transparent: true
-        });
-        _material.color.setHex(COLOR_VALUE_FIELD);
-        that.wValueSliderField = new THREE.Mesh(_geometry, _material);
-        that.wValueSliderField.sliderType = "field";
-        that.wValueSliderField.WebGLElement = that;
-        that.wValueSliderField.updateRendering = function(index) {
-            that.wValueSliderField.position.x = that.opt.POSITION.x + that.opt.TAB_1.x + that.opt.SLIDER.x / 2;
-            that.wValueSliderField.position.y = that.opt.POSITION.y + that.opt.AREA.y * (-0.5 - index);
-            that.wValueSliderField.position.z = that.opt.POSITION.z + that.opt.AREA.z + that.opt.DELTA_Z;
-            that.wValueSliderField.material.opacity = that.parent.opacityGui * 0.01;
-            that.wValueSliderField.visible = that.isSliderControl() && that.isVisible() && !that.isClosed;
-        };
-        that.parent.scene.add(that.wValueSliderField);
-    }
-
-    this.createValueTextField = function() {
-        var _geometry = new THREE.BoxGeometry(this.opt.TEXT.x, this.opt.TEXT.y, this.opt.TEXT.z);
-        var _material = new THREE.MeshBasicMaterial({
-            transparent: true
-        });
-        _material.color.setHex(COLOR_VALUE_FIELD);
-        that.wValueTextField = new THREE.Mesh(_geometry, _material);
-        that.wValueTextField.visible = false;
-        that.wValueTextField.WebGLElement = that;
-        that.wValueTextField.updateRendering = function(index) {
-            that.wValueTextField.position.x = that.opt.POSITION.x + that.opt.TAB_1.x + that.opt.TEXT.x / 2;
-            that.wValueTextField.position.y = that.opt.POSITION.y + that.opt.AREA.y * (-0.5 - index);
-            that.wValueTextField.position.z = that.opt.POSITION.z + that.opt.AREA.z + that.opt.DELTA_Z;
-            that.wValueTextField.material.opacity = that.parent.opacityGui * 0.01;
-            that.wValueTextField.visible = that.isVisible() && that.isTextControl() && !that.isClosed;
-        };
-        that.parent.scene.add(that.wValueTextField);
-    }
-
-    this.createTextValue = function(value) {
-
-        if (typeof that.wTextValue !== "undefined") {
-            that.parent.scene.remove(that.wTextValue);
-        }
-
-        var fontshapes = THREE.FontUtils.generateShapes(that.textHelper.truncated, {
-            size: this.opt.FONT
-        });
-        var _geometry = new THREE.ShapeGeometry(fontshapes, {
-            curveSegments: 2
-        });
-        that.wTextValue = new THREE.Mesh(_geometry, new THREE.MeshBasicMaterial({
-                    color: 0x1ed36f,
-                    transparent: true,
-        }));
-        that.wTextValue.updateRendering = function(index) {
-            that.wTextValue.position.x = that.opt.POSITION.x + that.opt.TAB_1.x + that.textHelper.residiumX;
-            that.wTextValue.position.y = that.opt.POSITION.y + that.opt.AREA.y * (-0.5 - index) - WEBGL_LABEL_OFFSET_Y;
-            that.wTextValue.position.z = that.opt.POSITION.z + that.opt.AREA.z + that.opt.DELTA_Z * 2;
-            that.wTextValue.material.opacity = that.parent.opacityGui * 0.01;
-            that.wTextValue.visible = that.isVisible() && that.isTextControl() && !that.isClosed;
-        };
-        that.parent.scene.add(that.wTextValue);
-    }
-
-    this.createValueSliderBar = function(scaling) {
-
-        if (typeof that.wValueSliderBar !== "undefined") {
-            that.parent.scene.remove(that.wValueSliderBar);
-        }
-        var _geometry = new THREE.BoxGeometry(this.opt.SLIDER.x * scaling, this.opt.SLIDER.y, this.opt.SLIDER.z);
-        var _material = new THREE.MeshBasicMaterial({
-            transparent: true
-        });
-        that.wValueSliderBar = new THREE.Mesh(_geometry, _material);
-        that.wValueSliderBar.sliderType = "bar";
-        that.wValueSliderBar.WebGLElement = that;
-        that.wValueSliderBar.updateRendering = function(index) {
-            that.wValueSliderBar.position.x = that.opt.POSITION.x + that.opt.TAB_1.x + that.opt.SLIDER.x / 2
-                        - that.opt.SLIDER.x * (1 - that.scaling) / 2;
-            that.wValueSliderBar.position.y = that.opt.POSITION.y + that.opt.AREA.y * (-0.5 - index);
-            that.wValueSliderBar.position.z = that.opt.POSITION.z + that.opt.AREA.z + that.opt.DELTA_Z * 2;
-            that.wValueSliderBar.material.opacity = that.parent.opacityGui * 0.01;
-            that.wValueSliderBar.visible = that.isSliderControl() && that.isVisible()
-                        && (that.object[that.property] > that.minValue) && !that.isClosed;
-        };
-        that.parent.scene.add(that.wValueSliderBar);
-    }
-
-    this.createCursor = function() {
-        var _geometry = new THREE.BoxGeometry(0.5, this.opt.TEXT.y * 0.8, 0.1);
-        var _material = new THREE.MeshBasicMaterial({
-            transparent: true
-        });
-        that.wCursor = new THREE.Mesh(_geometry, _material);
-
-        that.wCursor.updateRendering = function(index) {
-            var possiblePositon = that.textHelper.possibleCursorPositons[that.textHelper.cursor - that.textHelper.start];
-            if (typeof possiblePositon !== "undefined") {
-                that.wCursor.position.x = that.opt.POSITION.x + that.opt.TAB_1.x + that.textHelper.residiumX
-                            + possiblePositon.x + 0.25;
-                that.wCursor.position.y = that.opt.POSITION.y + that.opt.AREA.y * (-0.5 - index);
-                that.wCursor.position.z = that.opt.POSITION.z + that.opt.AREA.z + that.opt.DELTA_Z * 2;
-                that.wCursor.material.opacity = that.parent.opacityGui * 0.01;
-                that.wCursor.material.visible = that.isVisible() && that.isTextControl()
-                            && (that.parent.focus === that) && !that.isClosed;
-            } else {
-                that.wCursor.material.visible = false;
-            }
-        };
-        that.parent.scene.add(that.wCursor);
-    }
-
-    // CREATE NEEDED CONTROLS
-    this.createArea();
-    this.createLabel(this.label);
-    this.createMarker();
-
-    if (!this.isCloseButton) {
-        this.createFrame();
-    }
-    if (this.isElementFolder && !this.isCloseButton) {
-        this.createLabelMarker();
-    } else if (this.isFunctionControl()) {
-        this.onChangeCallback = object[property];
-    } else if (this.isCheckBoxControl()) {
-        this.createCheckBoxes();
-        this.object = object;
-        this.property = property;
-    } else if (this.isSliderControl()) {
-        this.createValueField();
-        this.createValueSliderField();
-        this.createValueSliderBar();
-        this.object = object;
-        this.property = property;
-        this.minValue = minValue;
-        this.maxValue = maxValue;
-        this.createValue(object[property]);
-    } else if (this.isTextControl()) {
-        this.newValue = object[property];
-        this.textHelper.calculateLeftAlignText("");
-        this.createValueTextField();
-        this.createTextValue("");
-        this.createCursor();
-        this.object = object;
-        this.property = property;
-        this.createTextValue(this.newValue);
-    }
-
-    this.listenInternal();
+    };
+    this.control.parent.scene.add(this.control.wCursor);
 }
 
 THREE.SimpleDatGuiControl.prototype.updateRendering = function(index, isClosed) {
     "use strict";
-    this.isClosed = isClosed;
 
+    this.isClosed = isClosed;
     this.wArea.updateRendering(index);
     this.wLabel.updateRendering(index);
     this.wMarker.updateRendering(index);
@@ -871,7 +916,7 @@ THREE.SimpleDatGuiControl.prototype.add = function(object, property, minValue, m
 THREE.SimpleDatGuiControl.prototype.name = function(value) {
     "use strict";
     this.label = value;
-    this.createLabel(this.label);
+    this._private.createLabel(this.label);
     return this;
 }
 
@@ -975,9 +1020,9 @@ THREE.SimpleDatGuiControl.prototype.listenInternal = function() {
             if (that.lastValue !== that.object[that.property]) {
                 var newValue = that.object[that.property];
                 newValue = Math.min(Math.max(newValue, that.minValue), that.maxValue);
-                that.createValue(newValue);
+                that._private.createNumberValue(newValue);
                 that.scaling = (newValue - that.minValue) / (that.maxValue - that.minValue);
-                that.createValueSliderBar(that.scaling);
+                that._private.createValueSliderBar(that.scaling);
             }
             that.lastValue = that.object[that.property];
         }
@@ -986,7 +1031,7 @@ THREE.SimpleDatGuiControl.prototype.listenInternal = function() {
             if (that.lastValue !== that.object[that.property]) {
                 var newValue = that.object[that.property];
                 that.textHelper.calculateAlignTextLastCall(newValue);
-                that.createTextValue(that.textHelper.truncated);
+                that._private.createTextValue(that.textHelper.truncated);
             }
             that.lastValue = that.object[that.property];
         }
