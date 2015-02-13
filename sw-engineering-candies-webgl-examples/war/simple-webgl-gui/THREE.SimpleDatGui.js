@@ -32,7 +32,6 @@ THREE.SimpleDatGui = function(scene, camera, renderer, parameters) {
     "use strict";
     console.log('THREE.SimpleDatGui v0.52 (alpha)');
 
-    // TODO Add controls without a folder directly to the root
     // TODO Implement triangle indicators on folder like in DAT.GUI
     // TODO Implement nicer symbol (check mark) in check box control
     // TODO Support of on screen position as HUD
@@ -59,7 +58,7 @@ THREE.SimpleDatGui = function(scene, camera, renderer, parameters) {
     this.renderer = renderer;
     this.domElement = renderer.domElement;
 
-    this.closeButton = new THREE.SimpleDatGuiControl(null, "Close Controls", 0, 0, this, true, this.opt);
+    this.closeButton = new THREE.SimpleDatGuiControl(null, "Close Controls", 0, 0, this, true, false, this.opt);
     this.children = [];
     this.mouseSensitiveObjects = [];
 
@@ -206,7 +205,7 @@ THREE.SimpleDatGui.__internals.prototype.onKeyEvt = function(event) {
 
             var value = this.gui.focus.object[this.gui.focus.property];
             if (this.gui.focus.textHelper.cursor > 0) {
-                var value = this.gui.focus.newValue;                
+                var value = this.gui.focus.newValue;
                 this.gui.focus.newValue = value.substring(0, this.gui.focus.textHelper.cursor - 1)
                             + value.substring(this.gui.focus.textHelper.cursor, value.length);
 
@@ -266,7 +265,7 @@ THREE.SimpleDatGui.__internals.prototype.onMouseEvt = function(event) {
 
                 if (_element === this.gui.closeButton) {
                     this.gui.closed = !this.gui.closed;
-                    this.gui._internal.updateCloseButtonText();
+                    this.gui._private.updateCloseButtonText();
                 } else if (_element.isSliderControl()) {
                     var _sliderType = intersects[0].object.sliderType;
                     var _increment = (_element.step == null) ? 1 : _element.step;
@@ -306,7 +305,8 @@ THREE.SimpleDatGui.__internals.prototype.onMouseEvt = function(event) {
                             }
                         }
                     }
-
+                } else if (_element.isCheckBoxControl()) {
+                    _element.object[_element.property] = !_element.object[this.gui.focus.property];
                 }
                 _element.executeCallback();
             }
@@ -385,7 +385,14 @@ THREE.SimpleDatGui.prototype.setOpacity = function(opacity) {
 
 THREE.SimpleDatGui.prototype.addFolder = function(name) {
     "use strict";
-    var result = new THREE.SimpleDatGuiControl(null, name, 0, 0, this, false, this.opt);
+    var result = new THREE.SimpleDatGuiControl(null, name, 0, 0, this, false, false, this.opt);
+    this.children.push(result);
+    return result;
+}
+
+THREE.SimpleDatGui.prototype.add = function(object, property, minValue, maxValue) {
+    "use strict";
+    var result = new THREE.SimpleDatGuiControl(object, property, minValue, maxValue, this, false, true, this.opt);
     this.children.push(result);
     return result;
 }
@@ -399,7 +406,8 @@ THREE.SimpleDatGui.prototype.close = function() {
 
 // /////////////////////////////////////////////////////////////////////////////
 
-THREE.SimpleDatGuiControl = function(object, property, minValue, maxValue, parent, isCloseButton, options) {
+THREE.SimpleDatGuiControl = function(object, property, minValue, maxValue, parent, isCloseButton, isRootControl,
+            options) {
     "use strict";
 
     var COLOR_BODER = '0x2c2c2c';
@@ -429,10 +437,15 @@ THREE.SimpleDatGuiControl = function(object, property, minValue, maxValue, paren
     this.textHelper = new THREE.SimpleDatGuiTextHelper(this.opt);
     this.newValue = "";
 
+    // RELATIVES
+    this.parent = parent;
+    this.children = [];
+
     // STATE
+    this.isRootControl = isRootControl;
     this.isFolderCollapsed = true;
     this.isElementFolder = this.propertyType === "folder";
-    this.isElementHidden = !this.isElementFolder;
+    this.isElementHidden = (!this.isRootControl) ? !this.isElementFolder : false;
     this.isOnChangeExisting = false;
     this.scaling = 1.0;
     this.hasFocus = false;
@@ -442,10 +455,6 @@ THREE.SimpleDatGuiControl = function(object, property, minValue, maxValue, paren
     // LISTER
     this.updateTimer;
     this.lastValue;
-
-    // RELATIVES
-    this.parent = parent;
-    this.children = [];
 
     this.createArea = function() {
         var _geometry = new THREE.BoxGeometry(this.opt.AREA.x, this.opt.AREA.y, this.opt.AREA.z);
@@ -819,7 +828,8 @@ THREE.SimpleDatGuiControl.prototype.onChange = function(value) {
 
 THREE.SimpleDatGuiControl.prototype.add = function(object, property, minValue, maxValue) {
     "use strict";
-    var _element = new THREE.SimpleDatGuiControl(object, property, minValue, maxValue, this.parent, false, this.opt);
+    var _element = new THREE.SimpleDatGuiControl(object, property, minValue, maxValue, this.parent, false, false,
+                this.opt);
     this.children.push(_element);
     return _element;
 }
@@ -837,22 +847,17 @@ THREE.SimpleDatGuiControl.prototype.executeCallback = function(event) {
         this.onChangeCallback(null);
         return;
     }
-    if (this.isCheckBoxControl()) {
-        this.object[this.property] = !this.object[this.property];
-        this.onChangeCallback(this.object[this.property]);
-        return;
-    }
-    if (this.isTextControl()) {
-        this.onChangeCallback(this.object[this.property]);
-        return;
-    }
-    if (this.isSliderControl()) {
-        this.onChangeCallback(this.object[this.property]);
-        return;
-    }
     if (this.isOnChangeExisting) {
-        this.onChangeCallback(this.object[this.property]);
-        return;
+        if (this.isCheckBoxControl()) {
+            this.onChangeCallback(this.object[this.property]);
+            return;
+        } else if (this.isTextControl()) {
+            this.onChangeCallback(this.object[this.property]);
+            return;
+        } else if (this.isSliderControl()) {
+            this.onChangeCallback(this.object[this.property]);
+            return;
+        }
     }
     if (this.isElementFolder) {
         this.open();

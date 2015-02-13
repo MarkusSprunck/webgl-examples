@@ -70,8 +70,8 @@ body {
         document.body.appendChild(renderer.domElement);
 
         camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 10000);
-        camera.position.x = -20;
-        camera.position.y = 40;
+        camera.position.x = 0;
+        camera.position.y = 0;
         camera.position.z = 400;
         camera.rotation.x = 0;
         camera.rotation.y = 0;
@@ -116,19 +116,20 @@ body {
                     position: new THREE.Vector3(-130, 110, 140)
         });
 
+        gui.add(objFunctions, 'RESET_EVENT').name('Reset Position');
+        gui.add(myOptions, 'RENDER_TEXT').name('Render Text').onChange(function(value) {
+            addOrUpdateRotatingText(scene, myOptions.RENDER_TEXT);
+        });
         var folder1 = gui.addFolder("General Options");
-        folder1.add(objFunctions, 'RESET_EVENT').name('Reset Position');
+
         folder1.add(myOptions, 'ROTATION_X_AXIS').name('Rotate X');
         folder1.add(myOptions, 'ROTATION_Y_AXIS').name('Rotate Y');
         folder1.add(myOptions, 'ROTATION_SPEED', -5, 5).step(0.5).name('Rotation Speed');
         folder1.add(myOptions, 'FONT_SIZE', 50, 250).step(25).name('Render Font Size').onChange(function(value) {
             addOrUpdateRotatingText(scene, myOptions.RENDER_TEXT);
         });
-        ;
-        folder1.add(myOptions, 'RENDER_TEXT').name('Render Text').onChange(function(value) {
-            addOrUpdateRotatingText(scene, myOptions.RENDER_TEXT);
-        });
         folder1.open();
+
         var folder2 = gui.addFolder("Opacity Options");
         folder2.add(myOptions, 'OPACITY_AUTOMATIC').name('Run Animation');
         folder2.add(myOptions, 'OPACITY', 10, 100).step(10).name('Value');
