@@ -32,7 +32,6 @@ THREE.SimpleDatGui = function(scene, camera, renderer, parameters) {
     "use strict";
     console.log('THREE.SimpleDatGui v0.52 (alpha)');
 
-    // TODO Execute the callback just in the case the focus leaves the control
     // TODO Add controls without a folder directly to the root
     // TODO Implement triangle indicators on folder like in DAT.GUI
     // TODO Implement nicer symbol (check mark) in check box control
@@ -131,21 +130,17 @@ THREE.SimpleDatGui.__internals.prototype.updateCloseButtonText = function() {
 THREE.SimpleDatGui.__internals.prototype.onKeyPressEvt = function(event) {
     "use strict";
     if (this.gui.focus !== null) {
-        var value = this.gui.focus.object[this.gui.focus.property];
+        var value = this.gui.focus.newValue;
 
         event = event || window.event;
         var charCode = (typeof event.which == "number") ? event.which : event.keyCode;
 
         var newCharacter = String.fromCharCode(charCode);
-        var newValue = value.substring(0, this.gui.focus.textHelper.cursor) + newCharacter
+        this.gui.focus.newValue = value.substring(0, this.gui.focus.textHelper.cursor) + newCharacter
                     + value.substring(this.gui.focus.textHelper.cursor, value.length);
 
         this.gui.focus.textHelper.cursor = this.gui.focus.textHelper.cursor + 1;
-        this.gui.focus.textHelper.calculateAlignTextLastCall(newValue);
-
-        this.gui.focus.lastValue = newValue;
-        this.gui.focus.object[this.gui.focus.property] = newValue;
-        this.gui.focus.executeCallback();
+        this.gui.focus.textHelper.calculateAlignTextLastCall(this.gui.focus.newValue);
 
         this.gui.focus.createTextValue(this.gui.focus.textHelper.truncated);
     }
@@ -162,9 +157,14 @@ THREE.SimpleDatGui.__internals.prototype.onKeyEvt = function(event) {
 
     "use strict";
     if (this.gui.focus !== null) {
-        var value = this.gui.focus.object[this.gui.focus.property];
+        var value = this.gui.focus.newValue;
 
         if (charCode === 9 /* TAB */|| charCode === 13 /* ENTER */) {
+
+            this.gui.focus.lastValue = this.gui.focus.newValue;
+            this.gui.focus.object[this.gui.focus.property] = this.gui.focus.newValue;
+            this.gui.focus.executeCallback();
+
             this.gui.focus = null;
 
             // Workaround to deactivate keyboard on iOS
@@ -194,15 +194,11 @@ THREE.SimpleDatGui.__internals.prototype.onKeyEvt = function(event) {
                 this.gui.focus.textHelper.calculateAlignTextLastCall(value);
             }
         } else if (charCode === 46 /* ENTF */) {
-            var value = this.gui.focus.object[this.gui.focus.property];
-            var valueNew = value.substring(0, this.gui.focus.textHelper.cursor)
+            var value = this.gui.focus.newValue;
+            this.gui.focus.newValue = value.substring(0, this.gui.focus.textHelper.cursor)
                         + value.substring(this.gui.focus.textHelper.cursor + 1, value.length);
 
-            this.gui.focus.textHelper.calculateAlignTextLastCall(valueNew);
-
-            this.gui.focus.lastValue = valueNew;
-            this.gui.focus.object[this.gui.focus.property] = valueNew;
-            this.gui.focus.executeCallback();
+            this.gui.focus.textHelper.calculateAlignTextLastCall(this.gui.focus.newValue);
 
         } else if (charCode === 8 /* BACK_SPACE */) {
 
@@ -210,16 +206,12 @@ THREE.SimpleDatGui.__internals.prototype.onKeyEvt = function(event) {
 
             var value = this.gui.focus.object[this.gui.focus.property];
             if (this.gui.focus.textHelper.cursor > 0) {
-
-                var newValue = value.substring(0, this.gui.focus.textHelper.cursor - 1)
+                var value = this.gui.focus.newValue;                
+                this.gui.focus.newValue = value.substring(0, this.gui.focus.textHelper.cursor - 1)
                             + value.substring(this.gui.focus.textHelper.cursor, value.length);
 
                 this.gui.focus.textHelper.cursor -= 1;
-                this.gui.focus.textHelper.calculateAlignTextLastCall(newValue);
-
-                this.gui.focus.lastValue = newValue;
-                this.gui.focus.object[this.gui.focus.property] = newValue;
-                this.gui.focus.executeCallback();
+                this.gui.focus.textHelper.calculateAlignTextLastCall(this.gui.focus.newValue);
             }
         }
         if (this.gui.focus != null) {
@@ -435,6 +427,7 @@ THREE.SimpleDatGuiControl = function(object, property, minValue, maxValue, paren
 
     // MANAGE TEXT INPUT
     this.textHelper = new THREE.SimpleDatGuiTextHelper(this.opt);
+    this.newValue = "";
 
     // STATE
     this.isFolderCollapsed = true;
@@ -767,13 +760,14 @@ THREE.SimpleDatGuiControl = function(object, property, minValue, maxValue, paren
         this.maxValue = maxValue;
         this.createValue(object[property]);
     } else if (this.isTextControl()) {
+        this.newValue = object[property];
         this.textHelper.calculateLeftAlignText("");
         this.createValueTextField();
         this.createTextValue("");
         this.createCursor();
         this.object = object;
         this.property = property;
-        this.createTextValue(object[property]);
+        this.createTextValue(this.newValue);
     }
 
     this.listenInternal();
