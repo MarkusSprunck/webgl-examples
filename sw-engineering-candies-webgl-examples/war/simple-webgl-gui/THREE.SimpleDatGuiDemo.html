@@ -109,7 +109,10 @@ body {
 
         // Add GUI
 
-        gui = new THREE.SimpleDatGui(scene, camera, renderer, {
+        gui = new THREE.SimpleDatGui({
+                    scene: scene,
+                    camera: camera,
+                    renderer: renderer,
                     width: 280,
                     position: new THREE.Vector3(-130, 110, 140)
         });
@@ -131,7 +134,6 @@ body {
         var folder2 = gui.addFolder("Opacity Options");
         folder2.add(myOptions, 'OPACITY_AUTOMATIC').name('Run Animation');
         folder2.add(myOptions, 'OPACITY', 10, 100).step(10).name('Value');
-        folder2.open();
 
         // Add event listeners
         window.addEventListener('resize', onWindowResize, false);
