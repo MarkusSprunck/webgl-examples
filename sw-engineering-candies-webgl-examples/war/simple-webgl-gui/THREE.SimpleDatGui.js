@@ -463,7 +463,7 @@ THREE.SimpleDatGui.__internals.prototype.createDummyTextInputToShowKeyboard = fu
         var _input = document.createElement("input");
         _input.setAttribute("type", "text");
         _input.setAttribute("id", "simple_dat_gui_dummy_text_input");
-        _input.setAttribute("style", "opacity: 0; width: 1px; cursor: pointer");
+        _input.setAttribute("style", "opacity: 0; width: 1px; font-size: 0px;");
         _form.appendChild(_input);
         document.body.appendChild(_div);
     }
