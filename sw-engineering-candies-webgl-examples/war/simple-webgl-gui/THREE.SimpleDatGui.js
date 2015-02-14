@@ -29,7 +29,7 @@
 THREE.SimpleDatGui = function(parameters) {
     "use strict";
 
-    console.log('THREE.SimpleDatGui v0.61');
+    console.log('THREE.SimpleDatGui v0.62');
 
     // Mandatory parameters
     if ((typeof parameters === "undefined") || (typeof parameters.scene === "undefined")
@@ -41,15 +41,12 @@ THREE.SimpleDatGui = function(parameters) {
     this.renderer = parameters.renderer;
 
     // Optional parameters
-    var width = (parameters.width !== undefined) ? parameters.width : 300;
-    var position = (parameters.position !== undefined) ? parameters.position : new THREE.Vector3(-150, 100, 150);
+    this.width = (parameters.width !== undefined) ? parameters.width : 300;
+    this.position = (parameters.position !== undefined) ? parameters.position : new THREE.Vector3(-150, 100, 150);
 
     // For internal use only
+    this._options = this.getOptions();
     this._private = new THREE.SimpleDatGui.__internals(this);
-    this._options = this._private.createOptions(position, width);
-
-    // Close button is always part of user interface
-    this.closeButton = new THREE.SimpleDatGuiControl(null, "Close Controls", 0, 0, this, true, false, this._options);
 };
 
 /**
@@ -98,21 +95,21 @@ THREE.SimpleDatGui.prototype.update = function() {
         if (!child.isElementHidden) {
             indexOfVisibleControls++;
         }
-        child.updateRendering(indexOfVisibleControls, that._private.closed);
+        child.updateRendering(indexOfVisibleControls, that._private.isClosed());
 
         child._private.children.forEach(function(element) {
             if (!element.isElementHidden) {
                 indexOfVisibleControls++;
             }
-            element.updateRendering(indexOfVisibleControls, that._private.closed);
+            element.updateRendering(indexOfVisibleControls, that._private.isClosed());
         });
     });
-    this.closeButton.updateRendering((that._private.closed) ? 0 : (indexOfVisibleControls + 1), false);
+    this._private.closeButton.updateRendering((this._private.isClosed()) ? 0 : (indexOfVisibleControls + 1), false);
 
     // JUST VISIBLE CONTROLS INTERACT WITH MOUSE
     var that = this;
     this._private.mouseBindings = [];
-    if (!this._private.closed) {
+    if (!this._private.isClosed()) {
         this._private.children.forEach(function(child) {
             // ALL VISIBLE FOLDER
             if (!child.isElementHidden) {
@@ -136,7 +133,7 @@ THREE.SimpleDatGui.prototype.update = function() {
             });
         });
     }
-    that._private.mouseBindings.push(this.closeButton.wArea);
+    that._private.mouseBindings.push(that._private.closeButton.wArea);
 };
 
 /**
@@ -149,6 +146,9 @@ THREE.SimpleDatGui.prototype.setOpacity = function(opacity) {
     return this;
 }
 
+/**
+ * Internal implementation may change - please don't access directly
+ */
 THREE.SimpleDatGui.__internals = function(gui) {
     this.gui = gui;
 
@@ -163,62 +163,51 @@ THREE.SimpleDatGui.__internals = function(gui) {
     this.children = [];
     this.mouseBindings = [];
 
-    // Needed to indicate mouse over changes of controls
+    // Close button is always part of user interface
+    this.closeButton = new THREE.SimpleDatGuiControl(null, "Close Controls", 0, 0, gui, true, false, gui._options);
+
+    // Create all event listeners
     gui.renderer.domElement.addEventListener('mousemove', function(event) {
-        gui._private.onMouseEvt(event);
+        gui._private.onMouseMoveEvt(event);
     }.bind(gui));
 
-    // Interact with controls
     gui.renderer.domElement.addEventListener('mousedown', function(event) {
-        gui._private.onMouseEvt(event);
+        gui._private.onMouseDownEvt(event);
     }.bind(gui));
 
-    // Get text input
     window.addEventListener('keypress', function(event) {
         gui._private.onKeyPressEvt(event);
     }.bind(gui));
 
-    // Get state of SHIFT
     var that = this;
     window.addEventListener('keyup', function(event) {
-        event = event || window.event;
-        var charCode = (typeof event.which == "number") ? event.which : event.keyCode;
-        if (charCode === 16 /* SHIFT */) {
+        if (that.getCharacterCode(event) === 16 /* 16 => SHIFT */) {
             that.shiftPressed = false;
         }
     }.bind(gui));
 
-    // Get state of SHIFT and special keys
     window.addEventListener('keydown', function(event) {
-        event = event || window.event;
-        var charCode = (typeof event.which == "number") ? event.which : event.keyCode;
-        if (charCode === 16 /* SHIFT */) {
+        if (that.getCharacterCode(event) === 16 /* 16 => SHIFT */) {
             that.shiftPressed = true;
         }
-        gui._private.onKeyEvt(event);
+        gui._private.onKeyDownEvt(event);
     }.bind(gui));
 };
 
 /**
- * Get text input
+ * Insert new character at cursor position
  */
 THREE.SimpleDatGui.__internals.prototype.onKeyPressEvt = function(event) {
     "use strict";
 
-    // Get current control with focus and handle just text input
     var focus = this.gui._private.focus;
     if (focus !== null && focus.isTextControl()) {
-
-        // Ensures compatibility between different browsers
-        event = event || window.event;
-        var charCode = (typeof event.which == "number") ? event.which : event.keyCode;
-
         // Insert new character
         var cursor = focus.textHelper.cursor;
         var oldText = focus.newText;
         var oldTextFirst = oldText.substring(0, cursor);
         var oldTextSecond = oldText.substring(cursor, oldText.length);
-        var newCharacter = String.fromCharCode(charCode);
+        var newCharacter = String.fromCharCode(this.getCharacterCode(event));
         focus.newText = oldTextFirst + newCharacter + oldTextSecond;
 
         // Truncate text if needed
@@ -231,11 +220,104 @@ THREE.SimpleDatGui.__internals.prototype.onKeyPressEvt = function(event) {
 }
 
 /**
- * 
+ * Get and handle state of special keys
  */
-THREE.SimpleDatGui.__internals.prototype.createOptions = function(position, width) {
+THREE.SimpleDatGui.__internals.prototype.onKeyDownEvt = function(event) {
+    "use strict";
 
-    var area_size = new THREE.Vector3(width, 20, 2.0);
+    function isKeyTab(code) {
+        return code === 9;
+    }
+
+    function isKeyEnter(code) {
+        return code === 13;
+    }
+
+    function isKeyPos1(code) {
+        return code === 36;
+    }
+
+    function isKeyEnd(code) {
+        return code === 35;
+    }
+
+    function isKeyLeft(code) {
+        return code === 37;
+    }
+
+    function isKeyRight(code) {
+        return code === 39;
+    }
+
+    function isKeyEnf(code) {
+        return code === 46;
+    }
+
+    function isKeyBackspace(code) {
+        return code === 8;
+    }
+
+    var focus = this.gui._private.focus;
+    if (focus !== null && focus.isTextControl()) {
+        var charCode = this.getCharacterCode(event);
+        if (isKeyTab(charCode) || isKeyEnter(charCode)) {
+            this.acknowledgeInput();
+        } else if (isKeyPos1(charCode)) {
+            this.moveCursorToFirstCharacter();
+        } else if (isKeyEnd(charCode)) {
+            this.moveCursorToLastCharacter();
+        } else if (isKeyLeft(charCode)) {
+            this.moveCursorToPreviousCharacter(event);
+        } else if (isKeyRight(charCode)) {
+            this.moveCursorToNextCharacter(event);
+        } else if (isKeyEnf(charCode)) {
+            this.deleteNextCharacter();
+        } else if (isKeyBackspace(charCode)) {
+            this.deletePreviousCharacter();
+            event.preventDefault();
+        }
+    }
+}
+
+THREE.SimpleDatGui.__internals.prototype.onMouseDownEvt = function(event) {
+    "use strict";
+
+    var intersects = this.getIntersectingObjects(this.getMousePositon(event));
+    if (intersects.length > 0) {
+        var element = intersects[0].object.WebGLElement;
+        if (event.which == 1 /* Left mouse button */) {
+
+            // Set focus on this control
+            this.gui._private.focus = element;
+
+            if (element.isSliderControl()) {
+                this.setNewSliderValueFromMouseDownEvt(intersects);
+            } else if (element.isTextControl()) {
+                this.setNewCursorFromMouseDownEvt(intersects);
+                this.createDummyTextInputToShowKeyboard(event.clientY);
+            } else if (element.isCheckBoxControl()) {
+                element.object[element.property] = !element.object[this.gui._private.focus.property];
+            } else if (element === this.gui._private.closeButton) {
+                this.gui._private.toggleClosed();
+            }
+            element.executeCallback();
+        }
+    }
+}
+
+/**
+ * Ensures compatibility between different browsers, i.e. Chrome, Firefox, IE
+ */
+THREE.SimpleDatGui.__internals.prototype.getCharacterCode = function(event) {
+    event = event || window.event;
+    var charCode = (typeof event.which == "number") ? event.which : event.keyCode;
+    return charCode;
+}
+
+THREE.SimpleDatGui.prototype.getOptions = function() {
+    "use strict";
+
+    var area_size = new THREE.Vector3(this.width, 20, 2.0);
     var delta_z_order = 0.1;
     var font_size = 7;
     var rightBorder = 4;
@@ -256,7 +338,7 @@ THREE.SimpleDatGui.__internals.prototype.createOptions = function(position, widt
                 MARKER: marker_size,
                 NUMBER: valueFiledSize,
                 OFFSET_X: text_offset_x,
-                POSITION: position,
+                POSITION: this.position,
                 RIGHT_BORDER: rightBorder,
                 SLIDER: slider_field_size,
                 TAB_1: labelTab1,
@@ -264,187 +346,198 @@ THREE.SimpleDatGui.__internals.prototype.createOptions = function(position, widt
                 TEXT: text_field_size,
                 LABEL_OFFSET_Y: 4,
                 COLOR_VALUE_FIELD: '0x303030'
-
     }
 }
 
-THREE.SimpleDatGui.__internals.prototype.updateCloseButtonText = function() {
-    this.gui.closeButton._private.createLabel(this.gui._private.closed ? "Open Controls" : "Close Controls");
-}
-
-THREE.SimpleDatGui.__internals.prototype.onKeyEvt = function(event) {
-
-    var blurDummyTextInputToHideKeyboard = function() {
-        document.getElementById('simple_dat_gui_dummy_text_input').blur();
-    }
-
-    event = event || window.event;
-    var charCode = (typeof event.which == "number") ? event.which : event.keyCode;
-
+THREE.SimpleDatGui.__internals.prototype.isClosed = function() {
     "use strict";
-    if (this.gui._private.focus !== null) {
-        var value = this.gui._private.focus.newText;
-        if (charCode === 9 /* TAB */|| charCode === 13 /* ENTER */) {
 
-            this.gui._private.focus.lastValue = this.gui._private.focus.newText;
-            this.gui._private.focus.object[this.gui._private.focus.property] = this.gui._private.focus.newText;
-            this.gui._private.focus.executeCallback();
+    return this.gui._private.closed;
+}
 
-            this.gui._private.focus = null;
+THREE.SimpleDatGui.__internals.prototype.toggleClosed = function() {
+    "use strict";
 
-            // Workaround to deactivate keyboard on iOS
-            blurDummyTextInputToHideKeyboard();
+    this.gui._private.closed = !this.gui._private.closed;
+    this.gui._private.closeButton._private.createLabel(this.gui._private.closed ? "Open Controls" : "Close Controls");
+}
 
-        } else if (charCode === 36 /* POS1 */) {
-            this.gui._private.focus.textHelper.cursor = 0;
-            this.gui._private.focus.textHelper.start = 0;
-            this.gui._private.focus.textHelper.calculateAlignTextLastCall(value);
-        } else if (charCode === 35 /* END */) {
-            this.gui._private.focus.textHelper.cursor = value.length;
-            this.gui._private.focus.textHelper.end = value.length - 1;
-            this.gui._private.focus.textHelper.calculateAlignTextLastCall(value);
-        } else if (charCode === 37 /* LEFT */) {
-            console.log("LEFT -> Shift pressed=" + this.gui._private.shiftPressed + "  event=" + event.which);
+THREE.SimpleDatGui.__internals.prototype.acknowledgeInput = function() {
+    "use strict";
 
-            if (this.gui._private.focus.textHelper.cursor > 0) {
-                this.gui._private.focus.textHelper.cursor -= 1;
-            }
-            if (this.gui._private.focus.textHelper.start > this.gui._private.focus.textHelper.cursor) {
-                if (this.gui._private.focus.textHelper.start > 0) {
-                    this.gui._private.focus.textHelper.start--;
-                }
-                this.gui._private.focus.textHelper.calculateAlignTextLastCall(value);
-            }
-        } else if (charCode === 39/* RIGHT */&& this.gui._private.focus.textHelper.cursor < value.length) {
-            console.log("RIGHT -> Shift pressed=" + this.gui._private.shiftPressed + "  event=" + event.which);
+    this.gui._private.focus.lastValue = this.gui._private.focus.newText;
+    this.gui._private.focus.object[this.gui._private.focus.property] = this.gui._private.focus.newText;
+    this.gui._private.focus.executeCallback();
 
-            this.gui._private.focus.textHelper.cursor += 1;
-            if (this.gui._private.focus.textHelper.cursor > this.gui._private.focus.textHelper.end) {
-                this.gui._private.focus.textHelper.calculateAlignTextLastCall(value);
-            }
-        } else if (charCode === 46 /* ENTF */) {
-            var value = this.gui._private.focus.newText;
-            this.gui._private.focus.newText = value.substring(0, this.gui._private.focus.textHelper.cursor)
-                        + value.substring(this.gui._private.focus.textHelper.cursor + 1, value.length);
+    // Deactivate focus
+    this.gui._private.focus = null;
 
+    // Deactivate focus - workaround to hide keyboard on iOS
+    document.getElementById('simple_dat_gui_dummy_text_input').blur();
+}
+
+THREE.SimpleDatGui.__internals.prototype.moveCursorToFirstCharacter = function() {
+    "use strict";
+
+    this.gui._private.focus.textHelper.cursor = 0;
+    this.gui._private.focus.textHelper.start = 0;
+    this.gui._private.focus.textHelper.calculateAlignTextLastCall(this.gui._private.focus.newText);
+}
+
+THREE.SimpleDatGui.__internals.prototype.moveCursorToLastCharacter = function() {
+    "use strict";
+    var value = this.gui._private.focus.newText;
+    this.gui._private.focus.textHelper.cursor = value.length;
+    this.gui._private.focus.textHelper.end = value.length - 1;
+    this.gui._private.focus.textHelper.calculateAlignTextLastCall(this.gui._private.focus.newText);
+}
+
+THREE.SimpleDatGui.__internals.prototype.moveCursorToNextCharacter = function(event) {
+    "use strict";
+
+    var value = this.gui._private.focus.newText;
+    if (this.gui._private.focus.textHelper.cursor < value.length) {
+        console.log("RIGHT -> Shift pressed=" + this.gui._private.shiftPressed + "  event=" + event.which);
+
+        this.gui._private.focus.textHelper.cursor += 1;
+        if (this.gui._private.focus.textHelper.cursor > this.gui._private.focus.textHelper.end) {
             this.gui._private.focus.textHelper.calculateAlignTextLastCall(this.gui._private.focus.newText);
-
-        } else if (charCode === 8 /* BACK_SPACE */) {
-
-            event.preventDefault();
-
-            var value = this.gui._private.focus.object[this.gui._private.focus.property];
-            if (this.gui._private.focus.textHelper.cursor > 0) {
-                var value = this.gui._private.focus.newText;
-                this.gui._private.focus.newText = value.substring(0, this.gui._private.focus.textHelper.cursor - 1)
-                            + value.substring(this.gui._private.focus.textHelper.cursor, value.length);
-
-                this.gui._private.focus.textHelper.cursor -= 1;
-                this.gui._private.focus.textHelper.calculateAlignTextLastCall(this.gui._private.focus.newText);
-            }
-        }
-        if (this.gui._private.focus != null) {
-            this.gui._private.focus._private.createTextValue(this.gui._private.focus.textHelper.truncated);
         }
     }
 }
 
-THREE.SimpleDatGui.__internals.prototype.onMouseEvt = function(event) {
+THREE.SimpleDatGui.__internals.prototype.moveCursorToPreviousCharacter = function(event) {
     "use strict";
 
-    var createDummyTextInputToShowKeyboard = function(positionY) {
-        var element = document.getElementById('simple_dat_gui_dummy_text_input');
-        if (element == null) {
-            var _div = document.createElement("div");
-            _div.setAttribute("id", "div_simple_dat_gui_dummy_text_input");
+    console.log("LEFT -> Shift pressed=" + this.gui._private.shiftPressed + "  event=" + event.which);
 
-            var _form = document.createElement("form");
-            _div.appendChild(_form);
-
-            var _input = document.createElement("input");
-            _input.setAttribute("type", "text");
-            _input.setAttribute("id", "simple_dat_gui_dummy_text_input");
-            _input.setAttribute("style", "opacity: 0; width: 1px; cursor: pointer");
-            _form.appendChild(_input);
-            document.body.appendChild(_div);
-        }
-        document.getElementById('div_simple_dat_gui_dummy_text_input').setAttribute("style",
-                    "position: absolute; top: " + positionY + "px; right: 0px;");
-        document.getElementById('simple_dat_gui_dummy_text_input').focus();
+    if (this.gui._private.focus.textHelper.cursor > 0) {
+        this.gui._private.focus.textHelper.cursor -= 1;
     }
+    if (this.gui._private.focus.textHelper.start > this.gui._private.focus.textHelper.cursor) {
+        if (this.gui._private.focus.textHelper.start > 0) {
+            this.gui._private.focus.textHelper.start--;
+        }
+        this.gui._private.focus.textHelper.calculateAlignTextLastCall(this.gui._private.focus.newText);
+    }
+}
 
-    // DECODE MOUSE EVENTS
+THREE.SimpleDatGui.__internals.prototype.deletePreviousCharacter = function() {
+    "use strict";
+
+    var value = this.gui._private.focus.object[this.gui._private.focus.property];
+    if (this.gui._private.focus.textHelper.cursor > 0) {
+        var value = this.gui._private.focus.newText;
+        this.gui._private.focus.newText = value.substring(0, this.gui._private.focus.textHelper.cursor - 1)
+                    + value.substring(this.gui._private.focus.textHelper.cursor, value.length);
+
+        this.gui._private.focus.textHelper.cursor -= 1;
+        this.gui._private.focus.textHelper.calculateAlignTextLastCall(this.gui._private.focus.newText);
+        this.gui._private.focus._private.createTextValue(this.gui._private.focus.textHelper.truncated);
+    }
+}
+
+THREE.SimpleDatGui.__internals.prototype.deleteNextCharacter = function() {
+    "use strict";
+
+    var value = this.gui._private.focus.newText;
+    this.gui._private.focus.newText = value.substring(0, this.gui._private.focus.textHelper.cursor)
+                + value.substring(this.gui._private.focus.textHelper.cursor + 1, value.length);
+
+    this.gui._private.focus.textHelper.calculateAlignTextLastCall(this.gui._private.focus.newText);
+    this.gui._private.focus._private.createTextValue(this.gui._private.focus.textHelper.truncated);
+}
+
+/**
+ * Workaround to activate keyboard on iOS
+ */
+THREE.SimpleDatGui.__internals.prototype.createDummyTextInputToShowKeyboard = function(positionY) {
+    "use strict";
+
+    var element = document.getElementById('simple_dat_gui_dummy_text_input');
+    if (element == null) {
+        var _div = document.createElement("div");
+        _div.setAttribute("id", "div_simple_dat_gui_dummy_text_input");
+        var _form = document.createElement("form");
+        _div.appendChild(_form);
+        var _input = document.createElement("input");
+        _input.setAttribute("type", "text");
+        _input.setAttribute("id", "simple_dat_gui_dummy_text_input");
+        _input.setAttribute("style", "opacity: 0; width: 1px; cursor: pointer");
+        _form.appendChild(_input);
+        document.body.appendChild(_div);
+    }
+    document.getElementById('div_simple_dat_gui_dummy_text_input').setAttribute("style",
+                "position: absolute; top: " + positionY + "px; right: 0px;");
+    document.getElementById('simple_dat_gui_dummy_text_input').focus();
+}
+
+THREE.SimpleDatGui.__internals.prototype.getMousePositon = function(event) {
+    "use strict";
+
     var mouse = {};
     mouse.x = ((event.clientX) / (window.innerWidth - this.gui.renderer.domElement.offsetLeft)) * 2 - 1;
     mouse.y = -((event.clientY - this.gui.renderer.domElement.offsetTop) / (this.gui.renderer.domElement.clientHeight)) * 2 + 1;
+    return mouse;
+}
 
-    if (typeof (this.gui.camera) !== "undefined") {
+THREE.SimpleDatGui.__internals.prototype.getIntersectingObjects = function(mouse) {
+    "use strict";
+
+    var vector = new THREE.Vector3(mouse.x, mouse.y, 0.5);
+    vector.unproject(this.gui.camera);
+    var raycaster = new THREE.Raycaster(this.gui.camera.position, vector.sub(this.gui.camera.position).normalize());
+    return raycaster.intersectObjects(this.gui._private.mouseBindings);
+}
+
+THREE.SimpleDatGui.__internals.prototype.onMouseMoveEvt = function(event) {
+    "use strict";
+
+    var intersects = this.getIntersectingObjects(this.getMousePositon(event));
+    if (intersects.length > 0) {
+        this.gui._private.selected = intersects[0].object.WebGLElement;
+    } else {
         this.gui._private.selected = null;
+    }
+}
 
-        var vector = new THREE.Vector3(mouse.x, mouse.y, 0.5);
-        vector.unproject(this.gui.camera);
-        var raycaster = new THREE.Raycaster(this.gui.camera.position, vector.sub(this.gui.camera.position).normalize());
-        var intersects = raycaster.intersectObjects(this.gui._private.mouseBindings);
-        if (intersects.length > 0) {
-            var _element = intersects[0].object.WebGLElement;
-            if (event.type === "mousemove") {
-                this.gui._private.selected = _element;
-            } else if (event.type === "mousedown" && event.which == 1) {
-                var _threeObject = intersects[0].object;
-                this.gui._private.focus = _element;
+THREE.SimpleDatGui.__internals.prototype.setNewSliderValueFromMouseDownEvt = function(intersects) {
+    "use strict";
 
-                if (_element === this.gui.closeButton) {
-                    this.gui._private.closed = !this.gui._private.closed;
-                    this.gui._private.updateCloseButtonText();
-                } else if (_element.isSliderControl()) {
-                    var _sliderType = intersects[0].object.sliderType;
-                    var _increment = (_element.step == null) ? 1 : _element.step;
+    var element = intersects[0].object.WebGLElement;
+    var cursorMinimalX = element.wValueSliderField.position.x - this.gui._options.SLIDER.x / 2;
+    var deltaX = intersects[0].point.x - cursorMinimalX - 3;
+    var newValue = element.minValue + deltaX / this.gui._options.SLIDER.x * (element.maxValue - element.minValue);
 
-                    var cursorMinimalX = _element.wValueSliderField.position.x - this.gui._options.SLIDER.x / 2;
-                    var deltaX = intersects[0].point.x - cursorMinimalX - 3;
-                    var newValue = _element.minValue + deltaX / this.gui._options.SLIDER.x
-                                * (_element.maxValue - _element.minValue);
-
-                    for (var value = _element.minValue; value <= _element.maxValue; value += _element.step) {
-                        if (value >= newValue) {
-                            _element.object[_element.property] = value;
-                            value = _element.maxValue + 1;
-                        }
-                    }
-
-                } else if (_element.isTextControl()) {
-                    this.gui._private.selected = _element;
-                    var value = this.gui._private.focus.newText;
-                    this.gui._private.focus.intersectX = intersects[0].point.x;
-
-                    // Workaround to activate keyboard on iOS
-                    createDummyTextInputToShowKeyboard(event.clientY);
-
-                    // FIND NEW CURSOR POSITION
-                    var cursorMinimalX = _element.wValueTextField.position.x - this.gui._options.TEXT.x / 2;
-                    var deltaX = intersects[0].point.x - cursorMinimalX;
-                    if (deltaX > _element.textHelper.possibleCursorPositons[_element.textHelper.possibleCursorPositons.length - 1].x) {
-                        _element.textHelper.end = value.length - 1;
-                        _element.textHelper.cursor = value.length;
-                        _element.textHelper.calculateAlignTextLastCall(value);
-                    } else {
-                        for (var i = 0; i < _element.textHelper.possibleCursorPositons.length - 1; i++) {
-                            var minX = _element.textHelper.possibleCursorPositons[i].x;
-                            var maxX = _element.textHelper.possibleCursorPositons[i + 1].x;
-                            if (deltaX > minX && deltaX <= maxX) {
-                                _element.textHelper.cursor = i + _element.textHelper.start;
-                            }
-                        }
-                    }
-                } else if (_element.isCheckBoxControl()) {
-                    _element.object[_element.property] = !_element.object[this.gui._private.focus.property];
-                }
-                _element.executeCallback();
-            }
-            return false;
+    for (var value = element.minValue; value <= element.maxValue; value += element.step) {
+        if (value >= newValue) {
+            element.object[element.property] = value;
+            break;
         }
     }
-    return true;
+}
+
+THREE.SimpleDatGui.__internals.prototype.setNewCursorFromMouseDownEvt = function(intersects) {
+    "use strict";
+
+    var element = intersects[0].object.WebGLElement;
+    this.gui._private.selected = element;
+    var value = this.gui._private.focus.newText;
+    var cursorMinimalX = element.wValueTextField.position.x - this.gui._options.TEXT.x / 2;
+    var deltaX = intersects[0].point.x - cursorMinimalX;
+    if (deltaX > element.textHelper.possibleCursorPositons[element.textHelper.possibleCursorPositons.length - 1].x) {
+        element.textHelper.end = value.length - 1;
+        element.textHelper.cursor = value.length;
+        element.textHelper.calculateAlignTextLastCall(value);
+    } else {
+        for (var i = 0; i < element.textHelper.possibleCursorPositons.length - 1; i++) {
+            var minX = element.textHelper.possibleCursorPositons[i].x;
+            var maxX = element.textHelper.possibleCursorPositons[i + 1].x;
+            if (deltaX > minX && deltaX <= maxX) {
+                element.textHelper.cursor = i + element.textHelper.start;
+            }
+        }
+    }
 }
 
 // ////////////////////////////////////////////////////////////////////////////////////////
@@ -490,7 +583,6 @@ THREE.SimpleDatGuiControl = function(object, property, minValue, maxValue, paren
     this.isOnChangeExisting = false;
     this.scaling = 1.0;
     this.hasFocus = false;
-    this.intersectX = 0;
     this.isClosed = false;
 
     // LISTEN WITH A TIMER
@@ -953,10 +1045,10 @@ THREE.SimpleDatGuiControl.prototype.onChange = function(value) {
 
 THREE.SimpleDatGuiControl.prototype.add = function(object, property, minValue, maxValue) {
     "use strict";
-    var _element = new THREE.SimpleDatGuiControl(object, property, minValue, maxValue, this.parent, false, false,
+    var element = new THREE.SimpleDatGuiControl(object, property, minValue, maxValue, this.parent, false, false,
                 this._options);
-    this._private.children.push(_element);
-    return _element;
+    this._private.children.push(element);
+    return element;
 }
 
 THREE.SimpleDatGuiControl.prototype.name = function(value) {

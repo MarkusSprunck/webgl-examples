@@ -82,9 +82,9 @@ body {
 
         // Add lights
 
-        var blueLight = new THREE.PointLight(0x5820A1);
-        blueLight.position.set(-100, 100, camera.position.z);
-        scene.add(blueLight);
+        var light = new THREE.PointLight(0xAAAAAA);
+        light.position.set(-100, 100, camera.position.z);
+        scene.add(light); 
 
         var yellowLight = new THREE.PointLight(0x666600);
         yellowLight.position.set(0, 0, 2 * camera.position.z);
