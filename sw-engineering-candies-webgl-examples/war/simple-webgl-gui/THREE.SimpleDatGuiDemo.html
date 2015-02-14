@@ -6,7 +6,7 @@
 <style>
 body {
 	margin: 0px;
-	background-color: #FFF;
+	background-color: #000;
 	overflow: hidden;
 }
 
@@ -64,7 +64,7 @@ body {
         renderer = new THREE.WebGLRenderer({
             antialias: true
         });
-        renderer.setClearColor(0xFFFFFF);
+        renderer.setClearColor(0x000000);
         renderer.setPixelRatio(window.devicePixelRatio);
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(renderer.domElement);
@@ -114,7 +114,7 @@ body {
                     camera: camera,
                     renderer: renderer,
                     width: 280,
-                    position: new THREE.Vector3(-130, 110, 140)
+                    position: new THREE.Vector3(-140, 130, 140)
         });
 
         gui.add(objFunctions, 'RESET_EVENT').name('Reset Position');
