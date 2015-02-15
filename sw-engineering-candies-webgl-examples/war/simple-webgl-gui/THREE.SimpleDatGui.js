@@ -21,15 +21,15 @@
  ******************************************************************************/
 
 /**
- * CONSTRUCTOR - Simple rendering with pure WebGL based on three.js without any
- * other 3rd party library. The look & feel should be like in the Chrome
- * Experiment DAT.GUI with some minor improvements. This is an early development
- * stage, so some features are missing.
+ * Simple rendering with pure WebGL based on three.js without any other 3rd
+ * party library. The look & feel should be like in the Chrome Experiment
+ * DAT.GUI with some minor improvements. This is an early development stage, so
+ * some features are missing.
  */
 THREE.SimpleDatGui = function(parameters) {
     "use strict";
 
-    console.log('THREE.SimpleDatGui v0.62');
+    console.log('THREE.SimpleDatGui v0.63');
 
     // Mandatory parameters
     if ((typeof parameters === "undefined") || (typeof parameters.scene === "undefined")
@@ -289,7 +289,6 @@ THREE.SimpleDatGui.__internals.prototype.onMouseDownEvt = function(event) {
 
             // Set focus on this control
             this.gui._private.focus = element;
-
             if (element.isSliderControl()) {
                 this.setNewSliderValueFromMouseDownEvt(intersects);
             } else if (element.isTextControl()) {
@@ -345,7 +344,10 @@ THREE.SimpleDatGui.prototype.getOptions = function() {
                 TAB_2: labelTab2,
                 TEXT: text_field_size,
                 LABEL_OFFSET_Y: 4,
-                COLOR_VALUE_FIELD: '0x303030'
+                COLOR_VALUE_FIELD: '0x303030',
+                MATERIAL: {
+                    transparent: true
+                }
     }
 }
 
@@ -365,9 +367,10 @@ THREE.SimpleDatGui.__internals.prototype.toggleClosed = function() {
 THREE.SimpleDatGui.__internals.prototype.acknowledgeInput = function() {
     "use strict";
 
-    this.gui._private.focus.lastValue = this.gui._private.focus.newText;
-    this.gui._private.focus.object[this.gui._private.focus.property] = this.gui._private.focus.newText;
-    this.gui._private.focus.executeCallback();
+    var focus = this.gui._private.focus;
+    focus.lastValue = focus.newText;
+    focus.object[focus.property] = focus.newText;
+    focus.executeCallback();
 
     // Deactivate focus
     this.gui._private.focus = null;
@@ -379,29 +382,34 @@ THREE.SimpleDatGui.__internals.prototype.acknowledgeInput = function() {
 THREE.SimpleDatGui.__internals.prototype.moveCursorToFirstCharacter = function() {
     "use strict";
 
-    this.gui._private.focus.textHelper.cursor = 0;
-    this.gui._private.focus.textHelper.start = 0;
-    this.gui._private.focus.textHelper.calculateAlignTextLastCall(this.gui._private.focus.newText);
+    var focus = this.gui._private.focus;
+    var textHelper = focus.textHelper;
+    textHelper.cursor = 0;
+    textHelper.start = 0;
+    textHelper.calculateAlignTextLastCall(focus.newText);
 }
 
 THREE.SimpleDatGui.__internals.prototype.moveCursorToLastCharacter = function() {
     "use strict";
-    var value = this.gui._private.focus.newText;
-    this.gui._private.focus.textHelper.cursor = value.length;
-    this.gui._private.focus.textHelper.end = value.length - 1;
-    this.gui._private.focus.textHelper.calculateAlignTextLastCall(this.gui._private.focus.newText);
+
+    var focus = this.gui._private.focus;
+    var textHelper = focus.textHelper;
+    var value = focus.newText;
+    textHelper.cursor = value.length;
+    textHelper.end = value.length - 1;
+    textHelper.calculateAlignTextLastCall(focus.newText);
 }
 
 THREE.SimpleDatGui.__internals.prototype.moveCursorToNextCharacter = function(event) {
     "use strict";
 
-    var value = this.gui._private.focus.newText;
-    if (this.gui._private.focus.textHelper.cursor < value.length) {
-        console.log("RIGHT -> Shift pressed=" + this.gui._private.shiftPressed + "  event=" + event.which);
-
-        this.gui._private.focus.textHelper.cursor += 1;
-        if (this.gui._private.focus.textHelper.cursor > this.gui._private.focus.textHelper.end) {
-            this.gui._private.focus.textHelper.calculateAlignTextLastCall(this.gui._private.focus.newText);
+    var focus = this.gui._private.focus;
+    var textHelper = focus.textHelper;
+    var value = focus.newText;
+    if (textHelper.cursor < value.length) {
+        textHelper.cursor += 1;
+        if (textHelper.cursor > focus.textHelper.end) {
+            textHelper.calculateAlignTextLastCall(focus.newText);
         }
     }
 }
@@ -409,43 +417,43 @@ THREE.SimpleDatGui.__internals.prototype.moveCursorToNextCharacter = function(ev
 THREE.SimpleDatGui.__internals.prototype.moveCursorToPreviousCharacter = function(event) {
     "use strict";
 
-    console.log("LEFT -> Shift pressed=" + this.gui._private.shiftPressed + "  event=" + event.which);
-
-    if (this.gui._private.focus.textHelper.cursor > 0) {
-        this.gui._private.focus.textHelper.cursor -= 1;
+    var focus = this.gui._private.focus;
+    var textHelper = this.gui._private.focus.textHelper;
+    if (textHelper.cursor > 0) {
+        textHelper.cursor -= 1;
     }
-    if (this.gui._private.focus.textHelper.start > this.gui._private.focus.textHelper.cursor) {
-        if (this.gui._private.focus.textHelper.start > 0) {
-            this.gui._private.focus.textHelper.start--;
+    if (textHelper.start > textHelper.cursor) {
+        if (textHelper.start > 0) {
+            textHelper.start--;
         }
-        this.gui._private.focus.textHelper.calculateAlignTextLastCall(this.gui._private.focus.newText);
+        textHelper.calculateAlignTextLastCall(focus.newText);
     }
 }
 
 THREE.SimpleDatGui.__internals.prototype.deletePreviousCharacter = function() {
     "use strict";
 
-    var value = this.gui._private.focus.object[this.gui._private.focus.property];
-    if (this.gui._private.focus.textHelper.cursor > 0) {
-        var value = this.gui._private.focus.newText;
-        this.gui._private.focus.newText = value.substring(0, this.gui._private.focus.textHelper.cursor - 1)
-                    + value.substring(this.gui._private.focus.textHelper.cursor, value.length);
-
-        this.gui._private.focus.textHelper.cursor -= 1;
-        this.gui._private.focus.textHelper.calculateAlignTextLastCall(this.gui._private.focus.newText);
-        this.gui._private.focus._private.createTextValue(this.gui._private.focus.textHelper.truncated);
+    var focus = this.gui._private.focus;
+    var textHelper = focus.textHelper;
+    var value = focus.object[focus.property];
+    if (textHelper.cursor > 0) {
+        var value = focus.newText;
+        focus.newText = value.substring(0, textHelper.cursor - 1) + value.substring(textHelper.cursor, value.length);
+        textHelper.cursor -= 1;
+        textHelper.calculateAlignTextLastCall(focus.newText);
+        focus._private.createTextValue(textHelper.truncated);
     }
 }
 
 THREE.SimpleDatGui.__internals.prototype.deleteNextCharacter = function() {
     "use strict";
 
-    var value = this.gui._private.focus.newText;
-    this.gui._private.focus.newText = value.substring(0, this.gui._private.focus.textHelper.cursor)
-                + value.substring(this.gui._private.focus.textHelper.cursor + 1, value.length);
-
-    this.gui._private.focus.textHelper.calculateAlignTextLastCall(this.gui._private.focus.newText);
-    this.gui._private.focus._private.createTextValue(this.gui._private.focus.textHelper.truncated);
+    var focus = this.gui._private.focus;
+    var textHelper = focus.textHelper;
+    var value = focus.newText;
+    focus.newText = value.substring(0, textHelper.cursor) + value.substring(textHelper.cursor + 1, value.length);
+    textHelper.calculateAlignTextLastCall(focus.newText);
+    focus._private.createTextValue(focus.textHelper.truncated);
 }
 
 /**
@@ -475,9 +483,10 @@ THREE.SimpleDatGui.__internals.prototype.createDummyTextInputToShowKeyboard = fu
 THREE.SimpleDatGui.__internals.prototype.getMousePositon = function(event) {
     "use strict";
 
+    var domElement = this.gui.renderer.domElement;
     var mouse = {};
-    mouse.x = ((event.clientX) / (window.innerWidth - this.gui.renderer.domElement.offsetLeft)) * 2 - 1;
-    mouse.y = -((event.clientY - this.gui.renderer.domElement.offsetTop) / (this.gui.renderer.domElement.clientHeight)) * 2 + 1;
+    mouse.x = ((event.clientX) / (window.innerWidth - domElement.offsetLeft)) * 2 - 1;
+    mouse.y = -((event.clientY - domElement.offsetTop) / (domElement.clientHeight)) * 2 + 1;
     return mouse;
 }
 
@@ -521,29 +530,28 @@ THREE.SimpleDatGui.__internals.prototype.setNewCursorFromMouseDownEvt = function
     "use strict";
 
     var element = intersects[0].object.WebGLElement;
+    var focus = this.gui._private.focus;
+    var textHelper = element.textHelper;
+    var value = focus.newText;
+
     this.gui._private.selected = element;
-    var value = this.gui._private.focus.newText;
+
     var cursorMinimalX = element.wValueTextField.position.x - this.gui._options.TEXT.x / 2;
     var deltaX = intersects[0].point.x - cursorMinimalX;
-    if (deltaX > element.textHelper.possibleCursorPositons[element.textHelper.possibleCursorPositons.length - 1].x) {
-        element.textHelper.end = value.length - 1;
-        element.textHelper.cursor = value.length;
-        element.textHelper.calculateAlignTextLastCall(value);
+    if (deltaX > textHelper.possibleCursorPositons[textHelper.possibleCursorPositons.length - 1].x) {
+        textHelper.end = value.length - 1;
+        textHelper.cursor = value.length;
+        textHelper.calculateAlignTextLastCall(value);
     } else {
-        for (var i = 0; i < element.textHelper.possibleCursorPositons.length - 1; i++) {
-            var minX = element.textHelper.possibleCursorPositons[i].x;
-            var maxX = element.textHelper.possibleCursorPositons[i + 1].x;
+        for (var i = 0; i < textHelper.possibleCursorPositons.length - 1; i++) {
+            var minX = textHelper.possibleCursorPositons[i].x;
+            var maxX = textHelper.possibleCursorPositons[i + 1].x;
             if (deltaX > minX && deltaX <= maxX) {
-                element.textHelper.cursor = i + element.textHelper.start;
+                textHelper.cursor = i + textHelper.start;
             }
         }
     }
 }
-
-// ////////////////////////////////////////////////////////////////////////////////////////
-// ////////////////////////////////////////////////////////////////////////////////////////
-// ////////////////////////////////////////////////////////////////////////////////////////
-// ////////////////////////////////////////////////////////////////////////////////////////
 
 THREE.SimpleDatGuiControl = function(object, property, minValue, maxValue, parent, isCloseButton, isRootControl,
             options) {
@@ -627,12 +635,28 @@ THREE.SimpleDatGuiControl = function(object, property, minValue, maxValue, paren
     this.listenInternal();
 }
 
-// *****************************************************************************
-// THREE.SimpleDatGuiControl INTERNALS
-
 THREE.SimpleDatGuiControl.__internals = function(control) {
     this.control = control;
 };
+
+THREE.SimpleDatGuiControl.__internals.prototype.createArea = function() {
+    "use strict";
+
+    var that = this.control;
+    var _geometry = new THREE.BoxGeometry(that._options.AREA.x, that._options.AREA.y, that._options.AREA.z);
+    var _material = new THREE.MeshBasicMaterial(that._options.MATERIAL);
+    that.wArea = new THREE.Mesh(_geometry, _material);
+    that.wArea.WebGLElement = that;
+    that.wArea.updateRendering = function(index) {
+        var $ = that._options;
+        this.position.x = $.POSITION.x + $.AREA.x / 2;
+        this.position.y = $.POSITION.y - $.AREA.y / 2 - $.AREA.y * index;
+        this.position.z = $.POSITION.z + $.AREA.z / 2;
+        this.material.opacity = that.parent._private.opacityGui * 0.01;
+        this.material.visible = that.isVisible() && !that.isClosed;
+    };
+    that.parent.scene.add(that.wArea);
+}
 
 THREE.SimpleDatGuiControl.__internals.prototype.createValueSliderBar = function(scaling) {
     "use strict";
@@ -641,22 +665,21 @@ THREE.SimpleDatGuiControl.__internals.prototype.createValueSliderBar = function(
     if (typeof that.wValueSliderBar !== "undefined") {
         that.parent.scene.remove(that.wValueSliderBar);
     }
+
     var _geometry = new THREE.BoxGeometry(that._options.SLIDER.x * scaling, that._options.SLIDER.y,
                 that._options.SLIDER.z);
-    var _material = new THREE.MeshBasicMaterial({
-        transparent: true
-    });
+    var _material = new THREE.MeshBasicMaterial(that._options.MATERIAL);
     that.wValueSliderBar = new THREE.Mesh(_geometry, _material);
     that.wValueSliderBar.sliderType = "bar";
     that.wValueSliderBar.WebGLElement = that;
     that.wValueSliderBar.updateRendering = function(index) {
-        that.wValueSliderBar.position.x = that._options.POSITION.x + that._options.TAB_1.x + that._options.SLIDER.x / 2
-                    - that._options.SLIDER.x * (1 - that.scaling) / 2;
-        that.wValueSliderBar.position.y = that._options.POSITION.y + that._options.AREA.y * (-0.5 - index);
-        that.wValueSliderBar.position.z = that._options.POSITION.z + that._options.AREA.z + that._options.DELTA_Z * 2;
-        that.wValueSliderBar.material.opacity = that.parent._private.opacityGui * 0.01;
-        that.wValueSliderBar.visible = that.isSliderControl() && that.isVisible()
-                    && (that.object[that.property] > that.minValue) && !that.isClosed;
+        var $ = that._options;
+        this.position.x = $.POSITION.x + $.TAB_1.x + $.SLIDER.x / 2 - $.SLIDER.x * (1 - that.scaling) / 2;
+        this.position.y = $.POSITION.y + $.AREA.y * (-0.5 - index);
+        this.position.z = $.POSITION.z + $.AREA.z + $.DELTA_Z * 2;
+        this.material.opacity = that.parent._private.opacityGui * 0.01;
+        this.visible = that.isSliderControl() && that.isVisible() && (that.object[that.property] > that.minValue)
+                    && !that.isClosed;
     };
     that.parent.scene.add(that.wValueSliderBar);
 }
@@ -675,17 +698,14 @@ THREE.SimpleDatGuiControl.__internals.prototype.createTextValue = function(value
     var _geometry = new THREE.ShapeGeometry(fontshapes, {
         curveSegments: 2
     });
-    that.wTextValue = new THREE.Mesh(_geometry, new THREE.MeshBasicMaterial({
-                color: 0x1ed36f,
-                transparent: true,
-    }));
+    that.wTextValue = new THREE.Mesh(_geometry, new THREE.MeshBasicMaterial(that._options.MATERIAL));
     that.wTextValue.updateRendering = function(index) {
-        that.wTextValue.position.x = that._options.POSITION.x + that._options.TAB_1.x + that.textHelper.residiumX;
-        that.wTextValue.position.y = that._options.POSITION.y + that._options.AREA.y * (-0.5 - index)
-                    - that._options.LABEL_OFFSET_Y;
-        that.wTextValue.position.z = that._options.POSITION.z + that._options.AREA.z + that._options.DELTA_Z * 2;
-        that.wTextValue.material.opacity = that.parent._private.opacityGui * 0.01;
-        that.wTextValue.visible = that.isVisible() && that.isTextControl() && !that.isClosed;
+        var $ = that._options;
+        this.position.x = $.POSITION.x + $.TAB_1.x + that.textHelper.residiumX;
+        this.position.y = $.POSITION.y + $.AREA.y * (-0.5 - index) - $.LABEL_OFFSET_Y;
+        this.position.z = $.POSITION.z + $.AREA.z + $.DELTA_Z * 2;
+        this.material.opacity = that.parent._private.opacityGui * 0.01;
+        this.visible = that.isVisible() && that.isTextControl() && !that.isClosed;
     };
     that.parent.scene.add(that.wTextValue);
 }
@@ -694,19 +714,18 @@ THREE.SimpleDatGuiControl.__internals.prototype.createValueTextField = function(
     "use strict";
     var that = this.control;
     var _geometry = new THREE.BoxGeometry(that._options.TEXT.x, that._options.TEXT.y, that._options.TEXT.z);
-    var _material = new THREE.MeshBasicMaterial({
-        transparent: true
-    });
+    var _material = new THREE.MeshBasicMaterial(that._options.MATERIAL);
     _material.color.setHex(that._options.COLOR_VALUE_FIELD);
     that.wValueTextField = new THREE.Mesh(_geometry, _material);
     that.wValueTextField.visible = false;
     that.wValueTextField.WebGLElement = that;
     that.wValueTextField.updateRendering = function(index) {
-        that.wValueTextField.position.x = that._options.POSITION.x + that._options.TAB_1.x + that._options.TEXT.x / 2;
-        that.wValueTextField.position.y = that._options.POSITION.y + that._options.AREA.y * (-0.5 - index);
-        that.wValueTextField.position.z = that._options.POSITION.z + that._options.AREA.z + that._options.DELTA_Z;
-        that.wValueTextField.material.opacity = that.parent._private.opacityGui * 0.01;
-        that.wValueTextField.visible = that.isVisible() && that.isTextControl() && !that.isClosed;
+        var $ = that._options;
+        this.position.x = $.POSITION.x + $.TAB_1.x + $.TEXT.x / 2;
+        this.position.y = $.POSITION.y + $.AREA.y * (-0.5 - index);
+        this.position.z = $.POSITION.z + $.AREA.z + $.DELTA_Z;
+        this.material.opacity = that.parent._private.opacityGui * 0.01;
+        this.visible = that.isVisible() && that.isTextControl() && !that.isClosed;
     };
     that.parent.scene.add(that.wValueTextField);
 }
@@ -716,20 +735,18 @@ THREE.SimpleDatGuiControl.__internals.prototype.createValueSliderField = functio
 
     var that = this.control;
     var _geometry = new THREE.BoxGeometry(that._options.SLIDER.x, that._options.SLIDER.y, that._options.SLIDER.z);
-    var _material = new THREE.MeshBasicMaterial({
-        transparent: true
-    });
+    var _material = new THREE.MeshBasicMaterial(that._options.MATERIAL);
     _material.color.setHex(that._options.COLOR_VALUE_FIELD);
     that.wValueSliderField = new THREE.Mesh(_geometry, _material);
     that.wValueSliderField.sliderType = "field";
     that.wValueSliderField.WebGLElement = that;
     that.wValueSliderField.updateRendering = function(index) {
-        that.wValueSliderField.position.x = that._options.POSITION.x + that._options.TAB_1.x + that._options.SLIDER.x
-                    / 2;
-        that.wValueSliderField.position.y = that._options.POSITION.y + that._options.AREA.y * (-0.5 - index);
-        that.wValueSliderField.position.z = that._options.POSITION.z + that._options.AREA.z + that._options.DELTA_Z;
-        that.wValueSliderField.material.opacity = that.parent._private.opacityGui * 0.01;
-        that.wValueSliderField.visible = that.isSliderControl() && that.isVisible() && !that.isClosed;
+        var $ = that._options;
+        this.position.x = $.POSITION.x + $.TAB_1.x + $.SLIDER.x / 2;
+        this.position.y = $.POSITION.y + $.AREA.y * (-0.5 - index);
+        this.position.z = $.POSITION.z + $.AREA.z + $.DELTA_Z;
+        this.material.opacity = that.parent._private.opacityGui * 0.01;
+        this.visible = that.isSliderControl() && that.isVisible() && !that.isClosed;
     };
     that.parent.scene.add(that.wValueSliderField);
 }
@@ -739,17 +756,16 @@ THREE.SimpleDatGuiControl.__internals.prototype.createValueField = function(even
 
     var that = this.control;
     var _geometry = new THREE.BoxGeometry(that._options.NUMBER.x, that._options.NUMBER.y, that._options.NUMBER.z);
-    var _material = new THREE.MeshBasicMaterial({
-        transparent: true
-    });
+    var _material = new THREE.MeshBasicMaterial(that._options.MATERIAL);
     _material.color.setHex(that._options.COLOR_VALUE_FIELD);
     that.wValueField = new THREE.Mesh(_geometry, _material);
     that.wValueField.updateRendering = function(index) {
-        that.wValueField.position.x = that._options.POSITION.x + that._options.TAB_2.x + that._options.NUMBER.x / 2;
-        that.wValueField.position.y = that._options.POSITION.y + that._options.AREA.y * (-0.5 - index);
-        that.wValueField.position.z = that._options.POSITION.z + that._options.AREA.z + that._options.DELTA_Z;
-        that.wValueField.material.opacity = that.parent._private.opacityGui * 0.01;
-        that.wValueField.visible = that.isSliderControl() && that.isVisible() && !that.isClosed;
+        var $ = that._options;
+        this.position.x = $.POSITION.x + $.TAB_2.x + $.NUMBER.x / 2;
+        this.position.y = $.POSITION.y + $.AREA.y * (-0.5 - index);
+        this.position.z = $.POSITION.z + $.AREA.z + $.DELTA_Z;
+        this.material.opacity = that.parent._private.opacityGui * 0.01;
+        this.visible = that.isSliderControl() && that.isVisible() && !that.isClosed;
     };
     that.parent.scene.add(that.wValueField);
 }
@@ -769,16 +785,14 @@ THREE.SimpleDatGuiControl.__internals.prototype.createNumberValue = function(val
     var _geometry = new THREE.ShapeGeometry(fontshapes, {
         curveSegments: 2
     });
-    that.wValue = new THREE.Mesh(_geometry, new THREE.MeshBasicMaterial({
-        transparent: true
-    }));
+    that.wValue = new THREE.Mesh(_geometry, new THREE.MeshBasicMaterial(that._options.MATERIAL));
     that.wValue.updateRendering = function(index) {
-        that.wValue.position.x = that._options.POSITION.x + that._options.TAB_2.x + that._options.OFFSET_X;
-        that.wValue.position.y = that._options.POSITION.y + that._options.AREA.y * (-0.5 - index)
-                    - that._options.LABEL_OFFSET_Y;
-        that.wValue.position.z = that._options.POSITION.z + that._options.AREA.z + that._options.DELTA_Z * 2;
-        that.wValue.material.opacity = that.parent._private.opacityGui * 0.01;
-        that.wValue.visible = that.isSliderControl() && that.isVisible() && !that.isClosed;
+        var $ = that._options;
+        this.position.x = $.POSITION.x + $.TAB_2.x + $.OFFSET_X;
+        this.position.y = $.POSITION.y + $.AREA.y * (-0.5 - index) - $.LABEL_OFFSET_Y;
+        this.position.z = $.POSITION.z + $.AREA.z + $.DELTA_Z * 2;
+        this.material.opacity = that.parent._private.opacityGui * 0.01;
+        this.visible = that.isSliderControl() && that.isVisible() && !that.isClosed;
     };
     that.parent.scene.add(that.wValue);
 }
@@ -789,16 +803,15 @@ THREE.SimpleDatGuiControl.__internals.prototype.createCheckBoxes = function(even
     var that = this.control;
     // CREATE CHECKBOX AREA
     var _geometry = new THREE.BoxGeometry(that._options.CHECKBOX.x, that._options.CHECKBOX.y, that._options.CHECKBOX.z);
-    var _material = new THREE.MeshBasicMaterial({
-        transparent: true
-    });
+    var _material = new THREE.MeshBasicMaterial(that._options.MATERIAL);
     that.wBoxUnChecked = new THREE.Mesh(_geometry, _material);
     that.wBoxUnChecked.visible = false;
     that.wBoxUnChecked.updateRendering = function(index) {
-        that.wBoxUnChecked.position.x = that._options.POSITION.x + that._options.TAB_1.x + that._options.CHECKBOX.x / 2;
-        that.wBoxUnChecked.position.y = that._options.POSITION.y + that._options.AREA.y * (-0.5 - index);
-        that.wBoxUnChecked.position.z = that._options.POSITION.z + that._options.AREA.z + that._options.DELTA_Z;
-        that.wBoxUnChecked.material.opacity = that.parent._private.opacityGui * 0.01;
+        var $ = that._options;
+        this.position.x = $.POSITION.x + $.TAB_1.x + $.CHECKBOX.x / 2;
+        this.position.y = $.POSITION.y + $.AREA.y * (-0.5 - index);
+        this.position.z = $.POSITION.z + $.AREA.z + $.DELTA_Z;
+        this.material.opacity = that.parent._private.opacityGui * 0.01;
     };
     that.parent.scene.add(that.wBoxUnChecked);
 
@@ -817,11 +830,11 @@ THREE.SimpleDatGuiControl.__internals.prototype.createCheckBoxes = function(even
     that.wBoxChecked = new THREE.Mesh(_geometry, _material);
     that.wBoxChecked.visible = false;
     that.wBoxChecked.updateRendering = function(index) {
-        that.wBoxChecked.position.x = that._options.POSITION.x + that._options.TAB_1.x + that._options.CHECKBOX.x / 2
-                    - 3;
-        that.wBoxChecked.position.y = that._options.POSITION.y + that._options.AREA.y * (-0.5 - index) - 3.5;
-        that.wBoxChecked.position.z = that._options.POSITION.z + that._options.AREA.z + that._options.DELTA_Z * 2;
-        that.wBoxChecked.material.opacity = that.parent._private.opacityGui * 0.01;
+        var $ = that._options;
+        this.position.x = $.POSITION.x + $.TAB_1.x + $.CHECKBOX.x / 2 - 3;
+        this.position.y = $.POSITION.y + $.AREA.y * (-0.5 - index) - 3.5;
+        this.position.z = $.POSITION.z + $.AREA.z + $.DELTA_Z * 2;
+        this.material.opacity = that.parent._private.opacityGui * 0.01;
     };
     that.parent.scene.add(that.wBoxChecked);
 }
@@ -839,21 +852,19 @@ THREE.SimpleDatGuiControl.__internals.prototype.createLabel = function(name) {
     var _geometry = new THREE.ShapeGeometry(fontshapes, {
         curveSegments: 2
     });
-    that.wLabel = new THREE.Mesh(_geometry, new THREE.MeshBasicMaterial({
-        transparent: true
-    }));
+    that.wLabel = new THREE.Mesh(_geometry, new THREE.MeshBasicMaterial(that._options.MATERIAL));
     that.wLabel.updateRendering = function(index) {
+        var $ = that._options;
         var WEBGL_CLOSE_LABEL_OFFSET_X = 30;
         var LABEL_OFFSET_X = 10;
         var folderOffset = (that.isElementFolder) ? 8 : 0;
-        that.wLabel.position.x = that._options.POSITION.x
-                    + ((that.isCloseButton) ? (that._options.AREA.x / 2 - WEBGL_CLOSE_LABEL_OFFSET_X)
+        this.position.x = $.POSITION.x
+                    + ((that.isCloseButton) ? ($.AREA.x / 2 - WEBGL_CLOSE_LABEL_OFFSET_X)
                                 : (LABEL_OFFSET_X + folderOffset));
-        that.wLabel.position.y = that._options.POSITION.y + that._options.AREA.y * (-0.5 - index)
-                    - that._options.LABEL_OFFSET_Y;
-        that.wLabel.position.z = that._options.POSITION.z + that._options.AREA.z + that._options.DELTA_Z;
-        that.wLabel.material.opacity = that.parent._private.opacityGui * 0.01;
-        that.wLabel.material.visible = that.isVisible() && !that.isClosed;
+        this.position.y = $.POSITION.y + $.AREA.y * (-0.5 - index) - $.LABEL_OFFSET_Y;
+        this.position.z = $.POSITION.z + $.AREA.z + $.DELTA_Z;
+        this.material.opacity = that.parent._private.opacityGui * 0.01;
+        this.material.visible = that.isVisible() && !that.isClosed;
     };
     that.parent.scene.add(that.wLabel);
 }
@@ -877,18 +888,13 @@ THREE.SimpleDatGuiControl.__internals.prototype.createLabelMarker = function() {
     });
     that.wLabelMarker = new THREE.Mesh(_geometry, _material);
     that.wLabelMarker.updateRendering = function(index) {
-        that.wLabelMarker.position.x = that._options.POSITION.x + 10;
-        that.wLabelMarker.position.y = that._options.POSITION.y - that._options.AREA.y / 2 - that._options.AREA.y
-                    * index;
-        that.wLabelMarker.position.z = that._options.POSITION.z + that._options.AREA.z / 2 + that._options.DELTA_Z;
-        that.wLabelMarker.material.opacity = that.parent._private.opacityGui * 0.01;
-        that.wLabelMarker.material.visible = that.isVisible() && !that.isClosed;
-
-        if (that.folderIsHidden) {
-            that.wLabelMarker.rotation.z = -Math.PI / 4 * 3;
-        } else {
-            that.wLabelMarker.rotation.z = -0.7853981;
-        }
+        var $ = that._options;
+        this.position.x = $.POSITION.x + 10;
+        this.position.y = $.POSITION.y - $.AREA.y / 2 - $.AREA.y * index;
+        this.position.z = $.POSITION.z + $.AREA.z / 2 + $.DELTA_Z;
+        this.material.opacity = that.parent._private.opacityGui * 0.01;
+        this.material.visible = that.isVisible() && !that.isClosed;
+        this.rotation.z = (that.folderIsHidden) ? -Math.PI / 4 * 3 : -0.7853981;
     };
     that.parent.scene.add(that.wLabelMarker);
 }
@@ -897,16 +903,15 @@ THREE.SimpleDatGuiControl.__internals.prototype.createMarker = function() {
 
     var that = this.control;
     var _geometry = new THREE.BoxGeometry(that._options.MARKER.x, that._options.MARKER.y, that._options.MARKER.z);
-    var _material = new THREE.MeshBasicMaterial({
-        transparent: true
-    });
+    var _material = new THREE.MeshBasicMaterial(that._options.MATERIAL);
     that.wMarker = new THREE.Mesh(_geometry, _material);
     that.wMarker.updateRendering = function(index) {
-        that.wMarker.position.x = that._options.POSITION.x + that._options.MARKER.x / 2 - 0.1;
-        that.wMarker.position.y = that._options.POSITION.y - that._options.AREA.y / 2 - that._options.AREA.y * index;
-        that.wMarker.position.z = that._options.POSITION.z + that._options.AREA.z / 2 + that._options.DELTA_Z;
-        that.wMarker.material.opacity = that.parent._private.opacityGui * 0.01;
-        that.wMarker.material.visible = that.isVisible() && !that.isClosed;
+        var $ = that._options;
+        this.position.x = $.POSITION.x + $.MARKER.x / 2 - 0.1;
+        this.position.y = $.POSITION.y - $.AREA.y / 2 - $.AREA.y * index;
+        this.position.z = $.POSITION.z + $.AREA.z / 2 + $.DELTA_Z;
+        this.material.opacity = that.parent._private.opacityGui * 0.01;
+        this.material.visible = that.isVisible() && !that.isClosed;
     };
     that.parent.scene.add(that.wMarker);
 }
@@ -936,39 +941,17 @@ THREE.SimpleDatGuiControl.__internals.prototype.createFrame = function() {
     var that = this.control;
     var _geometryBox = new THREE.BoxGeometry(that._options.AREA.x, that._options.AREA.y, 0.1);
     var _geometry = cubeGeometry2LineGeometry(_geometryBox);
-    that.wFrame = new THREE.Line(_geometry, new THREE.LineBasicMaterial({
-                color: 0x161616,
-                transparent: true
-    }));
+    that.wFrame = new THREE.Line(_geometry, new THREE.LineBasicMaterial(that._options.MATERIAL));
     that.wFrame.material.color.setHex(COLOR_BODER);
     that.wFrame.updateRendering = function(index) {
-        that.wFrame.position.x = that._options.POSITION.x + that._options.AREA.x / 2 - 0.1;
-        that.wFrame.position.y = that._options.POSITION.y - that._options.AREA.y / 2 - that._options.AREA.y * index;
-        that.wFrame.position.z = that._options.POSITION.z + that._options.AREA.z + that._options.DELTA_Z;
-        that.wFrame.material.opacity = that.parent._private.opacityGui * 0.01;
-        that.wFrame.material.visible = that.isVisible() && !that.isClosed;
+        var $ = that._options;
+        this.position.x = $.POSITION.x + $.AREA.x / 2 - 0.1;
+        this.position.y = $.POSITION.y - $.AREA.y / 2 - $.AREA.y * index;
+        this.position.z = $.POSITION.z + $.AREA.z + $.DELTA_Z;
+        this.material.opacity = that.parent._private.opacityGui * 0.01;
+        this.material.visible = that.isVisible() && !that.isClosed;
     };
     that.parent.scene.add(that.wFrame);
-}
-
-THREE.SimpleDatGuiControl.__internals.prototype.createArea = function() {
-    "use strict";
-
-    var that = this.control;
-    var _geometry = new THREE.BoxGeometry(that._options.AREA.x, that._options.AREA.y, that._options.AREA.z);
-    var _material = new THREE.MeshBasicMaterial({
-        transparent: true
-    });
-    that.wArea = new THREE.Mesh(_geometry, _material);
-    that.wArea.WebGLElement = that;
-    that.wArea.updateRendering = function(index) {
-        that.wArea.position.x = that._options.POSITION.x + that._options.AREA.x / 2;
-        that.wArea.position.y = that._options.POSITION.y - that._options.AREA.y / 2 - that._options.AREA.y * index;
-        that.wArea.position.z = that._options.POSITION.z + that._options.AREA.z / 2;
-        that.wArea.material.opacity = that.parent._private.opacityGui * 0.01;
-        that.wArea.material.visible = that.isVisible() && !that.isClosed;
-    };
-    that.parent.scene.add(that.wArea);
 }
 
 THREE.SimpleDatGuiControl.__internals.prototype.createCursor = function() {
@@ -976,20 +959,18 @@ THREE.SimpleDatGuiControl.__internals.prototype.createCursor = function() {
 
     var that = this.control;
     var _geometry = new THREE.BoxGeometry(0.5, that._options.TEXT.y * 0.8, 0.1);
-    var _material = new THREE.MeshBasicMaterial({
-        transparent: true
-    });
+    var _material = new THREE.MeshBasicMaterial(that._options.MATERIAL);
     this.control.wCursor = new THREE.Mesh(_geometry, _material);
     this.control.wCursor.updateRendering = function(index) {
+        var $ = that._options;
         var possiblePositon = that.textHelper.possibleCursorPositons[that.textHelper.cursor - that.textHelper.start];
         if (typeof possiblePositon !== "undefined") {
-            that.wCursor.position.x = that._options.POSITION.x + that._options.TAB_1.x + that.textHelper.residiumX
-                        + possiblePositon.x + 0.25;
-            that.wCursor.position.y = that._options.POSITION.y + that._options.AREA.y * (-0.5 - index);
-            that.wCursor.position.z = that._options.POSITION.z + that._options.AREA.z + that._options.DELTA_Z * 2;
-            that.wCursor.material.opacity = that.parent._private.opacityGui * 0.01;
-            that.wCursor.material.visible = that.isVisible() && that.isTextControl()
-                        && (that.parent._private.focus === that) && !that.isClosed;
+            this.position.x = $.POSITION.x + $.TAB_1.x + that.textHelper.residiumX + possiblePositon.x + 0.25;
+            this.position.y = $.POSITION.y + $.AREA.y * (-0.5 - index);
+            this.position.z = $.POSITION.z + $.AREA.z + $.DELTA_Z * 2;
+            this.material.opacity = that.parent._private.opacityGui * 0.01;
+            this.material.visible = that.isVisible() && that.isTextControl() && (that.parent._private.focus === that)
+                        && !that.isClosed;
         } else {
             that.wCursor.material.visible = false;
         }
@@ -1224,8 +1205,6 @@ THREE.SimpleDatGuiControl.prototype.isVisible = function() {
     return !this.isElementHidden;
 }
 
-// ////////////////////////////////////////////////////////////////////////////////////
-
 THREE.SimpleDatGuiTextHelper = function(options) {
     "use strict";
 
@@ -1241,8 +1220,9 @@ THREE.SimpleDatGuiTextHelper = function(options) {
 }
 
 /**
- * This is a workaround for the not always correct size of characters in the
- * font shapes. Replace all not working characters with similar size characters.
+ * This is a dirty workaround for the not always correct size of characters in
+ * the font shapes. Replace all not working characters with similar size
+ * characters.
  */
 THREE.SimpleDatGuiTextHelper.prototype.createFontShapes = function(value) {
     var valueNew = value
