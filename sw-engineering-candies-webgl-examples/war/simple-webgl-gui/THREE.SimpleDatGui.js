@@ -377,6 +377,9 @@ THREE.SimpleDatGui.prototype.getOptions = function() {
                 COLOR_VALUE_FIELD: '0x303030',
                 MATERIAL: {
                     transparent: true
+                },
+                FONT_PARAM: {
+                    size: font_size
                 }
     }
 }
@@ -726,12 +729,8 @@ THREE.SimpleDatGuiControl.__internals.prototype.createTextValue = function(value
         that.parent.scene.remove(that.wTextValue);
     }
 
-    var fontshapes = THREE.FontUtils.generateShapes(that.textHelper.truncated, {
-        size: that._options.FONT
-    });
-    var _geometry = new THREE.ShapeGeometry(fontshapes, {
-        curveSegments: 2
-    });
+    var _fontshapes = THREE.FontUtils.generateShapes(that.textHelper.truncated, that._options.FONT_PARAM);
+    var _geometry = new THREE.ShapeGeometry(_fontshapes);
     that.wTextValue = new THREE.Mesh(_geometry, new THREE.MeshBasicMaterial(that._options.MATERIAL));
     that.wTextValue.updateRendering = function(index) {
         var $ = that._options;
@@ -814,12 +813,8 @@ THREE.SimpleDatGuiControl.__internals.prototype.createNumberValue = function(val
     }
     var newValue = (typeof value === "number") ? value : 0;
     var digits = (parseInt(newValue) == newValue) ? 0 : 1;
-    var fontshapes = THREE.FontUtils.generateShapes(newValue.toFixed(digits), {
-        size: that._options.FONT
-    });
-    var _geometry = new THREE.ShapeGeometry(fontshapes, {
-        curveSegments: 2
-    });
+    var fontshapes = THREE.FontUtils.generateShapes(newValue.toFixed(digits), that._options.FONT_PARAM);
+    var _geometry = new THREE.ShapeGeometry(fontshapes);
     that.wValue = new THREE.Mesh(_geometry, new THREE.MeshBasicMaterial(that._options.MATERIAL));
     that.wValue.updateRendering = function(index) {
         var $ = that._options;
@@ -854,9 +849,7 @@ THREE.SimpleDatGuiControl.__internals.prototype.createCheckBoxes = function(even
     var fontshapes = THREE.FontUtils.generateShapes("X", {
         size: 7
     });
-    var _geometry = new THREE.ShapeGeometry(fontshapes, {
-        curveSegments: 2
-    });
+    var _geometry = new THREE.ShapeGeometry(fontshapes);
     var _material = new THREE.MeshLambertMaterial({
                 color: 0x000000,
                 depthTest: true,
@@ -881,12 +874,8 @@ THREE.SimpleDatGuiControl.__internals.prototype.createLabel = function(name) {
     if (typeof that.wLabel !== "undefined") {
         that.parent.scene.remove(that.wLabel);
     }
-    var fontshapes = THREE.FontUtils.generateShapes(name, {
-        size: that._options.FONT
-    });
-    var _geometry = new THREE.ShapeGeometry(fontshapes, {
-        curveSegments: 2
-    });
+    var fontshapes = THREE.FontUtils.generateShapes(name, that._options.FONT_PARAM);
+    var _geometry = new THREE.ShapeGeometry(fontshapes);
     that.wLabel = new THREE.Mesh(_geometry, new THREE.MeshBasicMaterial(that._options.MATERIAL));
     that.wLabel.updateRendering = function(index) {
         var $ = that._options;
