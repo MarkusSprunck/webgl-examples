@@ -20,7 +20,7 @@ body {
 	text-align: left;
 	padding-left: 10px;
 	padding-right: 10px;
-	padding-bottom: 10px;
+	padding-bottom: 15px;
 }
 </style>
 </head>
@@ -45,7 +45,8 @@ body {
                     FONT_SIZE: 175,
                     ROTATION_X_AXIS: true,
                     ROTATION_Y_AXIS: false,
-                    OPACITY: 100
+                    OPACITY: 100,
+                    SHOW_STATS: false
         };
     }
     var myOptions = myOptionsDefinition();
@@ -84,7 +85,7 @@ body {
 
         var light = new THREE.PointLight(0xAAAAAA);
         light.position.set(-100, 100, camera.position.z);
-        scene.add(light); 
+        scene.add(light);
 
         var yellowLight = new THREE.PointLight(0x666600);
         yellowLight.position.set(0, 0, 2 * camera.position.z);
@@ -129,6 +130,7 @@ body {
         folder1.add(myOptions, 'FONT_SIZE', 50, 250).step(25).name('Render Font Size').onChange(function(value) {
             addOrUpdateRotatingText(scene, myOptions.RENDER_TEXT);
         });
+        folder1.add(myOptions, 'SHOW_STATS').name('Show Stats');
         folder1.open();
 
         var folder2 = gui.addFolder("Opacity Options");
@@ -157,7 +159,7 @@ body {
         stats = new Stats();
         stats.domElement.style.position = 'absolute';
         stats.domElement.style.top = '10px';
-        stats.domElement.style.left = '10px';
+        stats.domElement.style.right = '10px';
         stats.domElement.style.zIndex = 100;
         document.body.appendChild(stats.domElement);
 
@@ -195,7 +197,11 @@ body {
         }
 
         trackbarControl.update();
-        stats.update();
+
+        stats.domElement.hidden = !myOptions.SHOW_STATS;
+        if (myOptions.SHOW_STATS) {
+            stats.update();
+        }
 
         renderer.render(scene, camera);
     }
