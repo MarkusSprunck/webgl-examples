@@ -29,7 +29,7 @@
 THREE.SimpleDatGui = function(parameters) {
     "use strict";
 
-    console.log('THREE.SimpleDatGui v0.63');
+    console.log('THREE.SimpleDatGui v0.64');
 
     // Mandatory parameters
     if ((typeof parameters === "undefined") || (typeof parameters.scene === "undefined")
@@ -54,6 +54,7 @@ THREE.SimpleDatGui = function(parameters) {
  */
 THREE.SimpleDatGui.prototype.addFolder = function(name) {
     "use strict";
+
     var result = new THREE.SimpleDatGuiControl(null, name, 0, 0, this, false, false, this._options);
     this._private.children.push(result);
     return result;
@@ -64,6 +65,7 @@ THREE.SimpleDatGui.prototype.addFolder = function(name) {
  */
 THREE.SimpleDatGui.prototype.add = function(object, property, minValue, maxValue) {
     "use strict";
+
     var result = new THREE.SimpleDatGuiControl(object, property, minValue, maxValue, this, false, true, this._options);
     this._private.children.push(result);
     return result;
@@ -74,6 +76,7 @@ THREE.SimpleDatGui.prototype.add = function(object, property, minValue, maxValue
  */
 THREE.SimpleDatGui.prototype.close = function() {
     "use strict";
+
     this._private.closed = true;
     this._internal.updateCloseButtonText();
     return this;
@@ -142,6 +145,7 @@ THREE.SimpleDatGui.prototype.update = function() {
  */
 THREE.SimpleDatGui.prototype.setOpacity = function(opacity) {
     "use strict";
+
     this._private.opacityGui = Math.max(20, Math.min(100, opacity));
     return this;
 }
@@ -150,6 +154,8 @@ THREE.SimpleDatGui.prototype.setOpacity = function(opacity) {
  * Internal implementation may change - please don't access directly
  */
 THREE.SimpleDatGui.__internals = function(gui) {
+    "use strict";
+
     this.gui = gui;
 
     // Status
@@ -181,13 +187,13 @@ THREE.SimpleDatGui.__internals = function(gui) {
 
     var that = this;
     window.addEventListener('keyup', function(event) {
-        if (that.getCharacterCode(event) === 16 /* 16 => SHIFT */) {
+        if (this._private.isKeyShift(that.getCharacterCode(event))) {
             that.shiftPressed = false;
         }
     }.bind(gui));
 
     window.addEventListener('keydown', function(event) {
-        if (that.getCharacterCode(event) === 16 /* 16 => SHIFT */) {
+        if (this._private.isKeyShift(that.getCharacterCode(event))) {
             that.shiftPressed = true;
         }
         gui._private.onKeyDownEvt(event);
@@ -225,58 +231,80 @@ THREE.SimpleDatGui.__internals.prototype.onKeyPressEvt = function(event) {
 THREE.SimpleDatGui.__internals.prototype.onKeyDownEvt = function(event) {
     "use strict";
 
-    function isKeyTab(code) {
-        return code === 9;
-    }
-
-    function isKeyEnter(code) {
-        return code === 13;
-    }
-
-    function isKeyPos1(code) {
-        return code === 36;
-    }
-
-    function isKeyEnd(code) {
-        return code === 35;
-    }
-
-    function isKeyLeft(code) {
-        return code === 37;
-    }
-
-    function isKeyRight(code) {
-        return code === 39;
-    }
-
-    function isKeyEnf(code) {
-        return code === 46;
-    }
-
-    function isKeyBackspace(code) {
-        return code === 8;
-    }
-
     var focus = this.gui._private.focus;
     if (focus !== null && focus.isTextControl()) {
         var charCode = this.getCharacterCode(event);
-        if (isKeyTab(charCode) || isKeyEnter(charCode)) {
+        if (this.isKeyTab(charCode) || this.isKeyEnter(charCode)) {
             this.acknowledgeInput();
-        } else if (isKeyPos1(charCode)) {
+        } else if (this.isKeyPos1(charCode)) {
             this.moveCursorToFirstCharacter();
-        } else if (isKeyEnd(charCode)) {
+        } else if (this.isKeyEnd(charCode)) {
             this.moveCursorToLastCharacter();
-        } else if (isKeyLeft(charCode)) {
+        } else if (this.isKeyLeft(charCode)) {
             this.moveCursorToPreviousCharacter(event);
-        } else if (isKeyRight(charCode)) {
+        } else if (this.isKeyRight(charCode)) {
             this.moveCursorToNextCharacter(event);
-        } else if (isKeyEnf(charCode)) {
+        } else if (this.isKeyEnf(charCode)) {
             this.deleteNextCharacter();
-        } else if (isKeyBackspace(charCode)) {
+        } else if (this.isKeyBackspace(charCode)) {
             this.deletePreviousCharacter();
             event.preventDefault();
         }
     }
+}
+
+THREE.SimpleDatGui.__internals.prototype.isKeyTab = function(code) {
+    "use strict";
+
+    return code === 9;
+}
+
+THREE.SimpleDatGui.__internals.prototype.isKeyEnter = function(code) {
+    "use strict";
+
+    return code === 13;
+}
+
+THREE.SimpleDatGui.__internals.prototype.isKeyPos1 = function(code) {
+    "use strict";
+
+    return code === 36;
+}
+
+THREE.SimpleDatGui.__internals.prototype.isKeyEnd = function(code) {
+    "use strict";
+
+    return code === 35;
+}
+
+THREE.SimpleDatGui.__internals.prototype.isKeyLeft = function(code) {
+    "use strict";
+
+    return code === 37;
+}
+
+THREE.SimpleDatGui.__internals.prototype.isKeyRight = function(code) {
+    "use strict";
+
+    return code === 39;
+}
+
+THREE.SimpleDatGui.__internals.prototype.isKeyEnf = function(code) {
+    "use strict";
+
+    return code === 46;
+}
+
+THREE.SimpleDatGui.__internals.prototype.isKeyBackspace = function(code) {
+    "use strict";
+
+    return code === 8;
+}
+
+THREE.SimpleDatGui.__internals.prototype.isKeyShift = function(code) {
+    "use strict";
+
+    return code === 16;
 }
 
 THREE.SimpleDatGui.__internals.prototype.onMouseDownEvt = function(event) {
@@ -308,6 +336,8 @@ THREE.SimpleDatGui.__internals.prototype.onMouseDownEvt = function(event) {
  * Ensures compatibility between different browsers, i.e. Chrome, Firefox, IE
  */
 THREE.SimpleDatGui.__internals.prototype.getCharacterCode = function(event) {
+    "use strict";
+
     event = event || window.event;
     var charCode = (typeof event.which == "number") ? event.which : event.keyCode;
     return charCode;
@@ -636,6 +666,8 @@ THREE.SimpleDatGuiControl = function(object, property, minValue, maxValue, paren
 }
 
 THREE.SimpleDatGuiControl.__internals = function(control) {
+    "use strict";
+
     this.control = control;
 };
 
@@ -660,6 +692,7 @@ THREE.SimpleDatGuiControl.__internals.prototype.createArea = function() {
 
 THREE.SimpleDatGuiControl.__internals.prototype.createValueSliderBar = function(scaling) {
     "use strict";
+
     var that = this.control;
 
     if (typeof that.wValueSliderBar !== "undefined") {
@@ -686,6 +719,7 @@ THREE.SimpleDatGuiControl.__internals.prototype.createValueSliderBar = function(
 
 THREE.SimpleDatGuiControl.__internals.prototype.createTextValue = function(value) {
     "use strict";
+
     var that = this.control;
 
     if (typeof that.wTextValue !== "undefined") {
@@ -712,6 +746,7 @@ THREE.SimpleDatGuiControl.__internals.prototype.createTextValue = function(value
 
 THREE.SimpleDatGuiControl.__internals.prototype.createValueTextField = function(event) {
     "use strict";
+
     var that = this.control;
     var _geometry = new THREE.BoxGeometry(that._options.TEXT.x, that._options.TEXT.y, that._options.TEXT.z);
     var _material = new THREE.MeshBasicMaterial(that._options.MATERIAL);
@@ -894,10 +929,11 @@ THREE.SimpleDatGuiControl.__internals.prototype.createLabelMarker = function() {
         this.position.z = $.POSITION.z + $.AREA.z / 2 + $.DELTA_Z;
         this.material.opacity = that.parent._private.opacityGui * 0.01;
         this.material.visible = that.isVisible() && !that.isClosed;
-        this.rotation.z = (that.folderIsHidden) ? -Math.PI / 4 * 3 : -0.7853981;
+        this.rotation.z = (that.folderIsHidden) ? -Math.PI / 4 * 3 : -Math.PI / 4;
     };
     that.parent.scene.add(that.wLabelMarker);
 }
+
 THREE.SimpleDatGuiControl.__internals.prototype.createMarker = function() {
     "use strict";
 
@@ -1019,6 +1055,7 @@ THREE.SimpleDatGuiControl.prototype.updateRendering = function(index, isClosed) 
 
 THREE.SimpleDatGuiControl.prototype.onChange = function(value) {
     "use strict";
+
     this.isOnChangeExisting = true;
     this.onChangeCallback = value;
     return this;
@@ -1026,6 +1063,7 @@ THREE.SimpleDatGuiControl.prototype.onChange = function(value) {
 
 THREE.SimpleDatGuiControl.prototype.add = function(object, property, minValue, maxValue) {
     "use strict";
+
     var element = new THREE.SimpleDatGuiControl(object, property, minValue, maxValue, this.parent, false, false,
                 this._options);
     this._private.children.push(element);
@@ -1034,6 +1072,7 @@ THREE.SimpleDatGuiControl.prototype.add = function(object, property, minValue, m
 
 THREE.SimpleDatGuiControl.prototype.name = function(value) {
     "use strict";
+
     this.label = value;
     this._private.createLabel(this.label);
     return this;
@@ -1041,6 +1080,7 @@ THREE.SimpleDatGuiControl.prototype.name = function(value) {
 
 THREE.SimpleDatGuiControl.prototype.executeCallback = function(event) {
     "use strict";
+
     if (this.isFunctionControl()) {
         this.onChangeCallback(null);
         return;
@@ -1064,6 +1104,7 @@ THREE.SimpleDatGuiControl.prototype.executeCallback = function(event) {
 
 THREE.SimpleDatGuiControl.prototype.updateColor = function() {
     "use strict";
+
     var COLOR_SELECTED = '0x010101';
 
     var COLOR_SELECTED_TEXT = '0xFFFFFF';
@@ -1127,12 +1168,15 @@ THREE.SimpleDatGuiControl.prototype.updateColor = function() {
 }
 
 THREE.SimpleDatGuiControl.prototype.listen = function() {
+    "use strict";
+
     console.warn('The listen method is depricated.');
     return this;
 }
 
 THREE.SimpleDatGuiControl.prototype.listenInternal = function() {
     "use strict";
+
     var that = this;
     this.updateTimer = setInterval(function() {
         if (that.isSliderControl()) {
@@ -1160,12 +1204,14 @@ THREE.SimpleDatGuiControl.prototype.listenInternal = function() {
 
 THREE.SimpleDatGuiControl.prototype.step = function(value) {
     "use strict";
+
     this.step = value;
     return this;
 }
 
 THREE.SimpleDatGuiControl.prototype.open = function() {
     "use strict";
+
     if (this.isElementFolder) {
         this.folderIsHidden = !this.folderIsHidden;
         this.updateChildrenHidden();
@@ -1175,6 +1221,7 @@ THREE.SimpleDatGuiControl.prototype.open = function() {
 
 THREE.SimpleDatGuiControl.prototype.updateChildrenHidden = function() {
     "use strict";
+
     this._private.children.forEach(function(entry) {
         entry.isElementHidden = !entry.isElementHidden;
     });
@@ -1182,26 +1229,31 @@ THREE.SimpleDatGuiControl.prototype.updateChildrenHidden = function() {
 
 THREE.SimpleDatGuiControl.prototype.isCheckBoxControl = function() {
     "use strict";
+
     return this.propertyType === 'boolean';
 }
 
 THREE.SimpleDatGuiControl.prototype.isTextControl = function() {
     "use strict";
+
     return this.propertyType === 'string';
 }
 
 THREE.SimpleDatGuiControl.prototype.isSliderControl = function() {
     "use strict";
+
     return this.propertyType === 'number';
 }
 
 THREE.SimpleDatGuiControl.prototype.isFunctionControl = function() {
     "use strict";
+
     return this.propertyType === 'function';
 }
 
 THREE.SimpleDatGuiControl.prototype.isVisible = function() {
     "use strict";
+
     return !this.isElementHidden;
 }
 
@@ -1225,6 +1277,8 @@ THREE.SimpleDatGuiTextHelper = function(options) {
  * characters.
  */
 THREE.SimpleDatGuiTextHelper.prototype.createFontShapes = function(value) {
+    "use strict";
+
     var valueNew = value
     valueNew = valueNew.split(" ").join("]");
     valueNew = valueNew.split('"').join("°");
@@ -1330,6 +1384,7 @@ THREE.SimpleDatGuiTextHelper.prototype.calculateLeftAlignText = function(value) 
 }
 
 THREE.SimpleDatGuiTextHelper.prototype.calculateAlignTextLastCall = function(value) {
+    "use strict";
 
     if (!this.isTruncated) { return this.calculateLeftAlignText(value); }
 
