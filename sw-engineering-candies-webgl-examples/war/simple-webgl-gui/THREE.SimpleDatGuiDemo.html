@@ -136,6 +136,7 @@ body {
         var folder2 = gui.addFolder("Opacity Options");
         folder2.add(myOptions, 'OPACITY_AUTOMATIC').name('Run Animation');
         folder2.add(myOptions, 'OPACITY', 10, 100).step(10).name('Value');
+        folder2.open();
 
         // Add event listeners
         window.addEventListener('resize', onWindowResize, false);
