@@ -30,6 +30,8 @@ body {
 <script src="./lib/stats.min.js"></script>
 <!-- Imports for THREE.SimpleDatGui | START -->
 <script src="./lib/helvetiker_regular.typeface.js"></script>
+<script src="./lib/gentilis_regular.typeface.js"></script>
+<script src="./lib/optimer_regular.typeface.js"></script>
 <script src="./THREE.SimpleDatGui.js"></script>
 <!-- Imports for THREE.SimpleDatGui | END   -->
 <div class="absoluteTitle">THREE.SimpleDatGui is rendered in WebGL based on three.js without any other 3rd party library. You may use your mouse wheel to zoom and the left mouse button to rotate the scene. A click with the right mouse button resets the position of the scene. Read more <a href="http://www.sw-engineering-candies.com/blog-1/three-simpledatgui-a-simple-user-interface-for-webgl-with-the-look-feel-of-dat-gui">here</a>.
@@ -39,13 +41,14 @@ body {
     function myOptionsDefinition() {
         "use strict";
         return {
-                    RENDER_TEXT: "Edit here",
+                    RENDER_TEXT: "change me",
                     OPACITY_AUTOMATIC: false,
-                    ROTATION_SPEED: 1.0,
-                    FONT_SIZE: 175,
+                    ROTATION_SPEED: 2.5,
+                    FONT_SIZE: 150,
                     ROTATION_X_AXIS: true,
                     ROTATION_Y_AXIS: false,
-                    OPACITY: 100,
+                    OPACITY: 90,
+                    FONT_NAME: "gentilis",
                     SHOW_STATS: false
         };
     }
@@ -84,7 +87,7 @@ body {
         // Add lights
 
         var yellowLight = new THREE.PointLight(0xFFFF00);
-        yellowLight.position.set(-800, 800, 2*camera.position.z);
+        yellowLight.position.set(-800, 800, 2 * camera.position.z);
         scene.add(yellowLight);
 
         var hemiLight = new THREE.HemisphereLight(0xffffff, 0xffffff, 0.6);
@@ -133,6 +136,10 @@ body {
             addOrUpdateRotatingText(scene, myOptions.RENDER_TEXT);
         });
         folder1.add(myOptions, 'SHOW_STATS').name('Show Stats');
+        folder1.add(myOptions, 'FONT_NAME', ['helvetiker', 'gentilis', 'optimer']).name('Font').onChange(
+                    function(value) {
+                        addOrUpdateRotatingText(scene, myOptions.RENDER_TEXT);
+                    });
         folder1.open();
 
         var folder2 = gui.addFolder("Opacity Options");
@@ -224,6 +231,7 @@ body {
         var geometry = new THREE.TextGeometry(myOptions.RENDER_TEXT, {
                     height: myOptions.FONT_SIZE / 10,
                     size: myOptions.FONT_SIZE,
+                    font: myOptions.FONT_NAME,
                     bevelSize: 1.5,
                     bevelThickness: 1.2,
                     bevelSegments: 4,
