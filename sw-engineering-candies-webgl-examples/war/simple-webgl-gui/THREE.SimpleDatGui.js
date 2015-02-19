@@ -236,31 +236,54 @@ THREE.SimpleDatGui.__internals.prototype.onMouseDownEvt = function(event) {
             this.gui._private.selected = element;
 
             if (element.isComboBoxControl() && element.isExpanded) {
+                var oldText = element.newText;
                 element.newText = element.selectedFieldText;
                 element.object[element.property] = element.newText;
                 element.isExpanded = false;
                 element.textHelper.calculateLeftAlignText(element.newText);
                 element._private.createComboBoxText();
-                element.executeCallback();
-            } else if (element.isSliderControl()) {
+                if (oldText != element.newText) {
+                    element.executeCallback();
+                }
+                return;
+            }
+
+            if (element.isSliderControl()) {
                 this.setNewSliderValueFromMouseDownEvt(intersects);
                 element.executeCallback();
-            } else if (element.isComboBoxControl()) {
+                return;
+            }
+
+            if (element.isComboBoxControl()) {
                 element.isExpanded = !element.isExpanded;
+                return;
+            }
+
+            if (element.isFunctionControl()) {
                 element.executeCallback();
-            } else if (element.isFunctionControl()) {
-                element.executeCallback();
-            } else if (element.isTextControl()) {
+                return;
+            }
+            if (element.isTextControl()) {
                 this.setNewCursorFromMouseDownEvt(intersects);
                 this.createDummyTextInputToShowKeyboard(event.clientY);
-            } else if (element.isCheckBoxControl()) {
+                return;
+            }
+
+            if (element.isCheckBoxControl()) {
                 element.object[element.property] = !element.object[this.gui._private.focus.property];
                 element.executeCallback();
-            } else if (element === this.gui._private.closeButton) {
+                return;
+            }
+
+            if (element === this.gui._private.closeButton) {
                 this.gui._private.toggleClosed();
                 element.executeCallback();
-            } else if (element.isElementFolder) {
+                return;
+            }
+
+            if (element.isElementFolder) {
                 element.executeCallback();
+                return;
             }
 
         } else if (this.comboBox != null) {
@@ -1008,7 +1031,7 @@ THREE.SimpleDatGuiControl.__internals.prototype.createMarker = function() {
     var COLOR_MARKER_NUMBER = '0x2fa1d6';
     var COLOR_MARKER_CLOSE_SELECTED = '0x121212';
     var COLOR_MARKER_CLOSE = '0x010101';
-   
+
     var that = this.control;
     var _geometry = new THREE.BoxGeometry(that._options.MARKER.x, that._options.MARKER.y, that._options.MARKER.z);
     var _material = new THREE.MeshBasicMaterial(that._options.MATERIAL);
@@ -1145,35 +1168,33 @@ THREE.SimpleDatGuiControl.__internals.prototype.createComboBoxListFields = funct
         wComboBoxListField.visible = false;
         wComboBoxListField.WebGLElement = that;
         wComboBoxListField.text = text;
-        wComboBoxListField.updateRendering = function(index, filedIndex) {
+        wComboBoxListField.updateRendering = function(index, fIndex) {
             var $ = that._options;
-            this.parentOfComboBoxListField = that;
             this.position.x = $.POSITION.x + $.TAB_1.x + $.TEXT.x / 2;
-            this.position.y = $.POSITION.y + $.AREA.y * (-0.5 - index) - (1 + filedIndex) * $.TEXT.y;
+            this.position.y = $.POSITION.y + $.AREA.y * (-0.5 - index) - (1 + fIndex) * $.TEXT.y;
             this.position.z = $.POSITION.z + $.AREA.z + $.DELTA_Z * 3;
             this.material.opacity = that.parent._private.opacityGui * 0.01;
             this.visible = that.isVisible() && that.isExpanded && !that.isClosed;
             this.material.color
-                        .setHex((that.selectedFieldText === that.comboBoxList[filedIndex]) ? 0x2fa1d6 : 0xFFFFFF);
+                        .setHex((that.selectedFieldText === that.comboBoxList[fIndex]) ? 0x2fa1d6 : 0xFFFFFF);
         };
         that.parent.scene.add(wComboBoxListField);
+        that.wComboBoxListFields.push(wComboBoxListField);
 
         // Text
         var _fontshapes = THREE.FontUtils.generateShapes(text, that._options.FONT_PARAM);
         var _geometry = new THREE.ShapeGeometry(_fontshapes);
         var wComboBoxTextValue = new THREE.Mesh(_geometry, new THREE.MeshBasicMaterial(that._options.MATERIAL));
+        wComboBoxTextValue.material.color.setHex(0x000000);
         wComboBoxTextValue.updateRendering = function(index, filedIndex) {
             var $ = that._options;
             this.position.x = $.POSITION.x + $.TAB_1.x + that.textHelper.residiumX;
             this.position.y = $.POSITION.y + $.AREA.y * (-0.5 - index) - $.LABEL_OFFSET_Y - (1 + filedIndex) * $.TEXT.y;
             this.position.z = $.POSITION.z + $.AREA.z + $.DELTA_Z * 4;
             this.material.opacity = that.parent._private.opacityGui * 0.01;
-            this.material.color.setHex(0x000000);
             this.visible = that.isVisible() && that.isExpanded && !that.isClosed;
         };
         that.parent.scene.add(wComboBoxTextValue);
-
-        that.wComboBoxListFields.push(wComboBoxListField);
         that.wComboBoxListTexts.push(wComboBoxTextValue);
     }
 
@@ -1337,27 +1358,22 @@ THREE.SimpleDatGuiControl.prototype.name = function(value) {
 THREE.SimpleDatGuiControl.prototype.executeCallback = function(event) {
     "use strict";
 
+    console.log("executeCallback " + event);
+
     if (this.isFunctionControl()) {
         this.onChangeCallback(null);
-        return;
-    }
-    if (this.isOnChangeExisting) {
+    } else if (this.isElementFolder) {
+        this.open();
+    } else if (this.isOnChangeExisting) {
         if (this.isCheckBoxControl()) {
             this.onChangeCallback(this.object[this.property]);
-            return;
         } else if (this.isTextControl()) {
             this.onChangeCallback(this.object[this.property]);
-            return;
         } else if (this.isSliderControl()) {
             this.onChangeCallback(this.object[this.property]);
-            return;
         } else if (this.isComboBoxControl()) {
             this.onChangeCallback(this.object[this.property]);
-            return;
         }
-    }
-    if (this.isElementFolder) {
-        this.open();
     }
 }
 

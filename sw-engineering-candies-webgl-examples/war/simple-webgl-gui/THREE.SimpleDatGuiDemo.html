@@ -123,7 +123,7 @@ body {
                     position: new THREE.Vector3(-140, 130, 140)
         });
 
-        gui.add(objFunctions, 'RESET_EVENT').name('Reset Position');
+        gui.add(objFunctions, 'RESET_EVENT').name('Reset Position of User Interface');
         gui.add(myOptions, 'RENDER_TEXT').name('Render Text').onChange(function(value) {
             addOrUpdateRotatingText(scene, myOptions.RENDER_TEXT);
         });
