@@ -47,7 +47,7 @@ body {
                     FONT_SIZE: 150,
                     ROTATION_X_AXIS: true,
                     ROTATION_Y_AXIS: false,
-                    OPACITY: 90,
+                    OPACITY: 100,
                     FONT_NAME: "gentilis",
                     SHOW_STATS: false
         };
@@ -68,7 +68,7 @@ body {
         renderer = new THREE.WebGLRenderer({
             antialias: true
         });
-        renderer.setClearColor(0x000000);
+        renderer.setClearColor(0x444444);
         renderer.setPixelRatio(window.devicePixelRatio);
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(renderer.domElement);
