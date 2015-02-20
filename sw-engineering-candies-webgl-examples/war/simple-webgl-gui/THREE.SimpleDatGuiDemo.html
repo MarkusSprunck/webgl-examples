@@ -120,7 +120,7 @@ body {
                     camera: camera,
                     renderer: renderer,
                     width: 280,
-                    position: new THREE.Vector3(-140, 130, 140)
+                    position: new THREE.Vector3(-140, 130, 25)
         });
 
         gui.add(objFunctions, 'RESET_EVENT').name('Reset Position of User Interface');
@@ -132,7 +132,13 @@ body {
         folder1.add(myOptions, 'ROTATION_X_AXIS').name('Rotate X');
         folder1.add(myOptions, 'ROTATION_Y_AXIS').name('Rotate Y');
         folder1.add(myOptions, 'ROTATION_SPEED', -5, 5).step(0.5).name('Rotation Speed');
-        folder1.add(myOptions, 'FONT_SIZE', 50, 250).step(25).name('Render Font Size').onChange(function(value) {
+        folder1.add(myOptions, 'FONT_SIZE', {
+                    S: 50,
+                    M: 100,
+                    L: 150,
+                    XL: 200,
+                    XXL: 250
+        }).name('Render Font Size').onChange(function(value) {
             addOrUpdateRotatingText(scene, myOptions.RENDER_TEXT);
         });
         folder1.add(myOptions, 'SHOW_STATS').name('Show Stats');
@@ -234,7 +240,7 @@ body {
                     font: myOptions.FONT_NAME,
                     bevelSize: 1.5,
                     bevelThickness: 1.2,
-                    bevelSegments: 4,
+                    bevelSegments: 8,
                     bevelEnabled: true
         });
         var material = new THREE.MeshPhongMaterial({
