@@ -138,15 +138,14 @@ body {
                     renderer: renderer,
                     width: guiWidth,
                     scale: 2.0,
-                    position: new THREE.Vector3(-width / 2, height / 2, 1)
+                    position: new THREE.Vector3(10 - width / 2, height / 2 - 10, 1)
         });
-
+        gui.add(objFunctions, 'RESET_EVENT').name('Reset Position');
         gui.add(myOptions, 'RENDER_TEXT').name('Render Text').onChange(function(value) {
             addOrUpdateRotatingText(scene, myOptions.RENDER_TEXT);
         });
-
+   
         var folder1 = gui.addFolder("Rendering");
-        folder1.add(objFunctions, 'RESET_EVENT').name('Reset Position');
         folder1.add(myOptions, 'SHOW_STATS').name('Show Stats');
         folder1.add(myOptions, 'ROTATION_X_AXIS').name('Rotation Active');
         folder1.add(myOptions, 'ROTATION_SPEED', -5, 5).step(0.5).name('Rotation Speed');
@@ -214,7 +213,7 @@ body {
 
             // Udpate position of GUI
             gui.update({
-                position: new THREE.Vector3(-window.innerWidth / 2, window.innerHeight / 2, 1)
+                position: new THREE.Vector3(10 - window.innerWidth / 2, window.innerHeight / 2 - 10, 1)
             });
         } else {
             cameraHUD.aspect = window.innerWidth / window.innerHeight;
