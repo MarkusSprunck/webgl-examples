@@ -29,7 +29,7 @@
 THREE.SimpleDatGui = function(parameters) {
     "use strict";
 
-    console.log('THREE.SimpleDatGui v0.71');
+    console.log('THREE.SimpleDatGui v0.8');
 
     // Mandatory parameters
     if ((typeof parameters === "undefined") || (typeof parameters.scene === "undefined")
@@ -41,8 +41,9 @@ THREE.SimpleDatGui = function(parameters) {
     this.renderer = parameters.renderer;
 
     // Optional parameters
-    this.width = (parameters.width !== undefined) ? parameters.width : 300;
+    this.width = (parameters.width !== undefined) ? parameters.width * parameters.scale : 300;
     this.position = (parameters.position !== undefined) ? parameters.position : new THREE.Vector3(-150, 100, 150);
+    this.scale = (parameters.scale !== undefined) ? parameters.scale : 1;
 
     // For internal use only
     this._options = this.getOptions();
@@ -88,8 +89,13 @@ THREE.SimpleDatGui.prototype.close = function() {
  * element there happens the update of visibility, color and sensitivity to
  * mouse events.
  */
-THREE.SimpleDatGui.prototype.update = function() {
+THREE.SimpleDatGui.prototype.update = function(parameters) {
     "use strict";
+
+    if (parameters !== undefined && parameters.position !== undefined) {
+        this.position = parameters.position;
+        this._options.POSITION = this.position;
+    }
 
     // UPDATE RENDERING OF ALL CONTROLS
     var that = this;
@@ -209,8 +215,8 @@ THREE.SimpleDatGui.__internals = function(gui) {
 THREE.SimpleDatGui.__internals.prototype.onMouseMoveEvt = function(event) {
     "use strict";
 
-    var intersects = this.getIntersectingObjects(this.getMousePositon(event));
-    if (intersects.length > 0) {
+    var intersects = this.getIntersectingObjects(event);
+    if (null != intersects && intersects.length > 0) {
         var element = intersects[0].object.WebGLElement;
         if (element.isComboBoxControl() && element.isExpanded) {
             element.selectedFieldText = intersects[0].object.text;
@@ -228,8 +234,8 @@ THREE.SimpleDatGui.__internals.prototype.onMouseDownEvt = function(event) {
 
     if (event.which == 1 /* Left mouse button */) {
 
-        var intersects = this.getIntersectingObjects(this.getMousePositon(event));
-        if (intersects.length > 0) {
+        var intersects = this.getIntersectingObjects(event);
+        if (null != intersects && intersects.length > 0) {
 
             // Set focus and selection on this control
             var element = intersects[0].object.WebGLElement;
@@ -238,7 +244,7 @@ THREE.SimpleDatGui.__internals.prototype.onMouseDownEvt = function(event) {
 
             if (element.isComboBoxControl() && element.isExpanded) {
                 var oldText = element.newText;
-                if (this.isAcceptedValues) {
+                if (element.isAcceptedValues) {
                     element.newText = element.selectedFieldText;
                     element.object[element.property] = element.newText;
                 } else {
@@ -407,22 +413,23 @@ THREE.SimpleDatGui.__internals.prototype.isKeyShift = function(code) {
 
 THREE.SimpleDatGui.prototype.getOptions = function() {
     "use strict";
-
-    var area_size = new THREE.Vector3(this.width, 20, 2.0);
-    var delta_z = 0.1;
-    var delta_z_order = 0.1;
-    var font_size = 7;
-    var rightBorder = 4;
-    var text_offset_x = 2;
-    var text_field_size = new THREE.Vector3(0.6 * area_size.x - rightBorder, 14, delta_z);
-    var valueFiledSize = new THREE.Vector3(0.2 * area_size.x, 14, delta_z);
-    var labelTab1 = new THREE.Vector3(0.4 * area_size.x, 20, delta_z);
-    var labelTab2 = new THREE.Vector3(area_size.x - rightBorder - valueFiledSize.x, 20, delta_z);
-    var slider_field_size = new THREE.Vector3(labelTab2.x - labelTab1.x - rightBorder, 14, delta_z);
-    var marker_size = new THREE.Vector3(3, area_size.y, area_size.z);
-    var checkbox_filed_size = new THREE.Vector3(10, 10, delta_z);
+    var scale = this.scale;
+    var area_size = new THREE.Vector3(this.width, 20 * scale, 2.0 * scale);
+    var delta_z = 0.1 * scale;
+    var delta_z_order = 0.1 * scale;
+    var font_size = 7 * scale;
+    var rightBorder = 4 * scale;
+    var text_offset_x = 2 * scale;
+    var text_field_size = new THREE.Vector3(0.6 * area_size.x - rightBorder, 14 * scale, delta_z);
+    var valueFiledSize = new THREE.Vector3(0.2 * area_size.x, 14 * scale, delta_z);
+    var labelTab1 = new THREE.Vector3(0.4 * area_size.x, 20 * scale, delta_z);
+    var labelTab2 = new THREE.Vector3(area_size.x - rightBorder - valueFiledSize.x, 20 * scale, delta_z);
+    var slider_field_size = new THREE.Vector3(labelTab2.x - labelTab1.x - rightBorder, 14 * scale, delta_z);
+    var marker_size = new THREE.Vector3(3 * scale, area_size.y, area_size.z);
+    var checkbox_filed_size = new THREE.Vector3(10 * scale, 10 * scale, delta_z);
 
     return {
+                SCALE: scale,
                 AREA: area_size,
                 CHECKBOX: checkbox_filed_size,
                 DELTA_Z: delta_z,
@@ -437,7 +444,7 @@ THREE.SimpleDatGui.prototype.getOptions = function() {
                 TAB_1: labelTab1,
                 TAB_2: labelTab2,
                 TEXT: text_field_size,
-                LABEL_OFFSET_Y: 4,
+                LABEL_OFFSET_Y: 4 * scale,
                 COLOR_VALUE_FIELD: '0x303030',
                 MATERIAL: {
                     transparent: true
@@ -590,10 +597,28 @@ THREE.SimpleDatGui.__internals.prototype.getMousePositon = function(event) {
 THREE.SimpleDatGui.__internals.prototype.getIntersectingObjects = function(mouse) {
     "use strict";
 
-    var vector = new THREE.Vector3(mouse.x, mouse.y, 0.5);
-    vector.unproject(this.gui.camera);
-    var raycaster = new THREE.Raycaster(this.gui.camera.position, vector.sub(this.gui.camera.position).normalize());
-    return raycaster.intersectObjects(this.gui._private.mouseBindings);
+    this.gui.isPerspectiveCamera = true;
+    if ("PerspectiveCamera" === this.gui.camera.type) {
+        var domElement = this.gui.renderer.domElement;
+        var mouse = {};
+        mouse.x = ((event.clientX) / (window.innerWidth - domElement.offsetLeft)) * 2 - 1;
+        mouse.y = -((event.clientY - domElement.offsetTop) / (domElement.clientHeight)) * 2 + 1;
+        var vector = new THREE.Vector3(mouse.x, mouse.y, 0.5);
+        vector.unproject(this.gui.camera);
+        var raycaster = new THREE.Raycaster(this.gui.camera.position, vector.sub(this.gui.camera.position).normalize());
+        return raycaster.intersectObjects(this.gui._private.mouseBindings);
+    } else if ("OrthographicCamera" === this.gui.camera.type) {
+        var vector = new THREE.Vector3();
+        var raycaster = new THREE.Raycaster();
+        var dir = new THREE.Vector3();
+        vector.set((event.clientX / window.innerWidth) * 2 - 1, -(event.clientY / window.innerHeight) * 2 + 1, -1);
+        vector.unproject(this.gui.camera);
+        dir.set(0, 0, -1).transformDirection(this.gui.camera.matrixWorld);
+        raycaster.set(vector, dir);
+        return raycaster.intersectObjects(this.gui._private.mouseBindings);
+    } else {
+        return null;
+    }
 }
 
 THREE.SimpleDatGui.__internals.prototype.setNewSliderValueFromMouseDownEvt = function(intersects) {
@@ -958,7 +983,7 @@ THREE.SimpleDatGuiControl.__internals.prototype.createCheckBoxes = function(even
 
     // CREATE CHECKBOX MARKER
     var fontshapes = THREE.FontUtils.generateShapes("X", {
-        size: 7
+        size: 7 * that._options.SCALE
     });
     var _geometry = new THREE.ShapeGeometry(fontshapes);
     var _material = new THREE.MeshLambertMaterial({
@@ -970,8 +995,8 @@ THREE.SimpleDatGuiControl.__internals.prototype.createCheckBoxes = function(even
     that.wBoxChecked.visible = false;
     that.wBoxChecked.updateRendering = function(index) {
         var $ = that._options;
-        this.position.x = $.POSITION.x + $.TAB_1.x + $.CHECKBOX.x / 2 - 3;
-        this.position.y = $.POSITION.y + $.AREA.y * (-0.5 - index) - 3.5;
+        this.position.x = $.POSITION.x + $.TAB_1.x + $.CHECKBOX.x / 2 - 3 * $.SCALE;
+        this.position.y = $.POSITION.y + $.AREA.y * (-0.5 - index) - 3.5 * $.SCALE;
         this.position.z = $.POSITION.z + $.AREA.z + $.DELTA_Z_ORDER * 2;
         this.material.opacity = that.parent._private.opacityGui * 0.01;
         this.visible = that.isVisible() && that.object[that.property] && !that.isClosed;
@@ -991,9 +1016,9 @@ THREE.SimpleDatGuiControl.__internals.prototype.createLabel = function(name) {
     that.wLabel = new THREE.Mesh(_geometry, new THREE.MeshBasicMaterial(that._options.MATERIAL));
     that.wLabel.updateRendering = function(index) {
         var $ = that._options;
-        var WEBGL_CLOSE_LABEL_OFFSET_X = 30;
-        var LABEL_OFFSET_X = 10;
-        var folderOffset = (that.isElementFolder) ? 8 : 0;
+        var WEBGL_CLOSE_LABEL_OFFSET_X = 30 * $.SCALE;
+        var LABEL_OFFSET_X = 10 * $.SCALE;
+        var folderOffset = (that.isElementFolder) ? 8 * $.SCALE : 0;
         this.position.x = $.POSITION.x
                     + ((that.isCloseButton) ? ($.AREA.x / 2 - WEBGL_CLOSE_LABEL_OFFSET_X)
                                 : (LABEL_OFFSET_X + folderOffset));
@@ -1010,9 +1035,9 @@ THREE.SimpleDatGuiControl.__internals.prototype.createLabelMarker = function() {
 
     var that = this.control;
     var _geometry = new THREE.Geometry();
-    var v1 = new THREE.Vector3(-2, 2, that._options.MARKER.z);
-    var v3 = new THREE.Vector3(2, 2, that._options.MARKER.z);
-    var v2 = new THREE.Vector3(2, -2, that._options.MARKER.z);
+    var v1 = new THREE.Vector3(-2 * that._options.SCALE, 2 * that._options.SCALE, that._options.MARKER.z);
+    var v3 = new THREE.Vector3(2 * that._options.SCALE, 2 * that._options.SCALE, that._options.MARKER.z);
+    var v2 = new THREE.Vector3(2 * that._options.SCALE, -2 * that._options.SCALE, that._options.MARKER.z);
     _geometry.vertices.push(v1);
     _geometry.vertices.push(v2);
     _geometry.vertices.push(v3);
@@ -1025,7 +1050,7 @@ THREE.SimpleDatGuiControl.__internals.prototype.createLabelMarker = function() {
     that.wLabelMarker = new THREE.Mesh(_geometry, _material);
     that.wLabelMarker.updateRendering = function(index) {
         var $ = that._options;
-        this.position.x = $.POSITION.x + 10;
+        this.position.x = $.POSITION.x + 10 * $.SCALE;
         this.position.y = $.POSITION.y - $.AREA.y / 2 - $.AREA.y * index;
         this.position.z = $.POSITION.z + $.AREA.z / 2 + $.DELTA_Z_ORDER;
         this.material.opacity = that.parent._private.opacityGui * 0.01;
@@ -1065,7 +1090,7 @@ THREE.SimpleDatGuiControl.__internals.prototype.createMarker = function() {
     }
     that.wMarker.updateRendering = function(index) {
         var $ = that._options;
-        this.position.x = $.POSITION.x + $.MARKER.x / 2 - 0.1;
+        this.position.x = $.POSITION.x + $.MARKER.x / 2 - 0.1 * $.SCALE;
         this.position.y = $.POSITION.y - $.AREA.y / 2 - $.AREA.y * index;
         this.position.z = $.POSITION.z + $.AREA.z / 2 + $.DELTA_Z_ORDER;
         this.material.opacity = that.parent._private.opacityGui * 0.01;
@@ -1120,7 +1145,7 @@ THREE.SimpleDatGuiControl.__internals.prototype.createCursor = function() {
     "use strict";
 
     var that = this.control;
-    var _geometry = new THREE.BoxGeometry(0.5, that._options.TEXT.y * 0.8, 0.1);
+    var _geometry = new THREE.BoxGeometry(0.5 * that._options.SCALE, that._options.TEXT.y * 0.8, 0.1);
     var _material = new THREE.MeshBasicMaterial(that._options.MATERIAL);
     this.control.wCursor = new THREE.Mesh(_geometry, _material);
     this.control.wCursor.material.color.setHex(0xFFFF11);
@@ -1128,7 +1153,7 @@ THREE.SimpleDatGuiControl.__internals.prototype.createCursor = function() {
         var $ = that._options;
         var possiblePositon = that.textHelper.possibleCursorPositons[that.textHelper.cursor - that.textHelper.start];
         if (typeof possiblePositon !== "undefined") {
-            this.position.x = $.POSITION.x + $.TAB_1.x + that.textHelper.residiumX + possiblePositon.x + 0.25;
+            this.position.x = $.POSITION.x + $.TAB_1.x + that.textHelper.residiumX + possiblePositon.x + 0.25 * $.SCALE;
             this.position.y = $.POSITION.y + $.AREA.y * (-0.5 - index);
             this.position.z = $.POSITION.z + $.AREA.z + $.DELTA_Z_ORDER * 2;
             this.material.opacity = that.parent._private.opacityGui * 0.01;
@@ -1241,9 +1266,9 @@ THREE.SimpleDatGuiControl.__internals.prototype.createComboBoxMarker = function(
 
     var that = this.control;
     var _geometry = new THREE.Geometry();
-    var v1 = new THREE.Vector3(-2, 2, that._options.AREA.z / 2);
-    var v3 = new THREE.Vector3(2, 2, that._options.AREA.z / 2);
-    var v2 = new THREE.Vector3(2, -2, that._options.AREA.z / 2);
+    var v1 = new THREE.Vector3(-2 * that._options.SCALE, 2 * that._options.SCALE, that._options.AREA.z / 2);
+    var v3 = new THREE.Vector3(2 * that._options.SCALE, 2 * that._options.SCALE, that._options.AREA.z / 2);
+    var v2 = new THREE.Vector3(2 * that._options.SCALE, -2 * that._options.SCALE, that._options.AREA.z / 2);
     _geometry.vertices.push(v1);
     _geometry.vertices.push(v2);
     _geometry.vertices.push(v3);
@@ -1256,8 +1281,8 @@ THREE.SimpleDatGuiControl.__internals.prototype.createComboBoxMarker = function(
     that.wComboBoxMarker = new THREE.Mesh(_geometry, _material);
     that.wComboBoxMarker.updateRendering = function(index) {
         var $ = that._options;
-        this.position.x = $.POSITION.x + $.AREA.x - 12;
-        this.position.y = $.POSITION.y - $.AREA.y / 2 - $.AREA.y * index + 2;
+        this.position.x = $.POSITION.x + $.AREA.x - 12 * $.SCALE;
+        this.position.y = $.POSITION.y - $.AREA.y / 2 - $.AREA.y * index + 2 * $.SCALE;
         this.position.z = $.POSITION.z + $.AREA.z / 2 + $.DELTA_Z_ORDER * 5;
         this.material.opacity = that.parent._private.opacityGui * 0.01;
         this.material.visible = that.isVisible() && !that.isClosed;
