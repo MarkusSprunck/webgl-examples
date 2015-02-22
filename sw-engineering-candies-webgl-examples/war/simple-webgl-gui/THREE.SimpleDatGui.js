@@ -29,7 +29,7 @@
 THREE.SimpleDatGui = function(parameters) {
     "use strict";
 
-    console.log('THREE.SimpleDatGui v0.8');
+    console.log('THREE.SimpleDatGui v0.81');
 
     // Check mandatory parameter
     if ((typeof parameters === "undefined") || (typeof parameters.scene === "undefined")) {
@@ -289,7 +289,7 @@ THREE.SimpleDatGui.__internals.prototype.onMouseMoveEvt = function(event) {
     var intersects = this.getIntersectingObjects(event);
     if (null != intersects && intersects.length > 0) {
         var element = intersects[0].object.WebGLElement;
-        if (element.isComboBoxControl() && element.isExpanded) {
+        if (element.isComboBoxControl() && element.isComboBoxExpanded()) {
             element.selectedFieldText = intersects[0].object.text;
             this.comboBox = element;
         } else {
@@ -313,7 +313,7 @@ THREE.SimpleDatGui.__internals.prototype.onMouseDownEvt = function(event) {
             this.gui._private.focus = element;
             this.gui._private.selected = element;
 
-            if (element.isComboBoxControl() && element.isExpanded) {
+            if (element.isComboBoxControl() && element.isComboBoxExpanded()) {
                 var oldText = element.newText;
                 if (element.isAcceptedValues) {
                     element.newText = element.selectedFieldText;
@@ -323,8 +323,7 @@ THREE.SimpleDatGui.__internals.prototype.onMouseDownEvt = function(event) {
                     element.object[element.property] = value;
                     element.newText = element.selectedFieldText;
                 }
-
-                element.isExpanded = false;
+                this.comboBox = null;
                 element.textHelper.calculateLeftAlignText(element.newText);
                 element._private.createComboBoxText();
                 if (oldText != element.newText) {
@@ -335,7 +334,6 @@ THREE.SimpleDatGui.__internals.prototype.onMouseDownEvt = function(event) {
 
             if (element.isComboBoxControl()) {
                 this.comboBox = element;
-                this.comboBox.isExpanded = !this.comboBox.isExpanded;
             } else if (element.isSliderControl()) {
                 this.setNewSliderValueFromMouseDownEvt(intersects);
                 element.executeCallback();
@@ -393,9 +391,7 @@ THREE.SimpleDatGui.__internals.prototype.onKeyDownEvt = function(event) {
     // Just in the case the focus is in a text control
     var focus = this.gui._private.focus;
     if (focus !== null) {
-        if (focus.isComboBoxControl()) {
-            focus.isExpanded = !focus.isExpanded;
-        } else if (focus.isTextControl()) {
+        if (focus.isTextControl()) {
             var charCode = this.getCharacterCode(event);
             if (this.isKeyTab(charCode) || this.isKeyEnter(charCode)) {
                 this.acknowledgeInput();
@@ -721,7 +717,6 @@ THREE.SimpleDatGuiControl = function(object, property, minValue, maxValue, paren
     this.isNamedValues = (typeof minValue === 'object') && !this.isAcceptedValues;
     this.isCombobox = this.isNamedValues || this.isAcceptedValues;
     this.comboBoxList = (this.isNamedValues) ? getKeys(minValue) : minValue;
-    this.isExpanded = false;
     this.selectedFieldText = "";
 
     // MANAGE NUMBER INPUT
@@ -1232,9 +1227,9 @@ THREE.SimpleDatGuiControl.__internals.prototype.createComboBoxListFields = funct
         wComboBoxListField.updateRendering = function(index, fIndex) {
             this.position.x = $.POSITION.x + $.TAB_1.x + $.TEXT.x / 2;
             this.position.y = $.POSITION.y + $.AREA.y * (-0.5 - index) - (1 + fIndex) * $.TEXT.y;
-            this.position.z = $.POSITION.z + $.AREA.z + $.DELTA_Z_ORDER * (that.isExpanded ? 5 : -1);
+            this.position.z = $.POSITION.z + $.AREA.z + $.DELTA_Z_ORDER * (that.isComboBoxExpanded() ? 5 : -1);
             this.material.opacity = that.parent._private.opacityGui * 0.01;
-            this.visible = that.isVisible() && that.isExpanded && !that.isClosed;
+            this.visible = that.isVisible() && that.isComboBoxExpanded() && !that.isClosed;
             this.material.color.setHex((that.selectedFieldText === that.comboBoxList[fIndex])
                         ? $.COLOR_COMBOBOX_AREA_SELECTED : $.COLOR_COMBOBOX_AREA);
         };
@@ -1249,9 +1244,9 @@ THREE.SimpleDatGuiControl.__internals.prototype.createComboBoxListFields = funct
         wComboBoxTextValue.updateRendering = function(index, filedIndex) {
             this.position.x = $.POSITION.x + $.TAB_1.x + that.textHelper.residiumX;
             this.position.y = $.POSITION.y + $.AREA.y * (-0.5 - index) - $.LABEL_OFFSET_Y - (1 + filedIndex) * $.TEXT.y;
-            this.position.z = $.POSITION.z + $.AREA.z + $.DELTA_Z_ORDER * (that.isExpanded ? 6 : -1);
+            this.position.z = $.POSITION.z + $.AREA.z + $.DELTA_Z_ORDER * (that.isComboBoxExpanded() ? 6 : -1);
             this.material.opacity = that.parent._private.opacityGui * 0.01;
-            this.visible = that.isVisible() && that.isExpanded && !that.isClosed;
+            this.visible = that.isVisible() && that.isComboBoxExpanded() && !that.isClosed;
         };
         that.parent.scene.add(wComboBoxTextValue);
         that.wComboBoxListTexts.push(wComboBoxTextValue);
@@ -1345,7 +1340,7 @@ THREE.SimpleDatGuiControl.__internals.prototype.createComboBoxFrame = function()
         this.position.y = $.POSITION.y + $.AREA.y * (-0.5 - index);
         this.position.z = $.POSITION.z + $.AREA.z + $.DELTA_Z_ORDER * 4;
         this.material.opacity = that.parent._private.opacityGui * 0.01;
-        this.material.visible = that.isVisible() && !that.isClosed && that.isExpanded;
+        this.material.visible = that.isVisible() && !that.isClosed && that.isComboBoxExpanded();
     };
     that.parent.scene.add(that.wComboBoxFrame);
 }
@@ -1529,6 +1524,12 @@ THREE.SimpleDatGuiControl.prototype.isVisible = function() {
     "use strict";
 
     return !this.isElementHidden;
+}
+
+THREE.SimpleDatGuiControl.prototype.isComboBoxExpanded = function() {
+    "use strict";
+
+    return this === this.parent._private.comboBox;
 }
 
 THREE.SimpleDatGuiTextHelper = function(options) {
