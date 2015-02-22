@@ -291,7 +291,9 @@ THREE.SimpleDatGui.__internals.prototype.onMouseMoveEvt = function(event) {
     if (null != intersects && intersects.length > 0) {
         var element = intersects[0].object.WebGLElement;
         if (element.isComboBoxControl() && element.isComboBoxExpanded()) {
-            element.selectedFieldText = intersects[0].object.text;
+            if (typeof intersects[0].object.text !== "undefined") {
+                element.selectedFieldText = intersects[0].object.text;
+            }
             this.comboBox = element;
         } else {
             this.gui._private.selected = element;
@@ -326,10 +328,12 @@ THREE.SimpleDatGui.__internals.prototype.onMouseDownEvt = function(event) {
                     element.newText = element.selectedFieldText;
                 }
                 this.activeComboBox = null;
-                element.textHelper.calculateLeftAlignText(element.newText);
-                element._private.createComboBoxText();
-                if (oldText != element.newText) {
-                    element.executeCallback();
+                if (typeof element.newText !== "undefined") {
+                    element.textHelper.calculateLeftAlignText(element.newText);
+                    element._private.createComboBoxText();
+                    if (oldText != element.newText) {
+                        element.executeCallback();
+                    }
                 }
                 return;
             }
@@ -772,6 +776,7 @@ THREE.SimpleDatGuiControl = function(object, property, minValue, maxValue, paren
                 }
             }
         }
+        this.selectedFieldText = this.newText;
         this.textHelper.calculateLeftAlignText(this.newText);
         this._private.createComboBoxField();
         this._private.createComboBoxListFields();
