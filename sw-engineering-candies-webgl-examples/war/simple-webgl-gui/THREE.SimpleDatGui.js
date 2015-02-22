@@ -124,17 +124,11 @@ THREE.SimpleDatGui.prototype.update = function(parameters) {
     // JUST VISIBLE CONTROLS INTERACT WITH MOUSE
     var that = this;
     this._private.mouseBindings = [];
+    that._private.mouseBindings.push(that._private.closeButton.wArea);
+
     if (!this._private.isClosed()) {
         this._private.children.forEach(function(child) {
-            // ALL VISIBLE FOLDER
-            if (!child.isElementHidden) {
-                if (!that.isElementFolder && child.isSliderControl()) {
-                    that._private.mouseBindings.push(child.wValueSliderBar);
-                    that._private.mouseBindings.push(child.wValueSliderField);
-                } else {
-                    that._private.mouseBindings.push(child.wArea);
-                }
-            }
+
             // ALL CONTROLS
             child._private.children.forEach(function(element) {
                 if (!element.isElementHidden) {
@@ -151,10 +145,23 @@ THREE.SimpleDatGui.prototype.update = function(parameters) {
                     }
                 }
             });
+
+            // ALL VISIBLE FOLDER
+            if (!child.isElementHidden) {
+                if (child.isComboBoxControl()) {
+                    for (var i = 0; i < child.wComboBoxListFields.length; i++) {
+                        that._private.mouseBindings.push(child.wComboBoxListFields[i]);
+                    }
+                    that._private.mouseBindings.push(child.wComboBoxTextField);
+                } else if (!that.isElementFolder && child.isSliderControl()) {
+                    that._private.mouseBindings.push(child.wValueSliderBar);
+                    that._private.mouseBindings.push(child.wValueSliderField);
+                } else {
+                    that._private.mouseBindings.push(child.wArea);
+                }
+            }
         });
     }
-    that._private.mouseBindings.push(that._private.closeButton.wArea);
-
 };
 
 /**
@@ -224,8 +231,8 @@ THREE.SimpleDatGui.prototype.getOptions = function() {
 
     var scale = this.scale;
     var area_size = new THREE.Vector3(this.width, 20 * scale, 2.0 * scale);
-    var delta_z = 0.1 * scale;
-    var delta_z_order = 0.1 * scale;
+    var delta_z = 0.2 * scale;
+    var delta_z_order = 0.3 * scale;
     var font_size = 7 * scale;
     var rightBorder = 4 * scale;
     var text_offset_x = 2 * scale;
