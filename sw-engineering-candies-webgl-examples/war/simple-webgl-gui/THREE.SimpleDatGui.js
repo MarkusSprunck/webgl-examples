@@ -297,6 +297,7 @@ THREE.SimpleDatGui.__internals.prototype.onMouseMoveEvt = function(event) {
         }
     } else {
         this.gui._private.selected = null;
+        this.activeComboBox = null;
     }
 }
 
@@ -323,7 +324,7 @@ THREE.SimpleDatGui.__internals.prototype.onMouseDownEvt = function(event) {
                     element.object[element.property] = value;
                     element.newText = element.selectedFieldText;
                 }
-                this.comboBox = null;
+                this.activeComboBox = null;
                 element.textHelper.calculateLeftAlignText(element.newText);
                 element._private.createComboBoxText();
                 if (oldText != element.newText) {
@@ -333,7 +334,7 @@ THREE.SimpleDatGui.__internals.prototype.onMouseDownEvt = function(event) {
             }
 
             if (element.isComboBoxControl()) {
-                this.comboBox = element;
+                this.activeComboBox = element;
             } else if (element.isSliderControl()) {
                 this.setNewSliderValueFromMouseDownEvt(intersects);
                 element.executeCallback();
@@ -1411,8 +1412,6 @@ THREE.SimpleDatGuiControl.prototype.name = function(value) {
 THREE.SimpleDatGuiControl.prototype.executeCallback = function(event) {
     "use strict";
 
-    console.log("executeCallback " + event);
-
     if (this.isFunctionControl()) {
         this.onChangeCallback(null);
     } else if (this.isElementFolder) {
@@ -1529,7 +1528,7 @@ THREE.SimpleDatGuiControl.prototype.isVisible = function() {
 THREE.SimpleDatGuiControl.prototype.isComboBoxExpanded = function() {
     "use strict";
 
-    return this === this.parent._private.comboBox;
+    return this === this.parent._private.activeComboBox;
 }
 
 THREE.SimpleDatGuiTextHelper = function(options) {
