@@ -519,7 +519,8 @@ THREE.SimpleDatGui.__internals.prototype.moveCursorToFirstCharacter = function()
     var textHelper = focus.textHelper;
     textHelper.cursor = 0;
     textHelper.start = 0;
-    textHelper.calculateAlignTextLastCall(focus.newText);
+    textHelper.calculateLeftAlignText(focus.newText);
+    focus._private.createTextValue(focus.textHelper.truncated);
 }
 
 THREE.SimpleDatGui.__internals.prototype.moveCursorToLastCharacter = function() {
@@ -531,6 +532,7 @@ THREE.SimpleDatGui.__internals.prototype.moveCursorToLastCharacter = function() 
     textHelper.cursor = value.length;
     textHelper.end = value.length - 1;
     textHelper.calculateAlignTextLastCall(focus.newText);
+    focus._private.createTextValue(focus.textHelper.truncated);
 }
 
 THREE.SimpleDatGui.__internals.prototype.moveCursorToNextCharacter = function(event) {
@@ -545,6 +547,7 @@ THREE.SimpleDatGui.__internals.prototype.moveCursorToNextCharacter = function(ev
             textHelper.calculateAlignTextLastCall(focus.newText);
         }
     }
+    focus._private.createTextValue(focus.textHelper.truncated);
 }
 
 THREE.SimpleDatGui.__internals.prototype.moveCursorToPreviousCharacter = function(event) {
@@ -561,6 +564,7 @@ THREE.SimpleDatGui.__internals.prototype.moveCursorToPreviousCharacter = functio
         }
         textHelper.calculateAlignTextLastCall(focus.newText);
     }
+    focus._private.createTextValue(focus.textHelper.truncated);
 }
 
 THREE.SimpleDatGui.__internals.prototype.deletePreviousCharacter = function() {
