@@ -44,8 +44,8 @@ body {
                     RENDER_TEXT: "Hello World!",
                     OPACITY_AUTOMATIC: false,
                     ROTATION_SPEED: 2.5,
-                    FONT_SIZE: 100,
-                    ROTATION_X_AXIS: true,
+                    FONT_SIZE: 120,
+                    ROTATION_X_AXIS: false,
                     OPACITY: 100,
                     FONT_NAME: "Gentilis",
                     SHOW_STATS: false
@@ -56,7 +56,9 @@ body {
     var camera, cameraHUD, stats, scene, sceneHUD, renderer, mesh, gui, trackbarControl, container, hemiLight;
     var opacityAnimationFactor = 0;
 
-    var HUD_Modus = true;
+    var HUDBorderTop = 10;
+    var HUDBorderLeft = 10;
+    var HUDModus = true;
 
     init();
     animate();
@@ -87,7 +89,7 @@ body {
         var width = window.innerWidth;
         var height = window.innerHeight;
 
-        if (HUD_Modus) {
+        if (HUDModus) {
             cameraHUD = new THREE.OrthographicCamera(-width / 2, width / 2, height / 2, -height / 2, 1, 10);
             cameraHUD.position.z = 10;
             cameraHUD.lookAt(new THREE.Vector3(0, 0, 0));
@@ -138,13 +140,12 @@ body {
                     renderer: renderer,
                     width: guiWidth,
                     scale: 2.0,
-                    position: new THREE.Vector3(10 - width / 2, height / 2 - 10, 1)
+                    position: new THREE.Vector3(HUDBorderLeft - width / 2, height / 2 - HUDBorderTop, 1)
         });
         gui.add(objFunctions, 'RESET_EVENT').name('Reset Position');
         gui.add(myOptions, 'RENDER_TEXT').name('Render Text').onChange(function(value) {
             addOrUpdateRotatingText(scene, myOptions.RENDER_TEXT);
         });
-   
         var folder1 = gui.addFolder("Rendering");
         folder1.add(myOptions, 'SHOW_STATS').name('Show Stats');
         folder1.add(myOptions, 'ROTATION_X_AXIS').name('Rotation Active');
@@ -153,8 +154,8 @@ body {
                     Minimal: 20,
                     Small: 50,
                     Medium: 100,
-                    Large: 150,
-                    Huge: 250
+                    Large: 120,
+                    Huge: 200
         }).name('Font Size').onChange(function(value) {
             addOrUpdateRotatingText(scene, myOptions.RENDER_TEXT);
         });
@@ -163,11 +164,10 @@ body {
                         addOrUpdateRotatingText(scene, myOptions.RENDER_TEXT);
                     });
         folder1.open();
-
         var folder2 = gui.addFolder("Opacity");
         folder2.add(myOptions, 'OPACITY_AUTOMATIC').name('Run Animation');
         folder2.add(myOptions, 'OPACITY', 10, 100).step(10).name('Value');
-        folder2.open();
+        gui.close();
 
         // Add event listeners
         window.addEventListener('resize', onWindowResize, false);
@@ -190,8 +190,8 @@ body {
 
         stats = new Stats();
         stats.domElement.style.position = 'absolute';
-        stats.domElement.style.top = '0px';
-        stats.domElement.style.right = '0px';
+        stats.domElement.style.top = '' + HUDBorderTop + 'px';
+        stats.domElement.style.right = '10px';
         stats.domElement.style.zIndex = 100;
         document.body.appendChild(stats.domElement);
 
@@ -204,7 +204,7 @@ body {
         camera.updateProjectionMatrix();
         renderer.setSize(window.innerWidth, window.innerHeight);
 
-        if (HUD_Modus) {
+        if (HUDModus) {
             cameraHUD.left = -window.innerWidth / 2;
             cameraHUD.right = window.innerWidth / 2;
             cameraHUD.top = window.innerHeight / 2;
@@ -213,7 +213,8 @@ body {
 
             // Udpate position of GUI
             gui.update({
-                position: new THREE.Vector3(10 - window.innerWidth / 2, window.innerHeight / 2 - 10, 1)
+                position: new THREE.Vector3(HUDBorderLeft - window.innerWidth / 2, window.innerHeight / 2
+                            - HUDBorderTop, 1)
             });
         } else {
             cameraHUD.aspect = window.innerWidth / window.innerHeight;

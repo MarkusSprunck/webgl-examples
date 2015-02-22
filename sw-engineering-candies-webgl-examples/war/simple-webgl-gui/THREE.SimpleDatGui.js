@@ -84,7 +84,7 @@ THREE.SimpleDatGui.prototype.close = function() {
     "use strict";
 
     this._private.closed = true;
-    this._internal.updateCloseButtonText();
+    this._private.closeButton._private.createLabel(this._private.closed ? "Open Controls" : "Close Controls");
     return this;
 }
 
@@ -154,6 +154,7 @@ THREE.SimpleDatGui.prototype.update = function(parameters) {
         });
     }
     that._private.mouseBindings.push(that._private.closeButton.wArea);
+
 };
 
 /**
