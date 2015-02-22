@@ -1024,6 +1024,7 @@ THREE.SimpleDatGuiControl.__internals.prototype.createCheckBoxes = function(even
     var _material = new THREE.MeshLambertMaterial($.MATERIAL);
     that.wBoxChecked = new THREE.Mesh(_geometry, _material);
     that.wBoxChecked.visible = false;
+    that.wBoxChecked.material.color.setHex($.COLOR_COMBOBOX_TEXT);
     that.wBoxChecked.updateRendering = function(index) {
         this.position.x = $.POSITION.x + $.TAB_1.x + $.CHECKBOX.x / 2 - 3 * $.SCALE;
         this.position.y = $.POSITION.y + $.AREA.y * (-0.5 - index) - 3.5 * $.SCALE;
@@ -1464,8 +1465,8 @@ THREE.SimpleDatGuiControl.prototype.listenInternal = function() {
         if (that.isTextControl()) {
 
             if (that.lastValue !== that.object[that.property]) {
-                var newValue = that.object[that.property];
-                that.textHelper.calculateAlignTextLastCall(newValue);
+                that.newText = that.object[that.property];
+                that.textHelper.calculateAlignTextLastCall(that.newText);
                 that._private.createTextValue(that.textHelper.truncated);
             }
             that.lastValue = that.object[that.property];
