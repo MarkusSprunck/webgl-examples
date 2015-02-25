@@ -43,21 +43,22 @@ body {
         "use strict";
         return {
                     RENDER_TEXT: "Hello World!",
-                    TRANPARENT: true,
+                    TRANPARENT: false,
                     ROTATION_SPEED: 2.5,
                     ROTATION_ANGLE: 0.0,
                     FONT_SIZE: 150,
                     ROTATION_X_AXIS: true,
-                    OPACITY: 80,
+                    OPACITY: 100,
                     FONT_NAME: "Gentilis",
-                    SHOW_STATS: false
+                    SHOW_STATS: true
         };
     }
     var myOptions = myOptionsDefinition();
 
     var guiDefaultWidth = 300;
-    var guiBorderTop = 0;
-    var guiBorderLeft = 0;
+    var guiBorderTop = 10;
+    var guiBorderRight = 10;
+    var guiBorderLeft = 10;
     var guiHudModus = !(document.location.search === "?hud=false");
 
     init();
@@ -161,7 +162,7 @@ body {
                     Small: 80,
                     Medium: 150,
                     Large: 180,
-                    Huge: 220
+                    Huge: 300
         }).name('Font Size').onChange(function(value) {
             addOrUpdateRotatingText(scene, myOptions.RENDER_TEXT);
         });
@@ -174,6 +175,7 @@ body {
         ;
         folder1.add(myOptions, 'ROTATION_X_AXIS').name('Rotation Active');
         folder1.add(myOptions, 'SHOW_STATS').name('Show Stats');
+        folder1.open();
 
         // Add event listeners
         window.addEventListener('resize', onWindowResize, false);
@@ -197,7 +199,7 @@ body {
         stats = new Stats();
         stats.domElement.style.position = 'absolute';
         stats.domElement.style.top = '' + guiBorderTop + 'px';
-        stats.domElement.style.right = '10px';
+        stats.domElement.style.right = '' + guiBorderRight + 'px';
         stats.domElement.style.zIndex = 100;
         document.body.appendChild(stats.domElement);
 

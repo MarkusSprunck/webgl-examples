@@ -29,7 +29,7 @@
 THREE.SimpleDatGui = function(parameters) {
     "use strict";
 
-    console.log('THREE.SimpleDatGui v0.81');
+    console.log('THREE.SimpleDatGui v0.82');
 
     // Check mandatory parameter
     if ((typeof parameters === "undefined") || (typeof parameters.scene === "undefined")) {
@@ -374,6 +374,11 @@ THREE.SimpleDatGui.__internals.prototype.onMouseDownEvt = function(event) {
 THREE.SimpleDatGui.__internals.prototype.onKeyPressEvt = function(event) {
     "use strict";
 
+    // Don't process the control keys is needed for Firefox
+    if (this.isKeyTab(event.keyCode) || this.isKeyEnter(event.keyCode) || this.isKeyPos1(event.keyCode)
+                || this.isKeyEnd(event.keyCode) || this.isKeyLeft(event.keyCode) || this.isKeyRight(event.keyCode)
+                || this.isKeyEnf(event.keyCode) || this.isKeyBackspace(event.keyCode)) { return; }
+
     // Just in the case the focus is in a text control
     var focus = this.gui._private.focus;
     if (focus !== null && focus.isTextControl()) {
@@ -634,7 +639,7 @@ THREE.SimpleDatGui.__internals.prototype.getMousePositon = function(event) {
     return mouse;
 }
 
-THREE.SimpleDatGui.__internals.prototype.getIntersectingObjects = function(mouse) {
+THREE.SimpleDatGui.__internals.prototype.getIntersectingObjects = function(event) {
     "use strict";
 
     this.gui.isPerspectiveCamera = true;
@@ -687,7 +692,8 @@ THREE.SimpleDatGui.__internals.prototype.setNewCursorFromMouseDownEvt = function
 
     this.gui._private.selected = element;
 
-    var cursorMinimalX = element.wValueTextField.position.x - this.gui._options.TEXT.x / 2;
+    var cursorMinimalX = element.wValueTextField.position.x - this.gui._options.TEXT.x / 2
+                + element.textHelper.residiumX;
     var deltaX = intersects[0].point.x - cursorMinimalX;
     if (deltaX > textHelper.possibleCursorPositons[textHelper.possibleCursorPositons.length - 1].x) {
         textHelper.end = value.length - 1;
@@ -1608,7 +1614,7 @@ THREE.SimpleDatGuiTextHelper.prototype.calculateRightAlignText = function(value)
         var boundingBox1 = fontshapesAll[i - 1].getBoundingBox();
         var charWidth = boundingBox2.maxX - boundingBox1.maxX;
         size -= charWidth;
-        if (size < 40 && !this.isTruncated) {
+        if (size < 30 && !this.isTruncated) {
             this.isTruncated = true;
             this.start = i - 2;
             this.truncated = value.substring(this.start, this.end + 1);
