@@ -1651,7 +1651,7 @@ THREE.SimpleDatGuiTextHelper.prototype.calculateLeftAlignText = function(value) 
     // Start with the complete string
     this.isTruncated = false;
     this.truncated = value;
-    this.residiumX = 10;
+    this.residiumX = 5;
     this.end = 0;
 
     var fontshapesAll = this.createFontShapes(value);
