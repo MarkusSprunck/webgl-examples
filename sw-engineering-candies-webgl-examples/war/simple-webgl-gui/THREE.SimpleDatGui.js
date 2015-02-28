@@ -1356,14 +1356,14 @@ THREE.SimpleDatGuiControl.__internals.prototype.createComboBoxFrame = function()
     var that = this.control;
     var $ = that._options;
 
-    var _geometryBox = new THREE.BoxGeometry($.TEXT.x, $.TEXT.y, 0.1);
+    var _geometryBox = new THREE.BoxGeometry($.TEXT.x, $.TEXT.y, 0.2);
     var _geometry = cubeGeometry2LineGeometry(_geometryBox);
     that.wComboBoxFrame = new THREE.Line(_geometry, new THREE.LineBasicMaterial($.MATERIAL));
     that.wComboBoxFrame.material.color.setHex($.COLOR_COMBOBOX_AREA_SELECTED_FRAME);
     that.wComboBoxFrame.updateRendering = function(index) {
         this.position.x = $.POSITION.x + $.TAB_1.x + $.TEXT.x / 2;
         this.position.y = $.POSITION.y + $.AREA.y * (-0.5 - index);
-        this.position.z = $.POSITION.z + $.AREA.z + $.DELTA_Z_ORDER * 4;
+        this.position.z = $.POSITION.z + $.AREA.z + $.DELTA_Z_ORDER * 5;
         this.material.opacity = that.parent._private.opacityGui * 0.01;
         this.material.visible = that.isVisible() && !that.isClosed && that.isComboBoxExpanded();
     };

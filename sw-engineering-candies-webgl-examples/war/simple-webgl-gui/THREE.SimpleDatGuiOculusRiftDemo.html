@@ -34,10 +34,11 @@ body {
 <script src="./lib/OculusRiftEffect.js"></script>
 <script src="./THREE.SimpleDatGui.js"></script>
 <script src="./THREE.OculusRiftMousePointerHelper.js"></script>
+<script src="./THREE.OculusRiftRotationControls.js"></script>
 <div class="absoluteTitle">THREE.SimpleDatGui is rendered in WebGL based on three.js without any other 3rd party library. You may use your mouse wheel to zoom and the left mouse button to rotate the scene. A click with the right mouse button resets the position of the scene. Read more <a href="http://www.sw-engineering-candies.com/blog-1/three-simpledatgui-a-simple-user-interface-for-webgl-with-the-look-feel-of-dat-gui">here</a>.
 </div>
 <script>
-    var effect, camera, scene, renderer, mesh, gui, trackbarControl, container, hemiLight, oculusRiftMousePointerHelper;
+    var controlOculus, effect, camera, scene, renderer, mesh, gui, trackbarControl, container, hemiLight, oculusRiftMousePointerHelper;
 
     function myOptionsDefinition() {
         "use strict";
@@ -59,7 +60,7 @@ body {
     var guiBorderRight = 10;
     var guiBorderLeft = 10;
     var guiHudModus = !(document.location.search === "?hud=false");
-    
+
     var sceneDistance = 700;
 
     init();
@@ -78,12 +79,10 @@ body {
         renderer.autoClear = false;
         document.body.appendChild(renderer.domElement);
 
-
         camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 10000);
         camera.applyMatrix(new THREE.Matrix4().makeTranslation(0, 0, sceneDistance));
         camera.lookAt(new THREE.Vector3(0, 0, 0));
 
-       
         scene = new THREE.Scene();
         scene.add(camera);
 
@@ -127,7 +126,7 @@ body {
                     renderer: renderer,
                     width: 280,
                     scale: 1.0,
-                    position: new THREE.Vector3(-140, 140, 500)
+                    position: new THREE.Vector3(-140, 80, 400)
         });
 
         oculusRiftMousePointerHelper = new THREE.OculusRiftMousePointerHelper({
@@ -180,9 +179,16 @@ body {
 
         trackbarControl = new THREE.TrackballControls(camera, renderer.domElement);
 
+        controlOculus = new THREE.OculusRiftRotationControls(camera);
+
         // Mouse Pointer
 
         onWindowResize();
+
+        var updateTimerImport = setInterval(function() {
+            trackbarControl.update();
+            controlOculus.update();
+        }, 50);
     }
 
     function onWindowResize() {
@@ -202,7 +208,6 @@ body {
         gui.update();
 
         oculusRiftMousePointerHelper.update();
-        trackbarControl.update();
 
         if (myOptions.ROTATION_X_AXIS) {
             mesh.rotation.x = (mesh.rotation.x + 0.005 * myOptions.ROTATION_SPEED) % (Math.PI * 2);
