@@ -71,7 +71,7 @@ THREE.OculusRiftRotationControls = function(camera) {
         "use strict";
 
         g_lastUpdateRequest = new Date().getTime();
-        var url = "http://localhost:44444";
+        var url = "http://localhost:8444";
         var script = document.createElement("script");
         script.setAttribute("type", "application/javascript");
         script.id = 'JSONP';

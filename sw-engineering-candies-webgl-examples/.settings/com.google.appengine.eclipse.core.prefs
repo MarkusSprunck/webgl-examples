@@ -4,6 +4,6 @@ gaeDatanucleusEnabled=false
 gaeDatanucleusVersion=v2
 gaeDeployDialogSettings=
 gaeHrdEnabled=false
-gaeLaunchAppInBrowser=false
+gaeLaunchAppInBrowser=true
 googleCloudSqlEnabled=false
 localDevMySqlEnabled=true
