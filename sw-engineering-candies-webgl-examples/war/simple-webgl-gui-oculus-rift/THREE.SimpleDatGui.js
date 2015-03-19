@@ -29,7 +29,7 @@
 THREE.SimpleDatGui = function(parameters) {
     "use strict";
 
-    console.log('THREE.SimpleDatGui v0.82');
+    console.log('THREE.SimpleDatGui v0.83');
 
     // Check mandatory parameter
     if ((typeof parameters === "undefined") || (typeof parameters.scene === "undefined")) {
@@ -52,6 +52,7 @@ THREE.SimpleDatGui = function(parameters) {
                 : new THREE.Vector3(0, 0, 0);
     this.scale = (parameters.scale !== undefined) ? parameters.scale : 1;
     this.automatic = (parameters.automatic !== undefined) ? parameters.automatic : false;
+    this.mouse = (parameters.mouse !== undefined) ? parameters.mouse : null;
 
     // Don't use this - for internal use only
     this._options = this.getOptions();
@@ -351,9 +352,36 @@ THREE.SimpleDatGui.__internals.prototype.onMouseMoveEvt = function(event) {
         } else {
             this.gui._private.selected = element;
         }
+
+        if (this.gui.mouse == null) {
+            if (element.isComboBoxControl()) {
+                this.gui.renderer.domElement.style.cursor = "pointer";
+            } else if (element.isTextControl()) {
+                this.gui.renderer.domElement.style.cursor = "text";
+            } else if (element.isSliderControl()) {
+                this.gui.renderer.domElement.style.cursor = "w-resize";
+            } else {
+                this.gui.renderer.domElement.style.cursor = "pointer";
+            }
+        } else {
+            if (element.isComboBoxControl()) {
+                this.gui.mouse.setMouse("pointer");
+            } else if (element.isTextControl()) {
+                this.gui.mouse.setMouse("text");
+            } else if (element.isSliderControl()) {
+                this.gui.mouse.setMouse("w-resize");
+            } else {
+                this.gui.mouse.setMouse("pointer");
+            }
+        }
     } else {
         this.gui._private.selected = null;
         this.activeComboBox = null;
+        if (this.gui.mouse == null) {
+            this.gui.renderer.domElement.style.cursor = "default";
+        } else {
+            this.gui.mouse.setMouse("default");
+        }
     }
 }
 

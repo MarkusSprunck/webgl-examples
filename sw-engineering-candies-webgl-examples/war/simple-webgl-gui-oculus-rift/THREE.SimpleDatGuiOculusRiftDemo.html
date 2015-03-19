@@ -186,7 +186,8 @@ body {
                     width: gui_options.GUI_WIDTH,
                     scale: gui_options.GUI_SCALE,
                     position: new THREE.Vector3(-gui_options.GUI_WIDTH * gui_options.GUI_SCALE / 2, 150, -400),
-                    automatic: !gui_options.FIXED_POSITION
+                    automatic: !gui_options.FIXED_POSITION,
+                    mouse : oculusRiftMouse
         });
 
         gui.add(myFunctions, 'RESET_EVENT').name('Reset Position');

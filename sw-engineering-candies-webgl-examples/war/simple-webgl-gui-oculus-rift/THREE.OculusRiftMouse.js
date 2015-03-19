@@ -25,6 +25,8 @@ THREE.OculusRiftMousePointerHelper = function(parameters) {
     console.log('THREE.OculusRiftMousePointerHelper v0.2');
 
     var that = this;
+    this.style = "default";
+
     parameters = parameters || {};
 
     // MANDATORY PARAMETERS
@@ -48,8 +50,8 @@ THREE.OculusRiftMousePointerHelper = function(parameters) {
     this.pointMapBorders = {};
     var geometryBorders = new THREE.Geometry();
     addLine("n0", "n1");
-    addLine("n1", "n2");
-    addLine("n2", "n0");
+    addLine("n5", "n2");
+    addLine("n6", "n0");
     addLine("n3", "n4");
 
     function addLine(a, b) {
@@ -68,8 +70,7 @@ THREE.OculusRiftMousePointerHelper = function(parameters) {
 
     var materialBorders = new THREE.LineBasicMaterial({
                 color: 0xffffff,
-                vertexColors: THREE.FaceColors,
-                linewidth: 2
+                vertexColors: THREE.FaceColors
     });
     THREE.Line.call(this, geometryBorders, materialBorders, THREE.Mesh);
 
@@ -95,6 +96,10 @@ THREE.OculusRiftMousePointerHelper = function(parameters) {
 };
 
 THREE.OculusRiftMousePointerHelper.prototype = Object.create(THREE.Line.prototype);
+
+THREE.OculusRiftMousePointerHelper.prototype.setMouse = function(style) {
+    this.style = style;
+}
 
 THREE.OculusRiftMousePointerHelper.prototype.update = function() {
 
@@ -125,11 +130,40 @@ THREE.OculusRiftMousePointerHelper.prototype.update = function() {
             var delta_w = this.size;
             var delta_h = this.size * aspect;
 
-            setPoint("n0", this.mouse.x, this.mouse.y, this.distance);
-            setPoint("n1", this.mouse.x + 2 * delta_w, this.mouse.y - delta_h, this.distance);
-            setPoint("n2", this.mouse.x + delta_w, this.mouse.y - 2 * delta_h, this.distance);
-            setPoint("n3", this.mouse.x + 1.5 * delta_w, this.mouse.y - 1.5 * delta_h, this.distance);
-            setPoint("n4", this.mouse.x + 3 * delta_w, this.mouse.y - 3 * delta_h, this.distance);
+            if (this.style === "text") {
+                setPoint("n0", this.mouse.x - delta_w / 4 * 3, this.mouse.y - delta_h, this.distance);
+                setPoint("n1", this.mouse.x - delta_w / 4, this.mouse.y - delta_h, this.distance);
+                setPoint("n6", this.mouse.x - delta_w / 4, this.mouse.y - delta_h, this.distance);
+                setPoint("n3", this.mouse.x - delta_w / 4 * 3, this.mouse.y + delta_h, this.distance);
+                setPoint("n4", this.mouse.x - delta_w / 4, this.mouse.y + delta_h, this.distance);
+                setPoint("n5", this.mouse.x - delta_w / 2, this.mouse.y - delta_h, this.distance);
+                setPoint("n2", this.mouse.x - delta_w / 2, this.mouse.y + delta_h, this.distance);
+            } else if (this.style === "w-resize") {
+                setPoint("n0", this.mouse.x - delta_w, this.mouse.y - delta_h / 4 * 3, this.distance);
+                setPoint("n1", this.mouse.x - delta_w, this.mouse.y - delta_h / 4, this.distance);
+                setPoint("n6", this.mouse.x - delta_w, this.mouse.y - delta_h / 4, this.distance);
+                setPoint("n3", this.mouse.x + delta_w, this.mouse.y - delta_h / 4 * 3, this.distance);
+                setPoint("n4", this.mouse.x + delta_w, this.mouse.y - delta_h / 4, this.distance);
+                setPoint("n5", this.mouse.x - delta_w, this.mouse.y - delta_h / 2, this.distance);
+                setPoint("n2", this.mouse.x + delta_w, this.mouse.y - delta_h / 2, this.distance);
+            } else if (this.style === "pointer") {
+                setPoint("n0", this.mouse.x - delta_w, this.mouse.y, this.distance);
+                setPoint("n1", this.mouse.x + delta_w, this.mouse.y, this.distance);
+                setPoint("n6", this.mouse.x - delta_w, this.mouse.y, this.distance);
+                setPoint("n0", this.mouse.x + delta_w, this.mouse.y, this.distance);
+                setPoint("n5", this.mouse.x, this.mouse.y - delta_h, this.distance);
+                setPoint("n2", this.mouse.x, this.mouse.y + delta_h, this.distance);
+                setPoint("n3", this.mouse.x, this.mouse.y - delta_h, this.distance);
+                setPoint("n4", this.mouse.x, this.mouse.y + delta_h, this.distance);
+            } else {
+                setPoint("n0", this.mouse.x, this.mouse.y, this.distance);
+                setPoint("n1", this.mouse.x + 2 * delta_w, this.mouse.y - delta_h, this.distance);
+                setPoint("n2", this.mouse.x + delta_w, this.mouse.y - 2 * delta_h, this.distance);
+                setPoint("n3", this.mouse.x + 1.5 * delta_w, this.mouse.y - 1.5 * delta_h, this.distance);
+                setPoint("n4", this.mouse.x + 3 * delta_w, this.mouse.y - 3 * delta_h, this.distance);
+                setPoint("n5", this.mouse.x + 2 * delta_w, this.mouse.y - delta_h, this.distance);
+                setPoint("n6", this.mouse.x + delta_w, this.mouse.y - 2 * delta_h, this.distance);
+            }
         }
     };
 

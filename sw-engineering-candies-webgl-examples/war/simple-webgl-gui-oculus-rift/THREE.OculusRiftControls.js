@@ -35,12 +35,17 @@ THREE.OculusRiftRotationControls = function(camera, scale, position) {
     this.scale = scale;
     this.position = position;
     this.url = "http:\\\\localhost:8444";
+    this.isConnected = false;
+    this.lastUpdate = new Date().getTime();
 
     this.controller = new THREE.Object3D();
     this.headPos = new THREE.Vector3();
     this.headQuat = new THREE.Quaternion();
 
     this.update = function() {
+
+        // update within the last 100 milliseconds
+        this.isConnected = (new Date().getTime() < this.lastUpdate + 250);
 
         if (g_oculusRiftSensorData) {
 
@@ -57,6 +62,7 @@ THREE.OculusRiftRotationControls = function(camera, scale, position) {
                 this.controller.setRotationFromMatrix(this.camera.matrix);
                 this.camera.position.addVectors(this.controller.position, this.headPos);
 
+                this.lastUpdate = new Date().getTime();
             }
             this.lastId = id;
 
@@ -71,7 +77,7 @@ THREE.OculusRiftRotationControls = function(camera, scale, position) {
     this.importData = function() {
         "use strict";
 
-        g_lastUpdateRequest = new Date().getTime();       
+        g_lastUpdateRequest = new Date().getTime();
         var script = document.createElement("script");
         script.setAttribute("type", "application/javascript");
         script.id = 'JSONP';
@@ -90,17 +96,23 @@ THREE.OculusRiftRotationControls = function(camera, scale, position) {
         }, 20);
 
     }
-    
+
     this.getUrl = function() {
         "use strict";
-   
+
         return this.url;
     }
-    
+
     this.setUrl = function(url) {
         "use strict";
-      
+
         this.url = url;
+    }
+
+    this.isOculusRiftConnected = function() {
+        "use strict";
+
+        return this.isConnected;
     }
 
 };
