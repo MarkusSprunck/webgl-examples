@@ -127,7 +127,7 @@ body {
         var updateTimerImport = setInterval(
                     function() {
 
-                        // Try to reconnect to Oculus Rift every 1 secoond
+                        // Try to reconnect to Oculus Rift every 1 second
                         if (!oculusRiftControl.isOculusRiftConnected()
                                     && (new Date().getTime() > lastConnectionTrial + 1000)) {
                             lastConnectionTrial = new Date().getTime();
@@ -160,7 +160,7 @@ body {
     }
 
     function createOculusRiftControl() {
-        var offset = new THREE.Vector3(0, 0, 0);
+        var offset = new THREE.Vector3(0, 0, gui_options.SCENE_DISTANCE);
         oculusRiftControl = new THREE.OculusRiftRotationControls(camera, gui_options.SCENE_DISTANCE, offset);
         gui_options.URL = oculusRiftControl.getUrl();
     }
