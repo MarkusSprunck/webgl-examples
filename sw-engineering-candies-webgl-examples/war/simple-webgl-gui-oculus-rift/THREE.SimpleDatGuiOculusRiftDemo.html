@@ -10,19 +10,18 @@ body {
 	overflow: hidden;
 }
 
-.absoluteTitle {
+.absoluteStatusLine {
 	position: absolute;
 	bottom: 10px;
-	right: 10px;
+	left: 10px;
 	color: #FFFFFF;
 	font-family: Arial;
-	font-size: 12pt;
+	font-size: 10pt;
 }
 </style>
 </head>
 <body>
-<div class="absoluteTitle">Click right mouse button to toggle GUI and run <a href="https://github.com/MarkusSprunck/oculus-rift-sensor-connector/tree/master/oculus-rift-sensor-connector">OculusRiftSensorConnector</a> on local machine to get Oculus Rift sensor data.
-</div>
+<div class=absoluteStatusLine id="statusLine"></div>
 <script src="./lib/three.min.js"></script>
 <script src="./lib/TrackballControls.js"></script>
 <script src="./lib/stats.min.js"></script>
@@ -39,27 +38,26 @@ body {
     var scene, renderer, skydome, camera, effect, gui, oculusRiftMouse, trackbarControl, oculusRiftControl;
 
     // options 
-    
+
     var pictureMap = new HashMap();
-    pictureMap.put("Place de la Concorde Paris-high" , "./textures/high/Place_de_la_Concorde_Paris.jpg");
-    pictureMap.put("Place de la Concorde Paris-medium" , "./textures/medium/Place_de_la_Concorde_Paris.jpg");
-    pictureMap.put("Place de la Concorde Paris-low" , "./textures/low/Place_de_la_Concorde_Paris.jpg");   	
-    
-    pictureMap.put("Place Dauphine Paris-high" , "./textures/high/Place_Dauphine_Paris.jpg");
-    pictureMap.put("Place Dauphine Paris-medium" , "./textures/medium/Place_Dauphine_Paris.jpg");
-    pictureMap.put("Place Dauphine Paris-low" , "./textures/low/Place_Dauphine_Paris.jpg");   	
-  
-    pictureMap.put("Parc de Belleville Paris-high" , "./textures/high/Parc_de_Belleville_Paris.jpg");
-    pictureMap.put("Parc de Belleville Paris-medium" , "./textures/medium/Parc_de_Belleville_Paris.jpg");
-    pictureMap.put("Parc de Belleville Paris-low" , "./textures/low/Parc_de_Belleville_Paris.jpg");   	
+    pictureMap.put("Place de la Concorde Paris-high", "./textures/high/Place_de_la_Concorde_Paris.jpg");
+    pictureMap.put("Place de la Concorde Paris-medium", "./textures/medium/Place_de_la_Concorde_Paris.jpg");
+    pictureMap.put("Place de la Concorde Paris-low", "./textures/low/Place_de_la_Concorde_Paris.jpg");
+
+    pictureMap.put("Place Dauphine Paris-high", "./textures/high/Place_Dauphine_Paris.jpg");
+    pictureMap.put("Place Dauphine Paris-medium", "./textures/medium/Place_Dauphine_Paris.jpg");
+    pictureMap.put("Place Dauphine Paris-low", "./textures/low/Place_Dauphine_Paris.jpg");
+
+    pictureMap.put("Parc de Belleville Paris-high", "./textures/high/Parc_de_Belleville_Paris.jpg");
+    pictureMap.put("Parc de Belleville Paris-medium", "./textures/medium/Parc_de_Belleville_Paris.jpg");
+    pictureMap.put("Parc de Belleville Paris-low", "./textures/low/Parc_de_Belleville_Paris.jpg");
 
     function createGuiOptionsDefinition() {
         "use strict";
         return {
-                    TRANPARENT: true,
+                    TRANPARENT: false,
                     FIXED_POSITION: false,
-                    USE_OCULUS_CONTROL: false,
-                    TEXTURE_FILE: 'Place de la Concorde Paris',
+                    TEXTURE_FILE: 'Parc de Belleville Paris',
                     TEXTURE_FILE_RESOLUTION: 'low',
                     URL: "",
                     OPACITY: 80,
@@ -123,21 +121,42 @@ body {
 
         onWindowResize();
 
-        var updateTimerImport = setInterval(function() {
-            if (gui_options.USE_OCULUS_CONTROL) {
-                oculusRiftControl.update();
-            } else {
-                trackbarControl.update();
-            }
-        }, 40);
+        // Init so that there is a valid time
+        var lastConnectionTrial = new Date().getTime();
+
+        var updateTimerImport = setInterval(
+                    function() {
+
+                        // Try to reconnect to Oculus Rift every 1 secoond
+                        if (!oculusRiftControl.isOculusRiftConnected()
+                                    && (new Date().getTime() > lastConnectionTrial + 1000)) {
+                            lastConnectionTrial = new Date().getTime();
+                            console.log("try to reconnect to OculusRift at " + lastConnectionTrial);
+                            setTimeout(function() {
+                                oculusRiftControl.update();
+                                oculusRiftControl.update();
+                            }, 500);
+                        }
+
+                        if (oculusRiftControl.isOculusRiftConnected()) {
+                            oculusRiftControl.update();
+                        } else {
+                            trackbarControl.update();
+                        }
+            			oculusRiftMouse.update();
+                   
+                        var stausLine = document.getElementById('statusLine');
+                        stausLine.innerHTML = ((oculusRiftControl.isOculusRiftConnected() ? '' : 'NOT ') + 'CONNECTED TO OCULUS RIFT');
+
+                    }, 40);
     }
 
     function createOculusRiftMouse() {
-        oculusRiftMouse = new THREE.OculusRiftMousePointerHelper({
+        oculusRiftMouse = new THREE.OculusRiftMousePointerHelper(scene, {
                     camera: camera,
                     domElement: renderer.domElement
         });
-        scene.add(oculusRiftMouse);
+      
     }
 
     function createOculusRiftControl() {
@@ -205,11 +224,6 @@ body {
                     });
 
         var folder1 = gui.addFolder("Advanced Options");
-        folder1.add(gui_options, 'USE_OCULUS_CONTROL').name('Oculus Control').onChange(function(value) {
-            if (!value) {
-                myFunctions.RESET_EVENT();
-            }
-        });
         folder1.add(gui_options, 'URL').name('Oculus Control URL').onChange(function(value) {
             oculusRiftControl.setUrl(value);
         });
@@ -225,6 +239,7 @@ body {
         folder1.add(gui_options, 'FIXED_POSITION').name('Fixed GUI Position').onChange(function(value) {
             gui.setAutomatic(!gui_options.FIXED_POSITION);
         });
+        folder1.open();
     }
 
     function createSkyDome() {
@@ -233,7 +248,7 @@ body {
             scene.remove(skydome);
         }
 
-        var path = pictureMap.get(gui_options.TEXTURE_FILE + '-'+  gui_options.TEXTURE_FILE_RESOLUTION);
+        var path = pictureMap.get(gui_options.TEXTURE_FILE + '-' + gui_options.TEXTURE_FILE_RESOLUTION);
         var texture = THREE.ImageUtils.loadTexture(path);
         texture.minFilter = THREE.LinearFilter;
         texture.magFilter = THREE.LinearFilter;
@@ -262,8 +277,7 @@ body {
         gui.setOpacity(gui_options.OPACITY);
         gui.update();
 
-        oculusRiftMouse.update();
-
+     
         if (gui_options.ROTATION_AUTOMATIC) {
             skydome.rotation.y = (skydome.rotation.y + 0.001 * gui_options.ROTATION_SPEED) % (Math.PI * 2);
             gui_options.ROTATION_ANGLE = skydome.rotation.y;
