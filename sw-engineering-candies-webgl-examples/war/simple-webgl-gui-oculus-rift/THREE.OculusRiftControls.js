@@ -28,6 +28,8 @@ function oculus_rift_callback(input_model) {
 }
 
 THREE.OculusRiftRotationControls = function(camera, scale, position) {
+    
+    console.log('THREE.OculusRiftRotationControls 1');
 
     var that = this;
     this.camera = camera;
@@ -37,6 +39,7 @@ THREE.OculusRiftRotationControls = function(camera, scale, position) {
     this.url = "http:\\\\localhost:8444";
     this.isConnected = false;
     this.lastUpdate = new Date().getTime();
+    this.tryConnection = false;
 
     this.controller = new THREE.Object3D();
     this.headPos = new THREE.Vector3();
@@ -67,7 +70,9 @@ THREE.OculusRiftRotationControls = function(camera, scale, position) {
             this.lastId = id;
 
             // Request new data
-            this.importData();
+            if (this.tryConnection) {
+                this.importData();
+            }
         }
 
     };
@@ -107,6 +112,12 @@ THREE.OculusRiftRotationControls = function(camera, scale, position) {
         "use strict";
 
         this.url = url;
+    }
+    
+    this.setActive = function(tryConnection) {
+        "use strict";
+
+        this.tryConnection = tryConnection;
     }
 
     this.isOculusRiftConnected = function() {

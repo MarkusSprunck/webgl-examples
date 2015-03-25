@@ -22,7 +22,7 @@
 
 THREE.OculusRiftMousePointerHelper = function(scene, parameters) {
 
-    console.log('THREE.OculusRiftMousePointerHelper v0.5');
+    console.log('THREE.OculusRiftMousePointerHelper 1');
 
     var that = this;
 
@@ -45,28 +45,16 @@ THREE.OculusRiftMousePointerHelper = function(scene, parameters) {
     this.distance = (parameters.distance !== undefined) ? parameters.distance : 0.9;
 
     // Create mouse pointers
-    this.sprite_default = new THREE.Sprite(new THREE.SpriteMaterial({
-                map: THREE.ImageUtils.loadTexture("textures/mouse_default.png"),
-                color: 0xffffff
-    }));
+    this.sprite_default = this.loadMouseCursorSprite("textures/mouse_default.png");
     scene.add(this.sprite_default);
 
-    this.sprite_resize = new THREE.Sprite(new THREE.SpriteMaterial({
-                map: THREE.ImageUtils.loadTexture("textures/mouse_resize.png"),
-                color: 0xffffff
-    }));
+    this.sprite_resize = this.loadMouseCursorSprite("textures/mouse_resize.png");
     scene.add(this.sprite_resize);
 
-    this.sprite_pointer = new THREE.Sprite(new THREE.SpriteMaterial({
-                map: THREE.ImageUtils.loadTexture("textures/mouse_pointer.png"),
-                color: 0xffffff
-    }));
+    this.sprite_pointer = this.loadMouseCursorSprite("textures/mouse_pointer.png");
     scene.add(this.sprite_pointer);
 
-    this.sprite_text = new THREE.Sprite(new THREE.SpriteMaterial({
-                map: THREE.ImageUtils.loadTexture("textures/mouse_text.png"),
-                color: 0xffffff
-    }));
+    this.sprite_text = this.loadMouseCursorSprite("textures/mouse_text.png");
     scene.add(this.sprite_text);
 
     if (this.initSucceeded) {
@@ -84,6 +72,17 @@ THREE.OculusRiftMousePointerHelper = function(scene, parameters) {
         domElement.addEventListener('mousemove', mousemove.bind(this), false);
     }
 };
+
+THREE.OculusRiftMousePointerHelper.prototype.loadMouseCursorSprite = function(path) {
+    var texture = THREE.ImageUtils.loadTexture(path);
+    texture.minFilter = THREE.LinearFilter;
+    texture.magFilter = THREE.LinearFilter;
+    var sprite = new THREE.Sprite(new THREE.SpriteMaterial({
+                map: texture,
+                color: 0xffffff
+    }));
+    return sprite;
+}
 
 THREE.OculusRiftMousePointerHelper.prototype.setMouse = function(style) {
     this.style = style;

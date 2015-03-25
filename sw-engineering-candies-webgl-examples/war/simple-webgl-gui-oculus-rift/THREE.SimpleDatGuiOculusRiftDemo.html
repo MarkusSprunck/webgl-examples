@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<title>THREE.SimpleDatGui Oculus Rift Demo</title>
+<title>THREE.SimpleDatGui - Oculus Rift Demo</title>
 <meta charset="utf-8">
 <style>
 body {
@@ -18,10 +18,76 @@ body {
 	font-family: Arial;
 	font-size: 10pt;
 }
+
+#forkongithub a {
+	background: #8181F7;
+	color: #fff;
+	text-decoration: none;
+	font-family: arial, sans-serif;
+	text-align: center;
+	font-weight: bold;
+	padding: 5px 40px;
+	font-size: 1rem;
+	line-height: 2rem;
+	position: absolute;
+	transition: 0.5s;
+	transform: scale(0.7, 0.7);
+	-webkit-transform: scale(0.7, 0.7);
+	-ms-transform: scale(0.7, 0.7);
+	-moz-transform: scale(0.7, 0.7);
+	-o-transform: scale(0.7, 0.7);
+}
+
+#forkongithub a:hover {
+	background: #2E2EFE;
+	color: #fff;
+}
+
+#forkongithub a::before, #forkongithub a::after {
+	content: "";
+	width: 100%;
+	display: block;
+	position: absolute;
+	top: 1px;
+	left: 0;
+	height: 1px;
+	background: #fff;
+}
+
+#forkongithub a::after {
+	bottom: 1px;
+	top: auto;
+}
+
+@media screen and (min-width: 800px) {
+	#forkongithub {
+		position: fixed;
+		display: block;
+		top: 0;
+		left: 0;
+		width: 200px;
+		overflow: hidden;
+		height: 200px;
+		z-index: 9999;
+	}
+	#forkongithub a {
+		width: 200px;
+		position: absolute;
+		top: 35px;
+		left: -85px;
+		transform: rotate(-45deg) scale(0.7, 0.7);
+		-webkit-transform: rotate(-45deg) scale(0.7, 0.7);
+		-ms-transform: rotate(-45deg) scale(0.7, 0.7);
+		-moz-transform: rotate(-45deg) scale(0.7, 0.7);
+		-o-transform: rotate(-45deg) scale(0.7, 0.7);
+		box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.3);
+	}
+}
 </style>
 </head>
 <body>
 <div class=absoluteStatusLine id="statusLine"></div>
+<span id="forkongithub"><a href="https://github.com/MarkusSprunck/oculus-rift-sensor-connector/tree/master/oculus-rift-sensor-connector">Fork me on GitHub</a></span>
 <script src="./lib/three.min.js"></script>
 <script src="./lib/TrackballControls.js"></script>
 <script src="./lib/stats.min.js"></script>
@@ -35,7 +101,7 @@ body {
 <script>
     // global 
 
-    var scene, renderer, skydome, camera, effect, gui, oculusRiftMouse, trackbarControl, oculusRiftControl;
+    var scene, renderer, skydome, camera, effect, gui, oculusRiftMouse, trackbarControl, oculusRiftControl, stats;
 
     // options 
 
@@ -66,7 +132,8 @@ body {
                     ROTATION_AUTOMATIC: false,
                     SCENE_DISTANCE: 50,
                     GUI_WIDTH: 280,
-                    GUI_SCALE: 1.5
+                    GUI_SCALE: 1.5,
+                    CONNECT_TO_OCULUS_RIFT: false
         };
     }
     var gui_options = createGuiOptionsDefinition();
@@ -83,6 +150,8 @@ body {
             camera.lookAt(new THREE.Vector3(0, 0, 0));
         }
     };
+    var guiBorderTop = 10;
+    var guiBorderRight = 10;
 
     init();
     animate();
@@ -100,6 +169,16 @@ body {
         createOculusRiftMouse();
         createGui();
         createEventListeners();
+        createStats();
+    }
+
+    function createStats() {
+        stats = new Stats();
+        stats.domElement.style.position = 'absolute';
+        stats.domElement.style.top = '' + guiBorderTop + 'px';
+        stats.domElement.style.right = '' + guiBorderRight + 'px';
+        stats.domElement.style.zIndex = 100;
+        document.body.appendChild(stats.domElement);
     }
 
     function createEventListeners() {
@@ -131,7 +210,6 @@ body {
                         if (!oculusRiftControl.isOculusRiftConnected()
                                     && (new Date().getTime() > lastConnectionTrial + 1000)) {
                             lastConnectionTrial = new Date().getTime();
-                            console.log("try to reconnect to OculusRift at " + lastConnectionTrial);
                             setTimeout(function() {
                                 oculusRiftControl.update();
                                 oculusRiftControl.update();
@@ -143,8 +221,8 @@ body {
                         } else {
                             trackbarControl.update();
                         }
-            			oculusRiftMouse.update();
-                   
+                        oculusRiftMouse.update();
+
                         var stausLine = document.getElementById('statusLine');
                         stausLine.innerHTML = ((oculusRiftControl.isOculusRiftConnected() ? '' : 'NOT ') + 'CONNECTED TO OCULUS RIFT');
 
@@ -156,7 +234,7 @@ body {
                     camera: camera,
                     domElement: renderer.domElement
         });
-      
+
     }
 
     function createOculusRiftControl() {
@@ -206,7 +284,7 @@ body {
                     scale: gui_options.GUI_SCALE,
                     position: new THREE.Vector3(-gui_options.GUI_WIDTH * gui_options.GUI_SCALE / 2, 150, -400),
                     automatic: !gui_options.FIXED_POSITION,
-                    mouse : oculusRiftMouse
+                    mouse: oculusRiftMouse
         });
 
         gui.add(myFunctions, 'RESET_EVENT').name('Reset Position');
@@ -227,6 +305,10 @@ body {
         folder1.add(gui_options, 'URL').name('Oculus Control URL').onChange(function(value) {
             oculusRiftControl.setUrl(value);
         });
+        folder1.add(gui_options, 'CONNECT_TO_OCULUS_RIFT').name('Oculus Control Active').onChange(function(value) {
+            oculusRiftControl.setActive(value);
+        });
+
         folder1.add(gui_options, 'OPACITY', 10, 100).step(10).name('Opacity').onChange(function(value) {
             gui_options.TRANPARENT = !(value == 100);
         });
@@ -239,7 +321,7 @@ body {
         folder1.add(gui_options, 'FIXED_POSITION').name('Fixed GUI Position').onChange(function(value) {
             gui.setAutomatic(!gui_options.FIXED_POSITION);
         });
-        folder1.open();
+        // folder1.open();
     }
 
     function createSkyDome() {
@@ -277,7 +359,8 @@ body {
         gui.setOpacity(gui_options.OPACITY);
         gui.update();
 
-     
+        stats.update();
+
         if (gui_options.ROTATION_AUTOMATIC) {
             skydome.rotation.y = (skydome.rotation.y + 0.001 * gui_options.ROTATION_SPEED) % (Math.PI * 2);
             gui_options.ROTATION_ANGLE = skydome.rotation.y;

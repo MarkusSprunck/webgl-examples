@@ -29,9 +29,9 @@
 THREE.SimpleDatGui = function(parameters) {
     "use strict";
 
-    console.log('THREE.SimpleDatGui v0.83.2');
+    console.log('THREE.SimpleDatGui 1');
 
-    // Check mandatory parameter
+    // Assign mandatory parameter
     if ((typeof parameters === "undefined") || (typeof parameters.scene === "undefined")) {
         console.err("THREE.SimpleDatGui - missing parameter scene");
     }
@@ -53,7 +53,7 @@ THREE.SimpleDatGui = function(parameters) {
     this.automatic = (parameters.automatic !== undefined) ? parameters.automatic : false;
     this.mouse = (parameters.mouse !== undefined) ? parameters.mouse : null;
 
-    // Don't use this - for internal use only
+    // For internal use only
     this._options = this.getOptions();
     this._private = new THREE.SimpleDatGui.__internals(this);
 };
@@ -364,7 +364,7 @@ THREE.SimpleDatGui.__internals.prototype.onMouseMoveEvt = function(event) {
             }
         } else {
             if (element.isComboBoxControl()) {
-                this.gui.mouse.setMouse("pointer");
+                this.gui.mouse.setMouse("default");
             } else if (element.isTextControl()) {
                 this.gui.mouse.setMouse("text");
             } else if (element.isSliderControl()) {
