@@ -1,0 +1,103 @@
+<!doctype html>
+<html>
+<head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<title>WebGL Examples</title>
+<style>
+body {
+	margin: 0px;
+	background-color: #111;
+	color: #FFF;
+	font-family: Arial;
+	text-align: left;
+	padding-top: 40px;
+	padding-left: 100px;
+	padding-right: 10px;
+	padding-bottom: 15px;
+}
+
+#forkongithub a {
+	background: #8181F7;
+	color: #fff;
+	text-decoration: none;
+	font-family: arial, sans-serif;
+	text-align: center;
+	font-weight: bold;
+	padding: 5px 40px;
+	font-size: 1rem;
+	line-height: 2rem;
+	position: absolute;
+	transition: 0.5s;
+	transform: scale(0.7, 0.7);
+	-webkit-transform: scale(0.7, 0.7);
+	-ms-transform: scale(0.7, 0.7);
+	-moz-transform: scale(0.7, 0.7);
+	-o-transform: scale(0.7, 0.7);
+}
+
+#forkongithub a:hover {
+	background: #2E2EFE;
+	color: #fff;
+}
+
+#forkongithub a::before, #forkongithub a::after {
+	content: "";
+	width: 100%;
+	display: block;
+	position: absolute;
+	top: 1px;
+	left: 0;
+	height: 1px;
+	background: #fff;
+}
+
+#forkongithub a::after {
+	bottom: 1px;
+	top: auto;
+}
+
+@media screen and (min-width: 800px) {
+	#forkongithub {
+		position: fixed;
+		display: block;
+		top: 0;
+		left: 0;
+		width: 200px;
+		overflow: hidden;
+		height: 200px;
+		z-index: 9999;
+	}
+	#forkongithub a {
+		width: 200px;
+		position: absolute;
+		top: 35px;
+		left: -85px;
+		transform: rotate(-45deg) scale(0.7, 0.7);
+		-webkit-transform: rotate(-45deg) scale(0.7, 0.7);
+		-ms-transform: rotate(-45deg) scale(0.7, 0.7);
+		-moz-transform: rotate(-45deg) scale(0.7, 0.7);
+		-o-transform: rotate(-45deg) scale(0.7, 0.7);
+		box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.3);
+	}
+}
+</style>
+</head>
+<body>
+<span id="forkongithub"><a href="https://github.com/MarkusSprunck/webgl-examples">Fork me on GitHub</a></span>
+<h1>WebGL Examples</h1>
+<table>
+<tr>
+<td><a href="http://webgl-examples.appspot.com/simple-webgl-gui/THREE.SimpleDatGuiDemo.html?hud=false" target="_blank">THREE.SimpleDatGuiDemo.html</a></td>
+</tr>
+<tr>
+<td><a href="http://webgl-examples.appspot.com/simple-webgl-gui/THREE.SimpleDatGuiDemo.html?hud=true" target="_blank">THREE.SimpleDatGuiDemo.html (HUD Mode)</a></td>
+</tr>
+<tr>
+<td><a href="http://webgl-examples.appspot.com/simple-webgl-gui-oculus-rift/THREE.SimpleDatGuiOculusRiftDemo.html" target="_blank">THREE.SimpleDatGuiOculusRiftDemo.html</a></td>
+</tr>
+<tr>
+<td><a href="http://webgl-examples.appspot.com/square-melon/melon.html" target="_blank">THREE.GrowingWaterMelonSimulation.html</a></td>
+</tr>
+</table>
+</body>
+</html>
