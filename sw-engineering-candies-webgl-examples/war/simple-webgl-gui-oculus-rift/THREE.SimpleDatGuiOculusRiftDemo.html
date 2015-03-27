@@ -122,7 +122,7 @@ body {
         "use strict";
         return {
                     TRANPARENT: false,
-                    FIXED_POSITION: false,
+                    FIXED_POSITION: true,
                     TEXTURE_FILE: 'Parc de Belleville Paris',
                     TEXTURE_FILE_RESOLUTION: 'low',
                     URL: "",
@@ -321,7 +321,7 @@ body {
         folder1.add(gui_options, 'FIXED_POSITION').name('Fixed GUI Position').onChange(function(value) {
             gui.setAutomatic(!gui_options.FIXED_POSITION);
         });
-        // folder1.open();
+        folder1.open();
     }
 
     function createSkyDome() {
