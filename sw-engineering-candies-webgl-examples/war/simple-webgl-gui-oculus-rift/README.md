@@ -52,7 +52,6 @@ Open Issues and Missing Features
 * THREE.SimpleDatGui.js - Compared to DAT.GUI the color picker control is missing and the save & restore of values
 * THREE.SimpleDatGui.js - No copy & paste support in text and value controls
 * THREE.SimpleDatGui.js - value control - slider just accepts mouse click - no mouse drag
-* THREE.SimpleDatGui.js - value control - the value can not be edited directly just with click on slider 
 * THREE.SimpleDatGui.js - in the case the scene is rotated in non fixed mode the location of the cursor in the text control is wrong
 * THREE.OculusRiftControls.js - performance and robustness should be improved
 
