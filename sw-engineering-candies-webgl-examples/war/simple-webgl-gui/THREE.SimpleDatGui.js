@@ -357,7 +357,7 @@ THREE.SimpleDatGui.__internals.prototype.onMouseMoveEvt = function(event) {
         } else {
             if (element.isComboBoxControl()) {
                 this.gui.mouse.setMouse("default");
-            } else if (element.isPropertyNumber()) {
+            } else if (element.isPropertyNumber() && typeof intersects[0].object.isTextValueField === "undefined") {
                 this.gui.mouse.setMouse("w-resize");
             } else if (element.isTextControl()) {
                 this.gui.mouse.setMouse("text");
