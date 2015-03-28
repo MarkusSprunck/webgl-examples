@@ -20,6 +20,8 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
+"use strict";
+
 /**
  * Simple rendering with pure WebGL based on three.js without any other 3rd
  * party library. The look & feel should be like in the Chrome Experiment
@@ -27,9 +29,8 @@
  * some features are missing.
  */
 THREE.SimpleDatGui = function(parameters) {
-    "use strict";
 
-    console.log('THREE.SimpleDatGui 1');
+    console.log('THREE.SimpleDatGui 2');
 
     // Assign mandatory parameter
     if ((typeof parameters === "undefined") || (typeof parameters.scene === "undefined")) {
@@ -62,7 +63,6 @@ THREE.SimpleDatGui = function(parameters) {
  * Same method as in DAT.GUI
  */
 THREE.SimpleDatGui.prototype.addFolder = function(name) {
-    "use strict";
 
     var result = new THREE.SimpleDatGuiControl(null, name, 0, 0, this, false, false, this._options);
     this._private.children.push(result);
@@ -70,7 +70,6 @@ THREE.SimpleDatGui.prototype.addFolder = function(name) {
 }
 
 THREE.SimpleDatGui.prototype.setAutomatic = function(automatic) {
-    "use strict";
 
     this.automatic = automatic;
 }
@@ -79,7 +78,6 @@ THREE.SimpleDatGui.prototype.setAutomatic = function(automatic) {
  * Same method as in DAT.GUI
  */
 THREE.SimpleDatGui.prototype.add = function(object, property, minValue, maxValue) {
-    "use strict";
 
     var result = new THREE.SimpleDatGuiControl(object, property, minValue, maxValue, this, false, true, this._options);
     this._private.children.push(result);
@@ -90,7 +88,6 @@ THREE.SimpleDatGui.prototype.add = function(object, property, minValue, maxValue
  * Same method as in DAT.GUI
  */
 THREE.SimpleDatGui.prototype.close = function() {
-    "use strict";
 
     this._private.closed = true;
     this._private.closeButton._private.createLabel(this._private.closed ? "Open Controls" : "Close Controls");
@@ -101,7 +98,6 @@ THREE.SimpleDatGui.prototype.close = function() {
  * Difference to DAT.GUI - hide gui
  */
 THREE.SimpleDatGui.prototype.hide = function() {
-    "use strict";
 
     this._private.hidden = true;
     return this;
@@ -111,7 +107,6 @@ THREE.SimpleDatGui.prototype.hide = function() {
  * Difference to DAT.GUI - hide gui
  */
 THREE.SimpleDatGui.prototype.isHidden = function() {
-    "use strict";
 
     return this._private.hidden;
 }
@@ -120,7 +115,6 @@ THREE.SimpleDatGui.prototype.isHidden = function() {
  * Difference to DAT.GUI - show gui
  */
 THREE.SimpleDatGui.prototype.show = function() {
-    "use strict";
 
     this._private.hidden = false;
     return this;
@@ -133,7 +127,6 @@ THREE.SimpleDatGui.prototype.show = function() {
  * mouse events.
  */
 THREE.SimpleDatGui.prototype.update = function(parameters) {
-    "use strict";
 
     // This can be used in cases the window resizes
     if (parameters !== undefined && parameters.position !== undefined) {
@@ -176,9 +169,10 @@ THREE.SimpleDatGui.prototype.update = function(parameters) {
                             that._private.mouseBindings.push(element.wComboBoxListFields[i]);
                         }
                         that._private.mouseBindings.push(element.wComboBoxTextField);
-                    } else if (element.isSliderControl()) {
+                    } else if (element.isPropertyNumber()) {
                         that._private.mouseBindings.push(element.wValueSliderBar);
                         that._private.mouseBindings.push(element.wValueSliderField);
+                        that._private.mouseBindings.push(element.wValueTextField);
                     } else {
                         that._private.mouseBindings.push(element.wArea);
                     }
@@ -192,9 +186,10 @@ THREE.SimpleDatGui.prototype.update = function(parameters) {
                         that._private.mouseBindings.push(child.wComboBoxListFields[i]);
                     }
                     that._private.mouseBindings.push(child.wComboBoxTextField);
-                } else if (!that.isElementFolder && child.isSliderControl()) {
+                } else if (!that.isElementFolder && child.isPropertyNumber()) {
                     that._private.mouseBindings.push(child.wValueSliderBar);
                     that._private.mouseBindings.push(child.wValueSliderField);
+                    that._private.mouseBindings.push(child.wValueTextField);
                 } else {
                     that._private.mouseBindings.push(child.wArea);
                 }
@@ -208,7 +203,6 @@ THREE.SimpleDatGui.prototype.update = function(parameters) {
  * This is just an optional feature which is helpful in some situations.
  */
 THREE.SimpleDatGui.prototype.setOpacity = function(opacity) {
-    "use strict";
 
     this._private.opacityGui = Math.max(20, Math.min(100, opacity));
     return this;
@@ -218,7 +212,6 @@ THREE.SimpleDatGui.prototype.setOpacity = function(opacity) {
  * Internal implementation may change - please don't access directly
  */
 THREE.SimpleDatGui.__internals = function(gui) {
-    "use strict";
 
     this.gui = gui;
 
@@ -267,7 +260,6 @@ THREE.SimpleDatGui.__internals = function(gui) {
 };
 
 THREE.SimpleDatGui.prototype.getOptions = function() {
-    "use strict";
 
     var scale = this.scale;
     var area_size = new THREE.Vector3(this.width, 20 * scale, 2.0 * scale);
@@ -338,7 +330,6 @@ THREE.SimpleDatGui.prototype.getOptions = function() {
 }
 
 THREE.SimpleDatGui.__internals.prototype.onMouseMoveEvt = function(event) {
-    "use strict";
 
     var intersects = this.getIntersectingObjects(event);
     if (null != intersects && intersects.length > 0) {
@@ -355,20 +346,21 @@ THREE.SimpleDatGui.__internals.prototype.onMouseMoveEvt = function(event) {
         if (this.gui.mouse == null) {
             if (element.isComboBoxControl()) {
                 this.gui.renderer.domElement.style.cursor = "pointer";
+            } else if (element.isPropertyNumber() && typeof intersects[0].object.isTextValueField === "undefined") {
+                this.gui.renderer.domElement.style.cursor = "w-resize";
+                this.gui._private.focus = null;
             } else if (element.isTextControl()) {
                 this.gui.renderer.domElement.style.cursor = "text";
-            } else if (element.isSliderControl()) {
-                this.gui.renderer.domElement.style.cursor = "w-resize";
             } else {
                 this.gui.renderer.domElement.style.cursor = "pointer";
             }
         } else {
             if (element.isComboBoxControl()) {
                 this.gui.mouse.setMouse("default");
+            } else if (element.isPropertyNumber()) {
+                this.gui.mouse.setMouse("w-resize");
             } else if (element.isTextControl()) {
                 this.gui.mouse.setMouse("text");
-            } else if (element.isSliderControl()) {
-                this.gui.mouse.setMouse("w-resize");
             } else {
                 this.gui.mouse.setMouse("pointer");
             }
@@ -385,7 +377,6 @@ THREE.SimpleDatGui.__internals.prototype.onMouseMoveEvt = function(event) {
 }
 
 THREE.SimpleDatGui.__internals.prototype.onMouseDownEvt = function(event) {
-    "use strict";
 
     if (event.which == 1 /* Left mouse button */) {
 
@@ -420,14 +411,15 @@ THREE.SimpleDatGui.__internals.prototype.onMouseDownEvt = function(event) {
 
             if (element.isComboBoxControl()) {
                 this.activeComboBox = element;
-            } else if (element.isSliderControl()) {
-                this.setNewSliderValueFromMouseDownEvt(intersects);
-                element.executeCallback();
             } else if (element.isFunctionControl()) {
                 element.executeCallback();
             } else if (element.isTextControl()) {
                 this.setNewCursorFromMouseDownEvt(intersects);
                 this.createDummyTextInputToShowKeyboard(event.clientY);
+                if (element.isPropertyNumber()) {
+                    this.setNewSliderValueFromMouseDownEvt(intersects);
+                }
+                element.executeCallback();
             } else if (element.isCheckBoxControl()) {
                 element.object[element.property] = !element.object[this.gui._private.focus.property];
                 element.executeCallback();
@@ -445,12 +437,11 @@ THREE.SimpleDatGui.__internals.prototype.onMouseDownEvt = function(event) {
  * Insert new character at cursor position
  */
 THREE.SimpleDatGui.__internals.prototype.onKeyPressEvt = function(event) {
-    "use strict";
 
     // Don't process the control keys is needed for Firefox
     if (this.isKeyTab(event.keyCode) || this.isKeyEnter(event.keyCode) || this.isKeyPos1(event.keyCode)
                 || this.isKeyEnd(event.keyCode) || this.isKeyLeft(event.keyCode) || this.isKeyRight(event.keyCode)
-                || this.isKeyEnf(event.keyCode) || this.isKeyBackspace(event.keyCode)) { return; }
+                /* || this.isKeyEnf(event.keyCode) */|| this.isKeyBackspace(event.keyCode)) { return; }
 
     // Just in the case the focus is in a text control
     var focus = this.gui._private.focus;
@@ -477,7 +468,6 @@ THREE.SimpleDatGui.__internals.prototype.onKeyPressEvt = function(event) {
  * Get and handle state of special keys
  */
 THREE.SimpleDatGui.__internals.prototype.onKeyDownEvt = function(event) {
-    "use strict";
 
     // Just in the case the focus is in a text control
     var focus = this.gui._private.focus;
@@ -508,7 +498,6 @@ THREE.SimpleDatGui.__internals.prototype.onKeyDownEvt = function(event) {
  * Ensures compatibility between different browsers, i.e. Chrome, Firefox, IE
  */
 THREE.SimpleDatGui.__internals.prototype.getCharacterCode = function(event) {
-    "use strict";
 
     event = event || window.event;
     var charCode = (typeof event.which == "number") ? event.which : event.keyCode;
@@ -516,78 +505,75 @@ THREE.SimpleDatGui.__internals.prototype.getCharacterCode = function(event) {
 }
 
 THREE.SimpleDatGui.__internals.prototype.isKeyTab = function(code) {
-    "use strict";
 
     return code === 9;
 }
 
 THREE.SimpleDatGui.__internals.prototype.isKeyEnter = function(code) {
-    "use strict";
 
     return code === 13;
 }
 
 THREE.SimpleDatGui.__internals.prototype.isKeyPos1 = function(code) {
-    "use strict";
 
     return code === 36;
 }
 
 THREE.SimpleDatGui.__internals.prototype.isKeyEnd = function(code) {
-    "use strict";
 
     return code === 35;
 }
 
 THREE.SimpleDatGui.__internals.prototype.isKeyLeft = function(code) {
-    "use strict";
 
     return code === 37;
 }
 
 THREE.SimpleDatGui.__internals.prototype.isKeyRight = function(code) {
-    "use strict";
 
     return code === 39;
 }
 
 THREE.SimpleDatGui.__internals.prototype.isKeyEnf = function(code) {
-    "use strict";
 
     return code === 46;
 }
 
 THREE.SimpleDatGui.__internals.prototype.isKeyBackspace = function(code) {
-    "use strict";
 
     return code === 8;
 }
 
 THREE.SimpleDatGui.__internals.prototype.isKeyShift = function(code) {
-    "use strict";
 
     return code === 16;
 }
 
 THREE.SimpleDatGui.__internals.prototype.isClosed = function() {
-    "use strict";
 
     return this.gui._private.closed;
 }
 
 THREE.SimpleDatGui.__internals.prototype.toggleClosed = function() {
-    "use strict";
 
     this.gui._private.closed = !this.gui._private.closed;
     this.gui._private.closeButton._private.createLabel(this.gui._private.closed ? "Open Controls" : "Close Controls");
 }
 
 THREE.SimpleDatGui.__internals.prototype.acknowledgeInput = function() {
-    "use strict";
 
     var focus = this.gui._private.focus;
     focus.lastValue = focus.newText;
-    focus.object[focus.property] = focus.newText;
+
+    if (focus.isPropertyNumber()) {
+        var value = parseFloat(focus.newText);
+        value = Math.min(Math.max(value, focus.minValue), focus.maxValue);
+        focus.object[focus.property] = value;
+        focus._private.createValueSliderBar(focus.scaling);
+    } else {
+        focus.object[focus.property] = focus.newText;
+    }
+
     focus.executeCallback();
 
     // Deactivate focus
@@ -598,7 +584,6 @@ THREE.SimpleDatGui.__internals.prototype.acknowledgeInput = function() {
 }
 
 THREE.SimpleDatGui.__internals.prototype.moveCursorToFirstCharacter = function() {
-    "use strict";
 
     var focus = this.gui._private.focus;
     var textHelper = focus.textHelper;
@@ -609,7 +594,6 @@ THREE.SimpleDatGui.__internals.prototype.moveCursorToFirstCharacter = function()
 }
 
 THREE.SimpleDatGui.__internals.prototype.moveCursorToLastCharacter = function() {
-    "use strict";
 
     var focus = this.gui._private.focus;
     var textHelper = focus.textHelper;
@@ -621,7 +605,6 @@ THREE.SimpleDatGui.__internals.prototype.moveCursorToLastCharacter = function() 
 }
 
 THREE.SimpleDatGui.__internals.prototype.moveCursorToNextCharacter = function(event) {
-    "use strict";
 
     var focus = this.gui._private.focus;
     var textHelper = focus.textHelper;
@@ -636,7 +619,6 @@ THREE.SimpleDatGui.__internals.prototype.moveCursorToNextCharacter = function(ev
 }
 
 THREE.SimpleDatGui.__internals.prototype.moveCursorToPreviousCharacter = function(event) {
-    "use strict";
 
     var focus = this.gui._private.focus;
     var textHelper = this.gui._private.focus.textHelper;
@@ -653,7 +635,6 @@ THREE.SimpleDatGui.__internals.prototype.moveCursorToPreviousCharacter = functio
 }
 
 THREE.SimpleDatGui.__internals.prototype.deletePreviousCharacter = function() {
-    "use strict";
 
     var focus = this.gui._private.focus;
     var textHelper = focus.textHelper;
@@ -668,7 +649,6 @@ THREE.SimpleDatGui.__internals.prototype.deletePreviousCharacter = function() {
 }
 
 THREE.SimpleDatGui.__internals.prototype.deleteNextCharacter = function() {
-    "use strict";
 
     var focus = this.gui._private.focus;
     var textHelper = focus.textHelper;
@@ -682,7 +662,6 @@ THREE.SimpleDatGui.__internals.prototype.deleteNextCharacter = function() {
  * Workaround to activate keyboard on iOS
  */
 THREE.SimpleDatGui.__internals.prototype.createDummyTextInputToShowKeyboard = function(positionY) {
-    "use strict";
 
     var element = document.getElementById('simple_dat_gui_dummy_text_input');
     if (element == null) {
@@ -703,7 +682,6 @@ THREE.SimpleDatGui.__internals.prototype.createDummyTextInputToShowKeyboard = fu
 }
 
 THREE.SimpleDatGui.__internals.prototype.getMousePositon = function(event) {
-    "use strict";
 
     var domElement = this.gui.renderer.domElement;
     var mouse = {};
@@ -713,7 +691,6 @@ THREE.SimpleDatGui.__internals.prototype.getMousePositon = function(event) {
 }
 
 THREE.SimpleDatGui.__internals.prototype.getIntersectingObjects = function(event) {
-    "use strict";
 
     this.gui.isPerspectiveCamera = true;
     if ("PerspectiveCamera" === this.gui.camera.type) {
@@ -740,7 +717,6 @@ THREE.SimpleDatGui.__internals.prototype.getIntersectingObjects = function(event
 }
 
 THREE.SimpleDatGui.__internals.prototype.setNewSliderValueFromMouseDownEvt = function(intersects) {
-    "use strict";
 
     var element = intersects[0].object.WebGLElement;
     var cursorMinimalX = element.wValueSliderField.position.x - this.gui._options.SLIDER.x / 2;
@@ -756,7 +732,6 @@ THREE.SimpleDatGui.__internals.prototype.setNewSliderValueFromMouseDownEvt = fun
 }
 
 THREE.SimpleDatGui.__internals.prototype.setNewCursorFromMouseDownEvt = function(intersects) {
-    "use strict";
 
     var element = intersects[0].object.WebGLElement;
     var focus = this.gui._private.focus;
@@ -764,9 +739,8 @@ THREE.SimpleDatGui.__internals.prototype.setNewCursorFromMouseDownEvt = function
     var value = focus.newText;
 
     this.gui._private.selected = element;
-
-    var cursorMinimalX = element.wValueTextField.position.x - this.gui._options.TEXT.x / 2
-                + element.textHelper.residiumX;
+    var fieldSize = element.isPropertyNumber() ? this.gui._options.NUMBER : this.gui._options.TEXT;
+    var cursorMinimalX = element.wValueTextField.position.x - fieldSize.x / 2 + element.textHelper.residiumX;
     var deltaX = intersects[0].point.x - cursorMinimalX;
     if (deltaX > textHelper.possibleCursorPositons[textHelper.possibleCursorPositons.length - 1].x) {
         textHelper.end = value.length - 1;
@@ -785,7 +759,6 @@ THREE.SimpleDatGui.__internals.prototype.setNewCursorFromMouseDownEvt = function
 
 THREE.SimpleDatGuiControl = function(object, property, minValue, maxValue, parent, isCloseButton, isRootControl,
             options) {
-    "use strict";
 
     // This is used for internal functions
     this._private = new THREE.SimpleDatGuiControl.__internals(this);
@@ -882,22 +855,28 @@ THREE.SimpleDatGuiControl = function(object, property, minValue, maxValue, paren
         this.property = property;
         this.minValue = minValue;
         this._private.createCheckBoxes();
-    } else if (this.isSliderControl()) {
-        this.object = object;
-        this.property = property;
-        this.minValue = minValue;
-        this.maxValue = maxValue;
-        this._private.createNumberValue(object[property]);
-        this._private.createValueField();
-        this._private.createValueSliderField();
-        this._private.createValueSliderBar();
     } else if (this.isTextControl()) {
+
         this.object = object;
         this.property = property;
-        this.newText = object[property];
-        this.selectedFieldText = this.newText;
-        this.textHelper.calculateLeftAlignText(this.newText);
-        this._private.createTextValue(this.newText);
+
+        if (this.isPropertyNumber()) {
+            this.minValue = minValue;
+            this.maxValue = maxValue;
+            this.newText = '' + object[property];
+            this._private.createValueSliderField();
+            this.scaling = (object[property] - this.minValue) / (this.maxValue - this.minValue);
+            this._private.createValueSliderBar(this.scaling);
+            this.selectedFieldText = this.newText;
+            this.textHelper.calculateLeftAlignText(this.newText);
+            this._private.createTextValue(object[property]);
+        } else {
+            this.newText = object[property];
+            this.selectedFieldText = this.newText;
+            this.textHelper.calculateLeftAlignText(this.newText);
+            this._private.createTextValue(this.newText);
+        }
+
         this._private.createValueTextField();
         this._private.createCursor();
     }
@@ -906,13 +885,11 @@ THREE.SimpleDatGuiControl = function(object, property, minValue, maxValue, paren
 }
 
 THREE.SimpleDatGuiControl.__internals = function(control) {
-    "use strict";
 
     this.control = control;
 };
 
 THREE.SimpleDatGuiControl.__internals.prototype.createArea = function() {
-    "use strict";
 
     var internal = this;
     var that = this.control;
@@ -946,8 +923,106 @@ THREE.SimpleDatGuiControl.__internals.prototype.createArea = function() {
     that.parent.scene.add(that.wArea);
 }
 
+THREE.SimpleDatGuiControl.__internals.prototype.createTextValue = function(value) {
+
+    var internal = this;
+    var that = this.control;
+    var $ = that._options;
+
+    if (that.isPropertyNumber()) {
+        var newValue = (typeof value === "number") ? value : 0;
+        var digits = (parseInt(newValue) == newValue) ? 0 : 1;
+        value = newValue.toFixed(digits);
+        if (value === "NaN") { return; }
+    }
+
+    if (typeof that.wTextValue !== "undefined") {
+        that.parent.scene.remove(that.wTextValue);
+    }
+
+    var _fontshapes = THREE.FontUtils.generateShapes(that.textHelper.truncated, $.FONT_PARAM);
+    var _geometry = new THREE.ShapeGeometry(_fontshapes);
+    that.wTextValue = new THREE.Mesh(_geometry, new THREE.MeshBasicMaterial($.MATERIAL));
+    that.wTextValue.updateRendering = function(index) {
+
+        if (that.isPropertyNumber()) {
+            var x = $.TAB_2.x + that.textHelper.residiumX;
+            var y = $.AREA.y * (-0.5 - index) - $.LABEL_OFFSET_Y;
+            var z = $.AREA.z + $.DELTA_Z_ORDER * 2;
+            internal.rotateAndTranslateElement(this, $, x, y, z);
+            this.material.color.setHex(that.parent._private.focus === that ? $.COLOR_LABEL : $.COLOR_MARKER_NUMBER);
+        } else {
+            var x = $.TAB_1.x + that.textHelper.residiumX;
+            var y = $.AREA.y * (-0.5 - index) - $.LABEL_OFFSET_Y;
+            var z = $.AREA.z + $.DELTA_Z_ORDER * 2;
+            internal.rotateAndTranslateElement(this, $, x, y, z);
+            this.material.color.setHex(that.parent._private.focus === that ? $.COLOR_LABEL : $.COLOR_TEXT);
+        }
+
+        this.material.opacity = that.parent._private.opacityGui * 0.01;
+        this.visible = that.isVisible() && that.isTextControl() && !that.isClosed;
+    };
+    that.parent.scene.add(that.wTextValue);
+}
+
+THREE.SimpleDatGuiControl.__internals.prototype.createValueTextField = function(event) {
+
+    var internal = this;
+    var that = this.control;
+    var $ = that._options;
+
+    var fieldSize = that.isPropertyNumber() ? $.NUMBER : $.TEXT;
+    var _geometry = new THREE.BoxGeometry(fieldSize.x, fieldSize.y, fieldSize.z);
+    var _material = new THREE.MeshBasicMaterial($.MATERIAL);
+    that.wValueTextField = new THREE.Mesh(_geometry, _material);
+    that.wValueTextField.visible = false;
+    that.wValueTextField.isTextValueField = false;
+    that.wValueTextField.WebGLElement = that;
+    that.wValueTextField.material.color.setHex($.COLOR_VALUE_FIELD);
+    that.wValueTextField.updateRendering = function(index) {
+        if (that.isPropertyNumber()) {
+            var x = $.TAB_2.x + $.NUMBER.x / 2;
+            var y = $.AREA.y * (-0.5 - index);
+            var z = $.AREA.z + $.DELTA_Z_ORDER;
+            internal.rotateAndTranslateElement(this, $, x, y, z);
+        } else {
+            var x = $.TAB_1.x + $.TEXT.x / 2;
+            var y = $.AREA.y * (-0.5 - index);
+            var z = $.AREA.z + $.DELTA_Z_ORDER;
+            internal.rotateAndTranslateElement(this, $, x, y, z);
+        }
+
+        this.material.opacity = that.parent._private.opacityGui * 0.01;
+        this.visible = that.isVisible() && that.isTextControl() && !that.isClosed;
+    };
+    that.parent.scene.add(that.wValueTextField);
+}
+
+THREE.SimpleDatGuiControl.__internals.prototype.createValueSliderField = function() {
+
+    var internal = this;
+    var that = this.control;
+    var $ = that._options;
+
+    var _geometry = new THREE.BoxGeometry($.SLIDER.x, $.SLIDER.y, $.SLIDER.z);
+    var _material = new THREE.MeshBasicMaterial($.MATERIAL);
+    that.wValueSliderField = new THREE.Mesh(_geometry, _material);
+    that.wValueSliderField.sliderType = "field";
+    that.wValueSliderField.WebGLElement = that;
+    that.wValueSliderField.material.color.setHex($.COLOR_VALUE_FIELD);
+    that.wValueSliderField.updateRendering = function(index) {
+        var x = $.TAB_1.x + $.SLIDER.x / 2;
+        var y = $.AREA.y * (-0.5 - index);
+        var z = $.AREA.z + $.DELTA_Z_ORDER;
+        internal.rotateAndTranslateElement(this, $, x, y, z);
+
+        this.material.opacity = that.parent._private.opacityGui * 0.01;
+        this.visible = that.isTextControl() && that.isPropertyNumber() && that.isVisible() && !that.isClosed;
+    };
+    that.parent.scene.add(that.wValueSliderField);
+}
+
 THREE.SimpleDatGuiControl.__internals.prototype.createValueSliderBar = function(scaling) {
-    "use strict";
 
     var internal = this;
     var that = this.control;
@@ -971,144 +1046,13 @@ THREE.SimpleDatGuiControl.__internals.prototype.createValueSliderBar = function(
 
         this.material.opacity = that.parent._private.opacityGui * 0.01;
         var isSliderBarNeeded = (that.object[that.property] > that.minValue);
-        this.visible = that.isSliderControl() && that.isVisible() && isSliderBarNeeded && !that.isClosed;
+        this.visible = that.isTextControl() && that.isPropertyNumber() && that.isVisible() && isSliderBarNeeded
+                    && !that.isClosed;
     };
     that.parent.scene.add(that.wValueSliderBar);
 }
 
-THREE.SimpleDatGuiControl.__internals.prototype.createTextValue = function(value) {
-    "use strict";
-
-    var internal = this;
-    var that = this.control;
-    var $ = that._options;
-
-    if (typeof that.wTextValue !== "undefined") {
-        that.parent.scene.remove(that.wTextValue);
-    }
-
-    var _fontshapes = THREE.FontUtils.generateShapes(that.textHelper.truncated, $.FONT_PARAM);
-    var _geometry = new THREE.ShapeGeometry(_fontshapes);
-    that.wTextValue = new THREE.Mesh(_geometry, new THREE.MeshBasicMaterial($.MATERIAL));
-    that.wTextValue.updateRendering = function(index) {
-        var x = $.TAB_1.x + that.textHelper.residiumX;
-        var y = $.AREA.y * (-0.5 - index) - $.LABEL_OFFSET_Y;
-        var z = $.AREA.z + $.DELTA_Z_ORDER * 2;
-        internal.rotateAndTranslateElement(this, $, x, y, z);
-
-        this.material.opacity = that.parent._private.opacityGui * 0.01;
-        this.material.color.setHex(that.parent._private.focus === that ? $.COLOR_LABEL : $.COLOR_TEXT);
-        this.visible = that.isVisible() && that.isTextControl() && !that.isClosed;
-    };
-    that.parent.scene.add(that.wTextValue);
-}
-
-THREE.SimpleDatGuiControl.__internals.prototype.createValueTextField = function(event) {
-    "use strict";
-
-    var internal = this;
-    var that = this.control;
-    var $ = that._options;
-
-    var _geometry = new THREE.BoxGeometry($.TEXT.x, $.TEXT.y, $.TEXT.z);
-    var _material = new THREE.MeshBasicMaterial($.MATERIAL);
-    that.wValueTextField = new THREE.Mesh(_geometry, _material);
-    that.wValueTextField.visible = false;
-    that.wValueTextField.WebGLElement = that;
-    that.wValueTextField.material.color.setHex($.COLOR_VALUE_FIELD);
-    that.wValueTextField.updateRendering = function(index) {
-        var x = $.TAB_1.x + $.TEXT.x / 2;
-        var y = $.AREA.y * (-0.5 - index);
-        var z = $.AREA.z + $.DELTA_Z_ORDER;
-        internal.rotateAndTranslateElement(this, $, x, y, z);
-
-        this.material.opacity = that.parent._private.opacityGui * 0.01;
-        this.visible = that.isVisible() && that.isTextControl() && !that.isClosed;
-    };
-    that.parent.scene.add(that.wValueTextField);
-}
-
-THREE.SimpleDatGuiControl.__internals.prototype.createValueSliderField = function(event) {
-    "use strict";
-
-    var internal = this;
-    var that = this.control;
-    var $ = that._options;
-
-    var _geometry = new THREE.BoxGeometry($.SLIDER.x, $.SLIDER.y, $.SLIDER.z);
-    var _material = new THREE.MeshBasicMaterial($.MATERIAL);
-    that.wValueSliderField = new THREE.Mesh(_geometry, _material);
-    that.wValueSliderField.sliderType = "field";
-    that.wValueSliderField.WebGLElement = that;
-    that.wValueSliderField.material.color.setHex($.COLOR_VALUE_FIELD);
-    that.wValueSliderField.updateRendering = function(index) {
-        var x = $.TAB_1.x + $.SLIDER.x / 2;
-        var y = $.AREA.y * (-0.5 - index);
-        var z = $.AREA.z + $.DELTA_Z_ORDER;
-        internal.rotateAndTranslateElement(this, $, x, y, z);
-
-        this.material.opacity = that.parent._private.opacityGui * 0.01;
-        this.visible = that.isSliderControl() && that.isVisible() && !that.isClosed;
-    };
-    that.parent.scene.add(that.wValueSliderField);
-}
-
-THREE.SimpleDatGuiControl.__internals.prototype.createValueField = function(event) {
-    "use strict";
-
-    var internal = this;
-    var that = this.control;
-    var $ = that._options;
-
-    var _geometry = new THREE.BoxGeometry($.NUMBER.x, $.NUMBER.y, $.NUMBER.z);
-    var _material = new THREE.MeshBasicMaterial($.MATERIAL);
-    _material.color.setHex($.COLOR_VALUE_FIELD);
-    that.wValueField = new THREE.Mesh(_geometry, _material);
-    that.wValueField.updateRendering = function(index) {
-        var x = $.TAB_2.x + $.NUMBER.x / 2;
-        var y = $.AREA.y * (-0.5 - index);
-        var z = $.AREA.z + $.DELTA_Z_ORDER;
-        internal.rotateAndTranslateElement(this, $, x, y, z);
-
-        this.material.opacity = that.parent._private.opacityGui * 0.01;
-        this.visible = that.isSliderControl() && that.isVisible() && !that.isClosed;
-    };
-    that.parent.scene.add(that.wValueField);
-}
-
-THREE.SimpleDatGuiControl.__internals.prototype.createNumberValue = function(value) {
-    "use strict";
-
-    var internal = this;
-    var that = this.control;
-    var $ = that._options;
-
-    if (typeof that.wValue !== "undefined") {
-        that.parent.scene.remove(that.wValue);
-    }
-
-    var newValue = (typeof value === "number") ? value : 0;
-    var digits = (parseInt(newValue) == newValue) ? 0 : 1;
-    var text = newValue.toFixed(digits);
-    if (text === "NaN") { return; }
-    var fontshapes = THREE.FontUtils.generateShapes(text, $.FONT_PARAM);
-    var _geometry = new THREE.ShapeGeometry(fontshapes);
-    that.wValue = new THREE.Mesh(_geometry, new THREE.MeshBasicMaterial($.MATERIAL));
-    that.wValue.material.color.setHex($.COLOR_MARKER_NUMBER);
-    that.wValue.updateRendering = function(index) {
-        var x = $.TAB_2.x + $.OFFSET_X;
-        var y = $.AREA.y * (-0.5 - index) - $.LABEL_OFFSET_Y;
-        var z = $.AREA.z + $.DELTA_Z_ORDER * 2;
-        internal.rotateAndTranslateElement(this, $, x, y, z);
-
-        this.material.opacity = that.parent._private.opacityGui * 0.01;
-        this.visible = that.isSliderControl() && that.isVisible() && !that.isClosed;
-    };
-    that.parent.scene.add(that.wValue);
-}
-
 THREE.SimpleDatGuiControl.__internals.prototype.createCheckBoxes = function(event) {
-    "use strict";
 
     var internal = this;
     var that = this.control;
@@ -1152,7 +1096,6 @@ THREE.SimpleDatGuiControl.__internals.prototype.createCheckBoxes = function(even
 }
 
 THREE.SimpleDatGuiControl.__internals.prototype.createLabel = function(name) {
-    "use strict";
 
     var internal = this;
     var that = this.control;
@@ -1181,7 +1124,6 @@ THREE.SimpleDatGuiControl.__internals.prototype.createLabel = function(name) {
 }
 
 THREE.SimpleDatGuiControl.__internals.prototype.createLabelMarker = function() {
-    "use strict";
 
     var internal = this;
     var that = this.control;
@@ -1213,7 +1155,6 @@ THREE.SimpleDatGuiControl.__internals.prototype.createLabelMarker = function() {
 }
 
 THREE.SimpleDatGuiControl.__internals.prototype.createMarker = function() {
-    "use strict";
 
     var internal = this;
     var that = this.control;
@@ -1229,11 +1170,11 @@ THREE.SimpleDatGuiControl.__internals.prototype.createMarker = function() {
         that.wMarker.material.color.setHex($.COLOR_MARKER_TEXT);
     } else if (that.isComboBoxControl()) {
         that.wMarker.material.color.setHex(that.isAcceptedValues ? $.COLOR_MARKER_TEXT : $.COLOR_MARKER_NUMBER);
-    } else if (that.isSliderControl()) {
+    } else if (that.isPropertyNumber()) {
         that.wMarker.material.color.setHex($.COLOR_MARKER_NUMBER);
     } else if (that.isFunctionControl()) {
         that.wMarker.material.color.setHex($.COLOR_MARKER_BUTTON);
-    } else if (that.isSliderControl()) {
+    } else if (that.isPropertyNumber()) {
         that.wMarker.material.color.setHex($.COLOR_MARKER_NUMBER);
     }
     that.wMarker.updateRendering = function(index) {
@@ -1253,10 +1194,9 @@ THREE.SimpleDatGuiControl.__internals.prototype.createMarker = function() {
 }
 
 THREE.SimpleDatGuiControl.__internals.prototype.createFrame = function() {
-    "use strict";
 
     var cubeGeometry2LineGeometry = function(input) {
-        "use strict";
+
         var _geometry = new THREE.Geometry();
         var vertices = _geometry.vertices;
         for (var i = 0; i < input.faces.length; i += 2) {
@@ -1294,7 +1234,6 @@ THREE.SimpleDatGuiControl.__internals.prototype.createFrame = function() {
 }
 
 THREE.SimpleDatGuiControl.__internals.prototype.createCursor = function() {
-    "use strict";
 
     var internal = this;
     var that = this.control;
@@ -1307,7 +1246,12 @@ THREE.SimpleDatGuiControl.__internals.prototype.createCursor = function() {
     that.wCursor.updateRendering = function(index) {
         var possiblePositon = that.textHelper.possibleCursorPositons[that.textHelper.cursor - that.textHelper.start];
         if (typeof possiblePositon !== "undefined") {
-            var x = $.TAB_1.x + that.textHelper.residiumX + possiblePositon.x + 0.25 * $.SCALE;
+            var x = 0;
+            if (that.isPropertyNumber()) {
+                x = $.TAB_2.x + that.textHelper.residiumX + possiblePositon.x + 0.25 * $.SCALE;
+            } else {
+                x = $.TAB_1.x + that.textHelper.residiumX + possiblePositon.x + 0.25 * $.SCALE;
+            }
             var y = $.AREA.y * (-0.5 - index);
             var z = $.AREA.z + $.DELTA_Z_ORDER * 2;
             internal.rotateAndTranslateElement(this, $, x, y, z);
@@ -1323,7 +1267,6 @@ THREE.SimpleDatGuiControl.__internals.prototype.createCursor = function() {
 }
 
 THREE.SimpleDatGuiControl.__internals.prototype.createComboBoxField = function(event) {
-    "use strict";
 
     var internal = this;
     var that = this.control;
@@ -1348,7 +1291,6 @@ THREE.SimpleDatGuiControl.__internals.prototype.createComboBoxField = function(e
 }
 
 THREE.SimpleDatGuiControl.__internals.prototype.createComboBoxListFields = function(event) {
-    "use strict";
 
     var internal = this;
     var that = this.control;
@@ -1404,7 +1346,6 @@ THREE.SimpleDatGuiControl.__internals.prototype.createComboBoxListFields = funct
 }
 
 THREE.SimpleDatGuiControl.__internals.prototype.createComboBoxText = function() {
-    "use strict";
 
     var internal = this;
     var that = this.control;
@@ -1431,7 +1372,6 @@ THREE.SimpleDatGuiControl.__internals.prototype.createComboBoxText = function() 
 }
 
 THREE.SimpleDatGuiControl.__internals.prototype.createComboBoxMarker = function() {
-    "use strict";
 
     var internal = this;
     var that = this.control;
@@ -1463,10 +1403,9 @@ THREE.SimpleDatGuiControl.__internals.prototype.createComboBoxMarker = function(
 }
 
 THREE.SimpleDatGuiControl.__internals.prototype.createComboBoxFrame = function() {
-    "use strict";
 
     var cubeGeometry2LineGeometry = function(input) {
-        "use strict";
+
         var _geometry = new THREE.Geometry();
         var vertices = _geometry.vertices;
         for (var i = 0; i < input.faces.length; i += 2) {
@@ -1504,7 +1443,6 @@ THREE.SimpleDatGuiControl.__internals.prototype.createComboBoxFrame = function()
 }
 
 THREE.SimpleDatGuiControl.__internals.prototype.rotateAndTranslateElement = function(element, $, x, y, z) {
-    "use strict";
 
     if (this.control.parent.automatic) {
         element.rotation.x = this.control.parent.camera.rotation._x;
@@ -1529,7 +1467,6 @@ THREE.SimpleDatGuiControl.__internals.prototype.rotateAndTranslateElement = func
 }
 
 THREE.SimpleDatGuiControl.prototype.updateRendering = function(index, isClosed) {
-    "use strict";
 
     var quaternion = new THREE.Quaternion();
     var euler = new THREE.Euler();
@@ -1560,20 +1497,18 @@ THREE.SimpleDatGuiControl.prototype.updateRendering = function(index, isClosed) 
             this.wComboBoxListTexts[i].updateRendering(index, i);
             this.wComboBoxListFields[i].updateRendering(index, i);
         }
-    } else if (this.isSliderControl()) {
-        this.wValue.updateRendering(index);
-        this.wValueField.updateRendering(index);
-        this.wValueSliderField.updateRendering(index);
-        this.wValueSliderBar.updateRendering(index);
     } else if (this.isTextControl()) {
         this.wValueTextField.updateRendering(index);
         this.wTextValue.updateRendering(index);
         this.wCursor.updateRendering(index);
+        if (this.isPropertyNumber()) {
+            this.wValueSliderField.updateRendering(index);
+            this.wValueSliderBar.updateRendering(index);
+        }
     }
 }
 
 THREE.SimpleDatGuiControl.prototype.onChange = function(value) {
-    "use strict";
 
     this.isOnChangeExisting = true;
     this.onChangeCallback = value;
@@ -1581,7 +1516,6 @@ THREE.SimpleDatGuiControl.prototype.onChange = function(value) {
 }
 
 THREE.SimpleDatGuiControl.prototype.add = function(object, property, minValue, maxValue) {
-    "use strict";
 
     var element = new THREE.SimpleDatGuiControl(object, property, minValue, maxValue, this.parent, false, false,
                 this._options);
@@ -1590,7 +1524,6 @@ THREE.SimpleDatGuiControl.prototype.add = function(object, property, minValue, m
 }
 
 THREE.SimpleDatGuiControl.prototype.name = function(value) {
-    "use strict";
 
     this.label = value;
     this._private.createLabel(this.label);
@@ -1598,7 +1531,6 @@ THREE.SimpleDatGuiControl.prototype.name = function(value) {
 }
 
 THREE.SimpleDatGuiControl.prototype.executeCallback = function(event) {
-    "use strict";
 
     if (this.isFunctionControl()) {
         this.onChangeCallback(null);
@@ -1609,8 +1541,6 @@ THREE.SimpleDatGuiControl.prototype.executeCallback = function(event) {
             this.onChangeCallback(this.object[this.property]);
         } else if (this.isTextControl()) {
             this.onChangeCallback(this.object[this.property]);
-        } else if (this.isSliderControl()) {
-            this.onChangeCallback(this.object[this.property]);
         } else if (this.isComboBoxControl()) {
             this.onChangeCallback(this.object[this.property]);
         }
@@ -1618,31 +1548,32 @@ THREE.SimpleDatGuiControl.prototype.executeCallback = function(event) {
 }
 
 THREE.SimpleDatGuiControl.prototype.listen = function() {
-    "use strict";
 
     console.warn('The listen method is depricated.');
     return this;
 }
 
 THREE.SimpleDatGuiControl.prototype.listenInternal = function() {
-    "use strict";
 
     var that = this;
     this.updateTimer = setInterval(function() {
-        if (that.isSliderControl()) {
-            if (that.lastValue !== that.object[that.property]) {
-                var newValue = that.object[that.property];
-                newValue = Math.min(Math.max(newValue, that.minValue), that.maxValue);
-                that._private.createNumberValue(newValue);
-                that.scaling = (newValue - that.minValue) / (that.maxValue - that.minValue);
-                that._private.createValueSliderBar(that.scaling);
-            }
-            that.lastValue = that.object[that.property];
-        }
-        if (that.isTextControl()) {
 
+        if (that.isPropertyNumber()) {
             if (that.lastValue !== that.object[that.property]) {
-                that.newText = that.object[that.property];
+                if (that.isPropertyNumber()) {
+                    var value = that.object[that.property];
+                    value = Math.min(Math.max(value, that.minValue), that.maxValue);
+                    that.scaling = (value - that.minValue) / (that.maxValue - that.minValue);
+                    that._private.createValueSliderBar(that.scaling);
+                    
+                    var newValue = (typeof value === "number") ? value : 0;
+                    var digits = (parseInt(newValue) == newValue) ? 0 : 1;
+                    value= newValue.toFixed(digits);
+                    if (value === "NaN") { return; }
+                    that.newText = value;
+                } else {
+                    that.newText = that.object[that.property];
+                }
                 that.textHelper.calculateAlignTextLastCall(that.newText);
                 that._private.createTextValue(that.textHelper.truncated);
             }
@@ -1653,14 +1584,12 @@ THREE.SimpleDatGuiControl.prototype.listenInternal = function() {
 }
 
 THREE.SimpleDatGuiControl.prototype.step = function(value) {
-    "use strict";
 
     this.step = value;
     return this;
 }
 
 THREE.SimpleDatGuiControl.prototype.open = function() {
-    "use strict";
 
     if (this.isElementFolder) {
         this.folderIsHidden = !this.folderIsHidden;
@@ -1670,7 +1599,6 @@ THREE.SimpleDatGuiControl.prototype.open = function() {
 }
 
 THREE.SimpleDatGuiControl.prototype.updateChildrenHidden = function() {
-    "use strict";
 
     this._private.children.forEach(function(entry) {
         entry.isElementHidden = !entry.isElementHidden;
@@ -1678,49 +1606,41 @@ THREE.SimpleDatGuiControl.prototype.updateChildrenHidden = function() {
 }
 
 THREE.SimpleDatGuiControl.prototype.isCheckBoxControl = function() {
-    "use strict";
 
     return this.propertyType === 'boolean';
 }
 
 THREE.SimpleDatGuiControl.prototype.isTextControl = function() {
-    "use strict";
 
-    return this.propertyType === 'string' && !this.isCombobox;
+    return (this.propertyType === 'number' || this.propertyType === 'string') && !this.isCombobox;
 }
 
 THREE.SimpleDatGuiControl.prototype.isComboBoxControl = function() {
-    "use strict";
 
     return this.isCombobox;
 }
 
-THREE.SimpleDatGuiControl.prototype.isSliderControl = function() {
-    "use strict";
+THREE.SimpleDatGuiControl.prototype.isPropertyNumber = function() {
 
     return this.propertyType === 'number';
 }
 
 THREE.SimpleDatGuiControl.prototype.isFunctionControl = function() {
-    "use strict";
 
     return this.propertyType === 'function';
 }
 
 THREE.SimpleDatGuiControl.prototype.isVisible = function() {
-    "use strict";
 
     return !this.isElementHidden;
 }
 
 THREE.SimpleDatGuiControl.prototype.isComboBoxExpanded = function() {
-    "use strict";
 
     return this === this.parent._private.activeComboBox;
 }
 
 THREE.SimpleDatGuiTextHelper = function(options) {
-    "use strict";
 
     this._options = options;
     this.start = 0;
@@ -1739,7 +1659,6 @@ THREE.SimpleDatGuiTextHelper = function(options) {
  * characters.
  */
 THREE.SimpleDatGuiTextHelper.prototype.createFontShapes = function(value) {
-    "use strict";
 
     var valueNew = value
     valueNew = valueNew.split(" ").join("]");
@@ -1763,7 +1682,6 @@ THREE.SimpleDatGuiTextHelper.prototype.createFontShapes = function(value) {
 }
 
 THREE.SimpleDatGuiTextHelper.prototype.calculateRightAlignText = function(value) {
-    "use strict";
 
     // Start with the complete string
     this.isTruncated = false;
@@ -1810,7 +1728,6 @@ THREE.SimpleDatGuiTextHelper.prototype.calculateRightAlignText = function(value)
 }
 
 THREE.SimpleDatGuiTextHelper.prototype.calculateLeftAlignText = function(value) {
-    "use strict";
 
     // Start with the complete string
     this.isTruncated = false;
@@ -1846,7 +1763,6 @@ THREE.SimpleDatGuiTextHelper.prototype.calculateLeftAlignText = function(value) 
 }
 
 THREE.SimpleDatGuiTextHelper.prototype.calculateAlignTextLastCall = function(value) {
-    "use strict";
 
     if (!this.isTruncated) { return this.calculateLeftAlignText(value); }
 
