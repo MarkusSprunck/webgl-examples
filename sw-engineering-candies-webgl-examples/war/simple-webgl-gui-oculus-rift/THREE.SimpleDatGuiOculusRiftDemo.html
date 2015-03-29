@@ -91,7 +91,6 @@ body {
 <script src="./lib/three.min.js"></script>
 <script src="./lib/TrackballControls.js"></script>
 <script src="./lib/stats.min.js"></script>
-<script src="./lib/AxisHelper.js"></script>
 <script src="./lib/helvetiker_regular.typeface.js"></script>
 <script src="./lib/OculusRiftEffect.js"></script>
 <script src="./lib/hashmap.js"></script>
@@ -122,9 +121,9 @@ body {
         "use strict";
         return {
                     TRANPARENT: false,
-                    FIXED_POSITION: true,
+                    HUD_MODE: true,
                     TEXTURE_FILE: 'Parc de Belleville Paris',
-                    TEXTURE_FILE_RESOLUTION: 'low',
+                    TEXTURE_FILE_RESOLUTION: 'medium',
                     URL: "",
                     OPACITY: 100,
                     ROTATION_SPEED: 0.5,
@@ -189,7 +188,7 @@ body {
             if (event.which == 3) {
                 if (gui.isHidden()) {
                     gui.show();
-                    if (gui_options.FIXED_POSITION) {
+                    if (!gui_options.HUD_MODE) {
                         myFunctions.RESET_EVENT();
                     }
                 } else {
@@ -283,13 +282,16 @@ body {
                     width: gui_options.GUI_WIDTH,
                     scale: gui_options.GUI_SCALE,
                     position: new THREE.Vector3(-gui_options.GUI_WIDTH * gui_options.GUI_SCALE / 2, 150, -400),
-                    automatic: !gui_options.FIXED_POSITION,
+                    automatic: gui_options.HUD_MODE,
                     mouse: oculusRiftMouse
         });
 
         gui.add(myFunctions, 'RESET_EVENT').name('Reset Position');
         gui.add(gui_options, 'TRANPARENT').name('Tranparent').onChange(function(value) {
             gui_options.OPACITY = (value) ? 80 : 100;
+        });
+        gui.add(gui_options, 'OPACITY', 10, 100).step(10).name('Opacity').onChange(function(value) {
+            gui_options.TRANPARENT = !(value == 100);
         });
         gui.add(gui_options, 'TEXTURE_FILE',
                     ['Place de la Concorde Paris', 'Place Dauphine Paris', 'Parc de Belleville Paris']).name('Scene')
@@ -309,19 +311,16 @@ body {
             oculusRiftControl.setActive(value);
         });
 
-        folder1.add(gui_options, 'OPACITY', 10, 100).step(10).name('Opacity').onChange(function(value) {
-            gui_options.TRANPARENT = !(value == 100);
-        });
         folder1.add(gui_options, 'ROTATION_ANGLE', 0, Math.PI * 2).step(0.1).name('Rotation Position').onChange(
                     function(value) {
                         skydome.rotation.y = gui_options.ROTATION_ANGLE;
                     });
         folder1.add(gui_options, 'ROTATION_SPEED', -5, 5).step(0.5).name('Rotation Speed');
         folder1.add(gui_options, 'ROTATION_AUTOMATIC').name('Automatic Rotation');
-        folder1.add(gui_options, 'FIXED_POSITION').name('Fixed GUI Position').onChange(function(value) {
-            gui.setAutomatic(!gui_options.FIXED_POSITION);
+        folder1.add(gui_options, 'HUD_MODE').name('HUD Mode').onChange(function(value) {
+            gui.setAutomatic(gui_options.HUD_MODE);
         });
-        folder1.open();
+
     }
 
     function createSkyDome() {
