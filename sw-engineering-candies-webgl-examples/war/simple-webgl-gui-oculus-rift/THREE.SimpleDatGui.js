@@ -30,7 +30,7 @@
  */
 THREE.SimpleDatGui = function(parameters) {
 
-    console.log('THREE.SimpleDatGui 3');
+    console.log('THREE.SimpleDatGui 4');
 
     // Assign mandatory parameter
     if ((typeof parameters === "undefined") || (typeof parameters.scene === "undefined")) {
@@ -415,10 +415,11 @@ THREE.SimpleDatGui.__internals.prototype.onMouseDownEvt = function(event) {
                 element.executeCallback();
             } else if (element.isTextControl()) {
                 this.setNewCursorFromMouseDownEvt(intersects);
-                this.createDummyTextInputToShowKeyboard(event.clientY);
+                if (typeof intersects[0].object.sliderType === "undefined") {
+                    this.createDummyTextInputToShowKeyboard(event.clientY);
+                }
                 if (element.isPropertyNumber()) {
                     var element = intersects[0].object.WebGLElement;
-                    console.log(intersects[0].object.sliderType);
                     if (intersects[0].object.sliderType == "bar") {
                         var newValue = Math.max(element.minValue, element.object[element.property] - element.step);
                         element.object[element.property] = newValue;
@@ -725,38 +726,6 @@ THREE.SimpleDatGui.__internals.prototype.getIntersectingObjects = function(event
         return null;
     }
 }
-
-// THREE.SimpleDatGui.__internals.prototype.setNewSliderValueFromMouseDownEvt =
-// function(intersects) {
-//
-// var element = intersects[0].object.WebGLElement;
-// var sliderFieldPosition = element.wValueSliderField.position;
-//
-// var xComponent = Math.pow((intersects[0].point.x + this.gui._options.SLIDER.x
-// / 2 - sliderFieldPosition.x) + 10, 2);
-// var yComponent = Math.pow((intersects[0].point.y - sliderFieldPosition.y),
-// 2);
-// var zComponent = Math.pow((intersects[0].point.z - sliderFieldPosition.z),
-// 2);
-// var fraction = Math.pow(xComponent + yComponent + zComponent, 0.5) /
-// this.gui._options.SLIDER.x;
-//
-// console.log("xComponent=" + xComponent);
-// console.log("yComponent=" + yComponent);
-// console.log("zComponent=" + zComponent);
-// console.log(fraction);
-//
-// var newValue = (element.maxValue - element.minValue) * fraction;
-// for (var value = element.minValue; value <= element.maxValue; value +=
-// element.step) {
-// if (value >= newValue) {
-// element.object[element.property] = value;
-// // Deactivate focus
-// this.gui._private.focus = null;
-// break;
-// }
-// }
-// }
 
 THREE.SimpleDatGui.__internals.prototype.setNewCursorFromMouseDownEvt = function(intersects) {
 
@@ -1586,19 +1555,21 @@ THREE.SimpleDatGuiControl.prototype.listenInternal = function() {
     var that = this;
     this.updateTimer = setInterval(function() {
 
-        if (that.isPropertyNumber()) {
+        if (that.isTextControl()) {
             if (that.lastValue !== that.object[that.property]) {
                 if (that.isPropertyNumber()) {
                     var value = that.object[that.property];
                     value = Math.min(Math.max(value, that.minValue), that.maxValue);
-                    that.scaling = (value - that.minValue) / (that.maxValue - that.minValue);
-                    that._private.createValueSliderBar(that.scaling);
-
                     var newValue = (typeof value === "number") ? value : 0;
                     var digits = (parseInt(newValue) == newValue) ? 0 : 1;
                     value = newValue.toFixed(digits);
-                    if (value === "NaN") { return; }
-                    that.newText = value;
+                    if (value === "NaN") {
+                        that.object[that.property] = (that.minValue + that.maxValue) / 2;
+                        value = that.object[that.property];
+                    }
+                    that.scaling = (value - that.minValue) / (that.maxValue - that.minValue);
+                    that._private.createValueSliderBar(that.scaling);
+                    that.newText = '' + value;
                 } else {
                     that.newText = that.object[that.property];
                 }
