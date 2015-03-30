@@ -29,7 +29,7 @@ function oculus_rift_callback(input_model) {
 
 THREE.OculusRiftRotationControls = function(camera, scale, position) {
     
-    console.log('THREE.OculusRiftRotationControls 1');
+    console.log('THREE.OculusRiftRotationControls 2');
 
     var that = this;
     this.camera = camera;
@@ -47,8 +47,8 @@ THREE.OculusRiftRotationControls = function(camera, scale, position) {
 
     this.update = function() {
 
-        // update within the last 100 milliseconds
-        this.isConnected = (new Date().getTime() < this.lastUpdate + 250);
+        // update within the last milliseconds
+        this.isConnected = (new Date().getTime() < this.lastUpdate + 500);
 
         if (g_oculusRiftSensorData) {
 

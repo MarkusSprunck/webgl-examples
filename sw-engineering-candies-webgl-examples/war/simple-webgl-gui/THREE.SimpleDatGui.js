@@ -30,7 +30,7 @@
  */
 THREE.SimpleDatGui = function(parameters) {
 
-    console.log('THREE.SimpleDatGui 4');
+    console.log('THREE.SimpleDatGui 5');
 
     // Assign mandatory parameter
     if ((typeof parameters === "undefined") || (typeof parameters.scene === "undefined")) {
@@ -263,9 +263,9 @@ THREE.SimpleDatGui.prototype.getOptions = function() {
 
     var scale = this.scale;
     var area_size = new THREE.Vector3(this.width, 20 * scale, 2.0 * scale);
-    var delta_z = 0.2 * scale;
-    var delta_z_order = 0.3 * scale;
-    var font_size = 7 * scale;
+    var delta_z = 0.3 * scale;
+    var delta_z_order = 0.4 * scale;
+    var font_size = 8 * scale;
     var rightBorder = 4 * scale;
     var text_offset_x = 2 * scale;
     var text_field_size = new THREE.Vector3(0.6 * area_size.x - rightBorder, 14 * scale, delta_z);

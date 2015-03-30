@@ -10,19 +10,6 @@ body {
 	overflow: hidden;
 }
 
-.absoluteTitle {
-	position: absolute;
-	bottom: 0px;
-	left: 0px;
-	color: #999;
-	font-family: Arial;
-	font-size: 9pt;
-	text-align: left;
-	padding-left: 10px;
-	padding-right: 10px;
-	padding-bottom: 15px;
-}
-
 #forkongithub a {
 	background: #8181F7;
 	color: #fff;
@@ -100,8 +87,6 @@ body {
 <script src="./THREE.SimpleDatGui.js"></script>
 <!-- Imports for THREE.SimpleDatGui | END   -->
 <span id="forkongithub"><a href="https://github.com/MarkusSprunck/webgl-examples">Fork me on GitHub</a></span>
-<div class="absoluteTitle">THREE.SimpleDatGui is rendered in WebGL based on three.js without any other 3rd party library. You may use your mouse wheel to zoom and the left mouse button to rotate the scene. A click with the right mouse button resets the position of the scene. Read more <a href="http://www.sw-engineering-candies.com/blog-1/three-simpledatgui-a-simple-user-interface-for-webgl-with-the-look-feel-of-dat-gui">here</a>.
-</div>
 <script>
     var camera, cameraHUD, stats, scene, sceneHUD, renderer, mesh, gui, trackbarControl, container, hemiLight;
 
@@ -186,7 +171,7 @@ body {
             var height = window.innerHeight;
 
             cameraHUD = new THREE.OrthographicCamera(-width / 2, width / 2, height / 2, -height / 2, 1, 10);
-            cameraHUD.position.z = 10;
+            cameraHUD.position.z = 11;
             cameraHUD.lookAt(new THREE.Vector3(0, 0, 0));
 
             sceneHUD = new THREE.Scene();

@@ -42,7 +42,7 @@ THREE.OculusRiftMousePointerHelper = function(scene, parameters) {
         console.warn('THREE.OculusRiftMousePointerHelper missing parameter \'domElement\'');
         this.initSucceeded = false;
     }
-    this.distance = (parameters.distance !== undefined) ? parameters.distance : 0.9;
+    this.distance = (parameters.distance !== undefined) ? parameters.distance : 0.95;
 
     // Create mouse pointers
     this.sprite_default = this.loadMouseCursorSprite("textures/mouse_default.png");
