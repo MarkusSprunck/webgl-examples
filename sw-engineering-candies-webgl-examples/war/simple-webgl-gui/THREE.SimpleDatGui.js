@@ -30,7 +30,7 @@
  */
 THREE.SimpleDatGui = function(parameters) {
 
-    console.log('THREE.SimpleDatGui 5');
+    console.log('THREE.SimpleDatGui 6');
 
     // Assign mandatory parameter
     if ((typeof parameters === "undefined") || (typeof parameters.scene === "undefined")) {
@@ -69,6 +69,15 @@ THREE.SimpleDatGui.prototype.addFolder = function(name) {
     return result;
 }
 
+/**
+ * Same method as in DAT.GUI
+ */
+THREE.SimpleDatGui.prototype.setPosition = function( position ) {
+
+	  this.rotation = position;	  
+	 
+}
+
 THREE.SimpleDatGui.prototype.setAutomatic = function(automatic) {
 
     this.automatic = automatic;
@@ -90,7 +99,7 @@ THREE.SimpleDatGui.prototype.add = function(object, property, minValue, maxValue
 THREE.SimpleDatGui.prototype.close = function() {
 
     this._private.closed = true;
-    this._private.closeButton._private.createLabel(this._private.closed ? "Open Controls" : "Close Controls");
+//    this._private.closeButton._private.createLabel(this._private.closed ? "Open Controls" : "Close Controls");
     return this;
 }
 
@@ -150,13 +159,13 @@ THREE.SimpleDatGui.prototype.update = function(parameters) {
             element.updateRendering(indexOfVisibleControls, that._private.isClosed() || that._private.hidden);
         });
     });
-    this._private.closeButton.updateRendering((this._private.isClosed()) ? 0 : (indexOfVisibleControls + 1),
-                that._private.hidden);
+//    this._private.closeButton.updateRendering((this._private.isClosed()) ? 0 : (indexOfVisibleControls + 1),
+//                that._private.hidden);
 
     // JUST VISIBLE CONTROLS INTERACT WITH MOUSE
     var that = this;
     this._private.mouseBindings = [];
-    that._private.mouseBindings.push(that._private.closeButton.wArea);
+  //  that._private.mouseBindings.push(that._private.closeButton.wArea);
 
     if (!this._private.isClosed() && !that._private.hidden) {
         this._private.children.forEach(function(child) {
@@ -229,7 +238,7 @@ THREE.SimpleDatGui.__internals = function(gui) {
     this.mouseBindings = [];
 
     // Close button is always part of user interface
-    this.closeButton = new THREE.SimpleDatGuiControl(null, "Close Controls", 0, 0, gui, true, false, gui._options);
+  //  this.closeButton = new THREE.SimpleDatGuiControl(null, "Close Controls", 0, 0, gui, true, false, gui._options);
 
     // Create all event listeners
     gui.renderer.domElement.addEventListener('mousemove', function(event) {
@@ -323,8 +332,8 @@ THREE.SimpleDatGui.prototype.getOptions = function() {
                 COLOR_MARKER_CHECKBOX: '0x806787',
                 COLOR_MARKER_TEXT: '0x1ed36f',
                 COLOR_MARKER_NUMBER: '0x2fa1d6',
-                COLOR_MARKER_CLOSE_SELECTED: '0x121212',
-                COLOR_MARKER_CLOSE: '0x010101',
+                COLOR_MARKER_CLOSE_SELECTED:  '0x010101',
+                COLOR_MARKER_CLOSE: '0x121212',
                 COLOR_BODER: '0x060606'
     }
 }
@@ -333,6 +342,10 @@ THREE.SimpleDatGui.__internals.prototype.onMouseMoveEvt = function(event) {
 
     var intersects = this.getIntersectingObjects(event);
     if (null != intersects && intersects.length > 0) {
+        
+        // Stop other event listeners from receiving this event
+        event.stopImmediatePropagation(); 
+
         var element = intersects[0].object.WebGLElement;
         if (element.isComboBoxControl() && element.isComboBoxExpanded()) {
             if (typeof intersects[0].object.text !== "undefined") {
@@ -378,11 +391,15 @@ THREE.SimpleDatGui.__internals.prototype.onMouseMoveEvt = function(event) {
 
 THREE.SimpleDatGui.__internals.prototype.onMouseDownEvt = function(event) {
 
+  
     if (event.which == 1 /* Left mouse button */) {
 
         var intersects = this.getIntersectingObjects(event);
         if (null != intersects && intersects.length > 0) {
-
+            
+            // Stop other event listeners from receiving this event
+            event.stopImmediatePropagation();
+ 
             // Set focus and selection on this control
             var element = intersects[0].object.WebGLElement;
             this.gui._private.focus = element;
@@ -434,9 +451,9 @@ THREE.SimpleDatGui.__internals.prototype.onMouseDownEvt = function(event) {
             } else if (element.isCheckBoxControl()) {
                 element.object[element.property] = !element.object[this.gui._private.focus.property];
                 element.executeCallback();
-            } else if (element === this.gui._private.closeButton) {
-                this.gui._private.toggleClosed();
-                element.executeCallback();
+//            } else if (element === this.gui._private.closeButton) {
+//                this.gui._private.toggleClosed();
+//                element.executeCallback();
             } else if (element.isElementFolder) {
                 element.executeCallback();
             }
@@ -568,7 +585,7 @@ THREE.SimpleDatGui.__internals.prototype.isClosed = function() {
 THREE.SimpleDatGui.__internals.prototype.toggleClosed = function() {
 
     this.gui._private.closed = !this.gui._private.closed;
-    this.gui._private.closeButton._private.createLabel(this.gui._private.closed ? "Open Controls" : "Close Controls");
+   // this.gui._private.closeButton._private.createLabel(this.gui._private.closed ? "Open Controls" : "Close Controls");
 }
 
 THREE.SimpleDatGui.__internals.prototype.acknowledgeInput = function() {
@@ -905,16 +922,11 @@ THREE.SimpleDatGuiControl.__internals.prototype.createArea = function() {
 
         this.material.opacity = that.parent._private.opacityGui * 0.01;
         this.material.visible = that.isVisible() && !that.isClosed;
-        if (that.isCloseButton) {
-            var color = (that.parent._private.selected === that) ? $.COLOR_BASE_CLOSE_BUTTON : $.COLOR_SELECTED;
-            this.material.color.setHex(color);
+        if (that.parent._private.selected === that
+                && (that.isCheckBoxControl() || that.isFunctionControl() || that.isElementFolder)) {
+        	this.material.color.setHex($.COLOR_SELECTED);
         } else {
-            if (that.parent._private.selected === that
-                        && (that.isCheckBoxControl() || that.isFunctionControl() || that.isElementFolder)) {
-                this.material.color.setHex($.COLOR_SELECTED);
-            } else {
-                this.material.color.setHex($.COLOR_BASE_CLOSE_BUTTON);
-            }
+        	this.material.color.setHex($.COLOR_BASE_CLOSE_BUTTON);
         }
     };
     that.parent.scene.add(that.wArea);
@@ -1546,7 +1558,7 @@ THREE.SimpleDatGuiControl.prototype.executeCallback = function(event) {
 
 THREE.SimpleDatGuiControl.prototype.listen = function() {
 
-    console.warn('The listen method is depricated.');
+    // console.warn('The listen method is depricated.');
     return this;
 }
 
