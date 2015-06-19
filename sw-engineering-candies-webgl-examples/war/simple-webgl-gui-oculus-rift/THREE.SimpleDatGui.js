@@ -30,7 +30,7 @@
  */
 THREE.SimpleDatGui = function(parameters) {
 
-    console.log('THREE.SimpleDatGui 6');
+    console.log('THREE.SimpleDatGui 7');
 
     // Assign mandatory parameter
     if ((typeof parameters === "undefined") || (typeof parameters.scene === "undefined")) {
@@ -99,7 +99,6 @@ THREE.SimpleDatGui.prototype.add = function(object, property, minValue, maxValue
 THREE.SimpleDatGui.prototype.close = function() {
 
     this._private.closed = true;
-//    this._private.closeButton._private.createLabel(this._private.closed ? "Open Controls" : "Close Controls");
     return this;
 }
 
@@ -159,13 +158,10 @@ THREE.SimpleDatGui.prototype.update = function(parameters) {
             element.updateRendering(indexOfVisibleControls, that._private.isClosed() || that._private.hidden);
         });
     });
-//    this._private.closeButton.updateRendering((this._private.isClosed()) ? 0 : (indexOfVisibleControls + 1),
-//                that._private.hidden);
 
     // JUST VISIBLE CONTROLS INTERACT WITH MOUSE
     var that = this;
     this._private.mouseBindings = [];
-  //  that._private.mouseBindings.push(that._private.closeButton.wArea);
 
     if (!this._private.isClosed() && !that._private.hidden) {
         this._private.children.forEach(function(child) {
@@ -236,9 +232,6 @@ THREE.SimpleDatGui.__internals = function(gui) {
     this.comboBox = null;
     this.children = [];
     this.mouseBindings = [];
-
-    // Close button is always part of user interface
-  //  this.closeButton = new THREE.SimpleDatGuiControl(null, "Close Controls", 0, 0, gui, true, false, gui._options);
 
     // Create all event listeners
     gui.renderer.domElement.addEventListener('mousemove', function(event) {
@@ -397,9 +390,13 @@ THREE.SimpleDatGui.__internals.prototype.onMouseDownEvt = function(event) {
         var intersects = this.getIntersectingObjects(event);
         if (null != intersects && intersects.length > 0) {
             
-            // Stop other event listeners from receiving this event
-            event.stopImmediatePropagation();
- 
+            // Stop other event listeners from receiving this event. On iOS this should not be 
+        	// done, because the keyboard closes
+        	var iOS = ( navigator.userAgent.match(/(iPad|iPhone|iPod)/g) ? true : false );
+        	if (!iOS) {
+        		event.stopImmediatePropagation();
+        	}
+        	
             // Set focus and selection on this control
             var element = intersects[0].object.WebGLElement;
             this.gui._private.focus = element;
@@ -451,9 +448,6 @@ THREE.SimpleDatGui.__internals.prototype.onMouseDownEvt = function(event) {
             } else if (element.isCheckBoxControl()) {
                 element.object[element.property] = !element.object[this.gui._private.focus.property];
                 element.executeCallback();
-//            } else if (element === this.gui._private.closeButton) {
-//                this.gui._private.toggleClosed();
-//                element.executeCallback();
             } else if (element.isElementFolder) {
                 element.executeCallback();
             }
@@ -469,7 +463,7 @@ THREE.SimpleDatGui.__internals.prototype.onKeyPressEvt = function(event) {
     // Don't process the control keys is needed for Firefox
     if (this.isKeyTab(event.keyCode) || this.isKeyEnter(event.keyCode) || this.isKeyPos1(event.keyCode)
                 || this.isKeyEnd(event.keyCode) || this.isKeyLeft(event.keyCode) || this.isKeyRight(event.keyCode)
-                /* || this.isKeyEnf(event.keyCode) */|| this.isKeyBackspace(event.keyCode)) { return; }
+                || this.isKeyEnf(event.keyCode) || this.isKeyBackspace(event.keyCode)) { return; }
 
     // Just in the case the focus is in a text control
     var focus = this.gui._private.focus;
@@ -585,7 +579,6 @@ THREE.SimpleDatGui.__internals.prototype.isClosed = function() {
 THREE.SimpleDatGui.__internals.prototype.toggleClosed = function() {
 
     this.gui._private.closed = !this.gui._private.closed;
-   // this.gui._private.closeButton._private.createLabel(this.gui._private.closed ? "Open Controls" : "Close Controls");
 }
 
 THREE.SimpleDatGui.__internals.prototype.acknowledgeInput = function() {
