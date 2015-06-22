@@ -30,7 +30,7 @@
  */
 THREE.SimpleDatGui = function(parameters) {
 	
-	console.log('THREE.SimpleDatGui 8');
+	console.log('THREE.SimpleDatGui 9');
 	
 	// Assign mandatory parameter
 	if ((typeof parameters === "undefined")
@@ -182,6 +182,7 @@ THREE.SimpleDatGui.prototype.update = function(parameters) {
 						that._private.mouseBindings.push(element.wComboBoxTextField);
 					}
 					else if (element.isPropertyNumber()) {
+						that._private.mouseBindings.push(element.wValueSliderBarRight);
 						that._private.mouseBindings.push(element.wValueSliderBar);
 						that._private.mouseBindings.push(element.wValueSliderField);
 						that._private.mouseBindings.push(element.wValueTextField);
@@ -202,6 +203,7 @@ THREE.SimpleDatGui.prototype.update = function(parameters) {
 				}
 				else if (!that.isElementFolder
 				    && child.isPropertyNumber()) {
+					that._private.mouseBindings.push(child.wValueSliderBarRight);
 					that._private.mouseBindings.push(child.wValueSliderBar);
 					that._private.mouseBindings.push(child.wValueSliderField);
 					that._private.mouseBindings.push(child.wValueTextField);
@@ -231,6 +233,8 @@ THREE.SimpleDatGui.__internals = function(gui) {
 	
 	this.gui = gui;
 	
+	var that = this;
+	
 	// Status
 	this.hidden = false;
 	this.closed = false;
@@ -246,31 +250,36 @@ THREE.SimpleDatGui.__internals = function(gui) {
 	this.mouseBindings = [];
 	
 	// timer for scrolling with mouse 
-	var timeout;
+	this.timeout;
+	this.eventMouseMove;
 	
 	// Create all event listeners
 	gui.renderer.domElement.addEventListener('mousemove', function(event) {
-		clearInterval(timeout);
-		timeout = setInterval(function() {
-			gui._private.handleScrollBarEvent(event);
-		}, 5);
+		gui._private.eventMouseMove = event;
 		gui._private.onMouseMoveEvt(event);
 	}.bind(gui));
 	
 	gui.renderer.domElement.addEventListener('mousedown', function(event) {
-		that.mouseDown = true;
+		gui._private.eventMouseMove = event;
+    	gui._private.mouseDown = true;
 		gui._private.onMouseDownEvt(event);
+		gui._private.handleScrollBarEvent();
+		if (gui._private.mouseDown) {
+			gui._private.timeout = setInterval(function() {
+				gui._private.handleScrollBarEvent();
+			}, 400);
+		}
 	}.bind(gui));
 	
 	gui.renderer.domElement.addEventListener('mouseup', function(event) {
-		that.mouseDown = false;
+		gui._private.mouseDown = false;
+		clearInterval(gui._private.timeout);
 	}.bind(gui));
 	
 	window.addEventListener('keypress', function(event) {
 		gui._private.onKeyPressEvt(event);
 	}.bind(gui));
 	
-	var that = this;
 	window.addEventListener('keyup', function(event) {
 		if (this._private.isKeyShift(that.getCharacterCode(event))) {
 			that.shiftPressed = false;
@@ -358,7 +367,8 @@ THREE.SimpleDatGui.prototype.getOptions = function() {
 	}
 }
 
-THREE.SimpleDatGui.__internals.prototype.handleScrollBarEvent = function(event) {
+THREE.SimpleDatGui.__internals.prototype.handleScrollBarEvent = function() {
+	var event = this.eventMouseMove;
 	var intersects = this.getIntersectingObjects(event);
 	if (null != intersects
 	    && intersects.length > 0) {
@@ -367,7 +377,7 @@ THREE.SimpleDatGui.__internals.prototype.handleScrollBarEvent = function(event) 
 		    && this.gui._private.mouseDown) {
 			if (element.isPropertyNumber()) {
 				var element = intersects[0].object.WebGLElement;
-				var delta = (element.maxValue - element.minValue) * 0.0005;
+				var delta = element.step;
 				if (intersects[0].object.sliderType == "bar") {
 					var newValue = Math.max(element.minValue, element.object[element.property]
 					    - delta);
@@ -387,8 +397,6 @@ THREE.SimpleDatGui.__internals.prototype.handleScrollBarEvent = function(event) 
 }
 
 THREE.SimpleDatGui.__internals.prototype.onMouseMoveEvt = function(event) {
-	
-	this.handleScrollBarEvent(event);
 	
 	var intersects = this.getIntersectingObjects(event);
 	if (null != intersects
@@ -415,7 +423,9 @@ THREE.SimpleDatGui.__internals.prototype.onMouseMoveEvt = function(event) {
 			}
 			else if (element.isPropertyNumber()
 			    && typeof intersects[0].object.isTextValueField === "undefined") {
-				this.gui.renderer.domElement.style.cursor = "w-resize";
+				if (intersects[0].object.sliderType === "barRight") {
+					this.gui.renderer.domElement.style.cursor = "w-resize";
+				}
 				this.gui._private.focus = null;
 			}
 			else if (element.isTextControl()) {
@@ -431,7 +441,9 @@ THREE.SimpleDatGui.__internals.prototype.onMouseMoveEvt = function(event) {
 			}
 			else if (element.isPropertyNumber()
 			    && typeof intersects[0].object.isTextValueField === "undefined") {
-				this.gui.mouse.setMouse("w-resize");
+				if (intersects[0].object.sliderType === "barRight") {
+					this.gui.mouse.setMouse("w-resize");
+				}
 			}
 			else if (element.isTextControl()) {
 				this.gui.mouse.setMouse("text");
@@ -507,22 +519,6 @@ THREE.SimpleDatGui.__internals.prototype.onMouseDownEvt = function(event) {
 				if (typeof intersects[0].object.sliderType === "undefined") {
 					this.createDummyTextInputToShowKeyboard(event.clientY);
 				}
-				if (element.isPropertyNumber()) {
-					var element = intersects[0].object.WebGLElement;
-					if (intersects[0].object.sliderType == "bar") {
-						var newValue = Math.max(element.minValue, element.object[element.property]
-						    - element.step);
-						element.object[element.property] = newValue;
-						this.gui._private.focus = null;
-					}
-					else if (intersects[0].object.sliderType == "field") {
-						var newValue = Math.min(element.maxValue, element.object[element.property]
-						    + element.step);
-						element.object[element.property] = newValue;
-						this.gui._private.focus = null;
-					}
-				}
-				element.executeCallback();
 			}
 			else if (element.isCheckBoxControl()) {
 				element.object[element.property] = !element.object[this.gui._private.focus.property];
@@ -684,6 +680,7 @@ THREE.SimpleDatGui.__internals.prototype.acknowledgeInput = function() {
 		value = Math.min(Math.max(value, focus.minValue), focus.maxValue);
 		focus.object[focus.property] = value;
 		focus._private.createValueSliderBar(focus.scaling);
+		focus._private.createValueSliderBarRight(focus.scaling);
 	}
 	else {
 		focus.object[focus.property] = focus.newText;
@@ -986,6 +983,7 @@ THREE.SimpleDatGuiControl = function(object, property, minValue, maxValue, paren
 			this.scaling = (object[property] - this.minValue)
 			    / (this.maxValue - this.minValue);
 			this._private.createValueSliderBar(this.scaling);
+			this._private.createValueSliderBarRight(this.scaling);
 			this.selectedFieldText = this.newText;
 			this.textHelper.calculateLeftAlignText(this.newText);
 			this._private.createTextValue(object[property]);
@@ -1195,6 +1193,41 @@ THREE.SimpleDatGuiControl.__internals.prototype.createValueSliderBar = function(
 		    && that.isPropertyNumber() && that.isVisible() && isSliderBarNeeded && !that.isClosed;
 	};
 	that.parent.scene.add(that.wValueSliderBar);
+}
+
+THREE.SimpleDatGuiControl.__internals.prototype.createValueSliderBarRight = function(scaling) {
+	
+	var internal = this;
+	var that = this.control;
+	var $ = that._options;
+	
+	if (typeof that.wValueSliderBarRight !== "undefined") {
+		that.parent.scene.remove(that.wValueSliderBarRight);
+	}
+	var width = that.step
+	    / (that.maxValue - that.minValue);
+	var _geometry = new THREE.BoxGeometry($.SLIDER.x
+	    * width, $.SLIDER.y, $.SLIDER.z);
+	var _material = new THREE.MeshBasicMaterial($.MATERIAL);
+	that.wValueSliderBarRight = new THREE.Mesh(_geometry, _material);
+	that.wValueSliderBarRight.sliderType = "barRight";
+	that.wValueSliderBarRight.WebGLElement = that;
+	that.wValueSliderBarRight.material.color.setHex($.COLOR_MARKER_NUMBER);
+	that.wValueSliderBarRight.updateRendering = function(index) {
+		var x = $.TAB_1.x
+		    - $.SLIDER.x * width / 2 + $.SLIDER.x * that.scaling;
+		var y = $.AREA.y
+		    * (-0.5 - index);
+		var z = $.AREA.z
+		    + $.DELTA_Z_ORDER * 3;
+		internal.rotateAndTranslateElement(this, $, x, y, z);
+		
+		this.material.opacity = 0.0;
+		var isSliderBarNeeded = (that.object[that.property] > that.minValue);
+		this.visible = that.isTextControl()
+		    && that.isPropertyNumber() && that.isVisible() && isSliderBarNeeded && !that.isClosed;
+	};
+	that.parent.scene.add(that.wValueSliderBarRight);
 }
 
 THREE.SimpleDatGuiControl.__internals.prototype.createCheckBoxes = function(event) {
@@ -1724,6 +1757,7 @@ THREE.SimpleDatGuiControl.prototype.updateRendering = function(index, isClosed) 
 		if (this.isPropertyNumber()) {
 			this.wValueSliderField.updateRendering(index);
 			this.wValueSliderBar.updateRendering(index);
+			this.wValueSliderBarRight.updateRendering(index);
 		}
 	}
 }
@@ -1797,6 +1831,7 @@ THREE.SimpleDatGuiControl.prototype.listenInternal = function() {
 					that.scaling = (value - that.minValue)
 					    / (that.maxValue - that.minValue);
 					that._private.createValueSliderBar(that.scaling);
+					that._private.createValueSliderBarRight(that.scaling);
 					that.newText = ''
 					    + value;
 				}
