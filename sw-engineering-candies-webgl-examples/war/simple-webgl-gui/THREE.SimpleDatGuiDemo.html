@@ -225,7 +225,7 @@ body {
         }).name('Font Size').onChange(function(value) {
             addOrUpdateRotatingText(scene, myOptions.RENDER_TEXT);
         });
-        folder1.add(myOptions, 'ROTATION_SPEED', -5, 5).step(1.0).name('Rotation Speed');
+        folder1.add(myOptions, 'ROTATION_SPEED', -5, 5).step(0.5).name('Rotation Speed');
         folder1.add(myOptions, 'ROTATION_ANGLE', 0, Math.PI * 2).step(0.1).name('Rotation Angle').onChange(
                     function(value) {
                         mesh.rotation.x = myOptions.ROTATION_ANGLE;

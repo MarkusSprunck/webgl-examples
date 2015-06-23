@@ -30,7 +30,7 @@
  */
 THREE.SimpleDatGui = function(parameters) {
 	
-	console.log('THREE.SimpleDatGui 9');
+	console.log('THREE.SimpleDatGui 10');
 	
 	// Assign mandatory parameter
 	if ((typeof parameters === "undefined")
@@ -48,8 +48,7 @@ THREE.SimpleDatGui = function(parameters) {
 	this.renderer = parameters.renderer;
 	
 	// Assign optional parameter
-	this.width = (parameters.width !== undefined) ? parameters.width
-	    * parameters.scale : 300;
+	this.width = (parameters.width !== undefined) ? parameters.width * parameters.scale : 300;
 	this.position = (parameters.position !== undefined) ? parameters.position : new THREE.Vector3(-150, 100, 150);
 	this.rotation = (parameters.rotation !== undefined) ? parameters.rotation : new THREE.Vector3(0, 0, 0);
 	this.scale = (parameters.scale !== undefined) ? parameters.scale : 1;
@@ -182,8 +181,6 @@ THREE.SimpleDatGui.prototype.update = function(parameters) {
 						that._private.mouseBindings.push(element.wComboBoxTextField);
 					}
 					else if (element.isPropertyNumber()) {
-						that._private.mouseBindings.push(element.wValueSliderBarRight);
-						that._private.mouseBindings.push(element.wValueSliderBar);
 						that._private.mouseBindings.push(element.wValueSliderField);
 						that._private.mouseBindings.push(element.wValueTextField);
 					}
@@ -203,8 +200,6 @@ THREE.SimpleDatGui.prototype.update = function(parameters) {
 				}
 				else if (!that.isElementFolder
 				    && child.isPropertyNumber()) {
-					that._private.mouseBindings.push(child.wValueSliderBarRight);
-					that._private.mouseBindings.push(child.wValueSliderBar);
 					that._private.mouseBindings.push(child.wValueSliderField);
 					that._private.mouseBindings.push(child.wValueTextField);
 				}
@@ -247,33 +242,23 @@ THREE.SimpleDatGui.__internals = function(gui) {
 	this.focus = null;
 	this.comboBox = null;
 	this.children = [];
-	this.mouseBindings = [];
-	
-	// timer for scrolling with mouse 
-	this.timeout;
-	this.eventMouseMove;
+	this.mouseBindings = [];	
 	
 	// Create all event listeners
 	gui.renderer.domElement.addEventListener('mousemove', function(event) {
-		gui._private.eventMouseMove = event;
 		gui._private.onMouseMoveEvt(event);
+		if (gui._private.mouseDown) {
+			gui._private.handleEventOnScrollBar(event);
+		}
 	}.bind(gui));
 	
 	gui.renderer.domElement.addEventListener('mousedown', function(event) {
-		gui._private.eventMouseMove = event;
-    	gui._private.mouseDown = true;
-		gui._private.onMouseDownEvt(event);
-		gui._private.handleScrollBarEvent();
-		if (gui._private.mouseDown) {
-			gui._private.timeout = setInterval(function() {
-				gui._private.handleScrollBarEvent();
-			}, 400);
-		}
+		gui._private.mouseDown = true;
+		gui._private.onMouseDownEvt(event);		
 	}.bind(gui));
 	
 	gui.renderer.domElement.addEventListener('mouseup', function(event) {
 		gui._private.mouseDown = false;
-		clearInterval(gui._private.timeout);
 	}.bind(gui));
 	
 	window.addEventListener('keypress', function(event) {
@@ -303,14 +288,11 @@ THREE.SimpleDatGui.prototype.getOptions = function() {
 	var font_size = 8 * scale;
 	var rightBorder = 4 * scale;
 	var text_offset_x = 2 * scale;
-	var text_field_size = new THREE.Vector3(0.6
-	    * area_size.x - rightBorder, 14 * scale, delta_z);
+	var text_field_size = new THREE.Vector3(0.6 * area_size.x - rightBorder, 14 * scale, delta_z);
 	var valueFiledSize = new THREE.Vector3(0.2 * area_size.x, 14 * scale, delta_z);
 	var labelTab1 = new THREE.Vector3(0.4 * area_size.x, 20 * scale, delta_z);
-	var labelTab2 = new THREE.Vector3(area_size.x
-	    - rightBorder - valueFiledSize.x, 20 * scale, delta_z);
-	var slider_field_size = new THREE.Vector3(labelTab2.x
-	    - labelTab1.x - rightBorder, 14 * scale, delta_z);
+	var labelTab2 = new THREE.Vector3(area_size.x - rightBorder - valueFiledSize.x, 20 * scale, delta_z);
+	var slider_field_size = new THREE.Vector3(labelTab2.x - labelTab1.x - rightBorder, 14 * scale, delta_z);
 	var marker_size = new THREE.Vector3(3 * scale, area_size.y, area_size.z);
 	var checkbox_filed_size = new THREE.Vector3(10 * scale, 10 * scale, delta_z);
 	var matrial = {
@@ -367,40 +349,11 @@ THREE.SimpleDatGui.prototype.getOptions = function() {
 	}
 }
 
-THREE.SimpleDatGui.__internals.prototype.handleScrollBarEvent = function() {
-	var event = this.eventMouseMove;
-	var intersects = this.getIntersectingObjects(event);
-	if (null != intersects
-	    && intersects.length > 0) {
-		var element = intersects[0].object.WebGLElement;
-		if (element.isTextControl()
-		    && this.gui._private.mouseDown) {
-			if (element.isPropertyNumber()) {
-				var element = intersects[0].object.WebGLElement;
-				var delta = element.step;
-				if (intersects[0].object.sliderType == "bar") {
-					var newValue = Math.max(element.minValue, element.object[element.property]
-					    - delta);
-					element.object[element.property] = newValue;
-					this.gui._private.focus = null;
-				}
-				else if (intersects[0].object.sliderType == "field") {
-					var newValue = Math.min(element.maxValue, element.object[element.property]
-					    + delta);
-					element.object[element.property] = newValue;
-					this.gui._private.focus = null;
-				}
-			}
-			element.executeCallback();
-		}
-	}
-}
 
 THREE.SimpleDatGui.__internals.prototype.onMouseMoveEvt = function(event) {
 	
 	var intersects = this.getIntersectingObjects(event);
-	if (null != intersects
-	    && intersects.length > 0) {
+	if (null != intersects && intersects.length > 0) {
 		
 		// Stop other event listeners from receiving this event
 		event.stopImmediatePropagation();
@@ -423,9 +376,7 @@ THREE.SimpleDatGui.__internals.prototype.onMouseMoveEvt = function(event) {
 			}
 			else if (element.isPropertyNumber()
 			    && typeof intersects[0].object.isTextValueField === "undefined") {
-				if (intersects[0].object.sliderType === "barRight") {
-					this.gui.renderer.domElement.style.cursor = "w-resize";
-				}
+				this.gui.renderer.domElement.style.cursor = "w-resize";
 				this.gui._private.focus = null;
 			}
 			else if (element.isTextControl()) {
@@ -441,9 +392,7 @@ THREE.SimpleDatGui.__internals.prototype.onMouseMoveEvt = function(event) {
 			}
 			else if (element.isPropertyNumber()
 			    && typeof intersects[0].object.isTextValueField === "undefined") {
-				if (intersects[0].object.sliderType === "barRight") {
-					this.gui.mouse.setMouse("w-resize");
-				}
+				this.gui.mouse.setMouse("w-resize");
 			}
 			else if (element.isTextControl()) {
 				this.gui.mouse.setMouse("text");
@@ -518,6 +467,8 @@ THREE.SimpleDatGui.__internals.prototype.onMouseDownEvt = function(event) {
 				this.setNewCursorFromMouseDownEvt(intersects);
 				if (typeof intersects[0].object.sliderType === "undefined") {
 					this.createDummyTextInputToShowKeyboard(event.clientY);
+				} else {	
+				    this.handleEventOnScrollBar(event);	
 				}
 			}
 			else if (element.isCheckBoxControl()) {
@@ -527,6 +478,29 @@ THREE.SimpleDatGui.__internals.prototype.onMouseDownEvt = function(event) {
 			else if (element.isElementFolder) {
 				element.executeCallback();
 			}
+		}
+	}
+}
+
+THREE.SimpleDatGui.__internals.prototype.handleEventOnScrollBar = function( event ) {
+	var intersects = this.getIntersectingObjects(event);
+	if (null != intersects && intersects.length > 0) {
+		var element = intersects[0].object.WebGLElement;
+		if (typeof element.wValueSliderField !== "undefined") {
+			var deltaX = ( 
+				Math.pow( Math.pow(intersects[0].point.x + element.wValueSliderField.position.x, 2)
+						+ Math.pow(intersects[0].point.y - element.wValueSliderField.position.y, 2) 
+						+ Math.pow(intersects[0].point.z - element.wValueSliderField.position.z, 2), 0.5) ) / this.gui._options.SLIDER.x;
+			if ("OrthographicCamera" === this.gui.camera.type) {
+				deltaX = 1-deltaX;
+			}
+			var numberOfSteps = ( element.maxValue - element.minValue ) / element.step;
+			deltaX *= numberOfSteps;
+			deltaX -= deltaX % 1;
+		
+			element.object[element.property] =  element.minValue + element.step * deltaX;
+			element.executeCallback();
+			this.gui._private.focus = null;
 		}
 	}
 }
@@ -680,7 +654,6 @@ THREE.SimpleDatGui.__internals.prototype.acknowledgeInput = function() {
 		value = Math.min(Math.max(value, focus.minValue), focus.maxValue);
 		focus.object[focus.property] = value;
 		focus._private.createValueSliderBar(focus.scaling);
-		focus._private.createValueSliderBarRight(focus.scaling);
 	}
 	else {
 		focus.object[focus.property] = focus.newText;
@@ -983,7 +956,6 @@ THREE.SimpleDatGuiControl = function(object, property, minValue, maxValue, paren
 			this.scaling = (object[property] - this.minValue)
 			    / (this.maxValue - this.minValue);
 			this._private.createValueSliderBar(this.scaling);
-			this._private.createValueSliderBarRight(this.scaling);
 			this.selectedFieldText = this.newText;
 			this.textHelper.calculateLeftAlignText(this.newText);
 			this._private.createTextValue(object[property]);
@@ -1193,41 +1165,6 @@ THREE.SimpleDatGuiControl.__internals.prototype.createValueSliderBar = function(
 		    && that.isPropertyNumber() && that.isVisible() && isSliderBarNeeded && !that.isClosed;
 	};
 	that.parent.scene.add(that.wValueSliderBar);
-}
-
-THREE.SimpleDatGuiControl.__internals.prototype.createValueSliderBarRight = function(scaling) {
-	
-	var internal = this;
-	var that = this.control;
-	var $ = that._options;
-	
-	if (typeof that.wValueSliderBarRight !== "undefined") {
-		that.parent.scene.remove(that.wValueSliderBarRight);
-	}
-	var width = that.step
-	    / (that.maxValue - that.minValue);
-	var _geometry = new THREE.BoxGeometry($.SLIDER.x
-	    * width, $.SLIDER.y, $.SLIDER.z);
-	var _material = new THREE.MeshBasicMaterial($.MATERIAL);
-	that.wValueSliderBarRight = new THREE.Mesh(_geometry, _material);
-	that.wValueSliderBarRight.sliderType = "barRight";
-	that.wValueSliderBarRight.WebGLElement = that;
-	that.wValueSliderBarRight.material.color.setHex($.COLOR_MARKER_NUMBER);
-	that.wValueSliderBarRight.updateRendering = function(index) {
-		var x = $.TAB_1.x
-		    - $.SLIDER.x * width / 2 + $.SLIDER.x * that.scaling;
-		var y = $.AREA.y
-		    * (-0.5 - index);
-		var z = $.AREA.z
-		    + $.DELTA_Z_ORDER * 3;
-		internal.rotateAndTranslateElement(this, $, x, y, z);
-		
-		this.material.opacity = 0.0;
-		var isSliderBarNeeded = (that.object[that.property] > that.minValue);
-		this.visible = that.isTextControl()
-		    && that.isPropertyNumber() && that.isVisible() && isSliderBarNeeded && !that.isClosed;
-	};
-	that.parent.scene.add(that.wValueSliderBarRight);
 }
 
 THREE.SimpleDatGuiControl.__internals.prototype.createCheckBoxes = function(event) {
@@ -1757,7 +1694,6 @@ THREE.SimpleDatGuiControl.prototype.updateRendering = function(index, isClosed) 
 		if (this.isPropertyNumber()) {
 			this.wValueSliderField.updateRendering(index);
 			this.wValueSliderBar.updateRendering(index);
-			this.wValueSliderBarRight.updateRendering(index);
 		}
 	}
 }
@@ -1814,8 +1750,7 @@ THREE.SimpleDatGuiControl.prototype.listen = function() {
 THREE.SimpleDatGuiControl.prototype.listenInternal = function() {
 	
 	var that = this;
-	this.updateTimer = setInterval(function() {
-		
+	this.updateTimer = setInterval(function() {		
 		if (that.isTextControl()) {
 			if (that.lastValue !== that.object[that.property]) {
 				if (that.isPropertyNumber()) {
@@ -1828,12 +1763,9 @@ THREE.SimpleDatGuiControl.prototype.listenInternal = function() {
 						that.object[that.property] = (that.minValue + that.maxValue) / 2;
 						value = that.object[that.property];
 					}
-					that.scaling = (value - that.minValue)
-					    / (that.maxValue - that.minValue);
+					that.scaling = (value - that.minValue) / (that.maxValue - that.minValue);
 					that._private.createValueSliderBar(that.scaling);
-					that._private.createValueSliderBarRight(that.scaling);
-					that.newText = ''
-					    + value;
+					that.newText = '' + value;
 				}
 				else {
 					that.newText = that.object[that.property];
