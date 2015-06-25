@@ -121,7 +121,6 @@ body {
         "use strict";
         return {
                     TRANPARENT: false,
-                    HUD_MODE: true,
                     TEXTURE_FILE: 'Parc de Belleville Paris',
                     TEXTURE_FILE_RESOLUTION: 'medium',
                     URL: "",
@@ -188,9 +187,7 @@ body {
             if (event.which == 3) {
                 if (gui.isHidden()) {
                     gui.show();
-                    if (!gui_options.HUD_MODE) {
-                        myFunctions.RESET_EVENT();
-                    }
+                    myFunctions.RESET_EVENT();                   
                 } else {
                     gui.hide();
                 }
@@ -281,15 +278,12 @@ body {
                     renderer: renderer,
                     width: gui_options.GUI_WIDTH,
                     scale: gui_options.GUI_SCALE,
-                    position: new THREE.Vector3(-gui_options.GUI_WIDTH * gui_options.GUI_SCALE / 2, 150, -500),
-                    automatic: gui_options.HUD_MODE,
+                    position: new THREE.Vector3(-gui_options.GUI_WIDTH * gui_options.GUI_SCALE / 2, 150, -500),               
                     mouse: oculusRiftMouse
         });
 
         gui.add(myFunctions, 'RESET_EVENT').name('Reset Position');
-        gui.add(gui_options, 'CONNECT_TO_OCULUS_RIFT').name('Oculus Control').onChange(function(value) {
-            oculusRiftControl.setActive(value);
-        });
+      
         gui.add(gui_options, 'TRANPARENT').name('Tranparent').onChange(function(value) {
             gui_options.OPACITY = (value) ? 80 : 100;
         });
@@ -310,16 +304,16 @@ body {
         folder1.add(gui_options, 'URL').name('Oculus Control URL').onChange(function(value) {
             oculusRiftControl.setUrl(value);
         });
+        folder1.add(gui_options, 'CONNECT_TO_OCULUS_RIFT').name('Oculus Control').onChange(function(value) {
+            oculusRiftControl.setActive(value);
+        });
 
         folder1.add(gui_options, 'ROTATION_ANGLE', 0, Math.PI * 2).step(0.1).name('Rotation Position').onChange(
                     function(value) {
                         skydome.rotation.y = gui_options.ROTATION_ANGLE;
                     });
         folder1.add(gui_options, 'ROTATION_SPEED', -5, 5).step(0.5).name('Rotation Speed');
-        folder1.add(gui_options, 'ROTATION_AUTOMATIC').name('Automatic Rotation');
-        folder1.add(gui_options, 'HUD_MODE').name('HUD Mode').onChange(function(value) {
-            gui.setAutomatic(gui_options.HUD_MODE);
-        });
+        folder1.add(gui_options, 'ROTATION_AUTOMATIC').name('Automatic Rotation');      
     }
 
     function createSkyDome() {
