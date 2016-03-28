@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (C) 2013, Markus Sprunck
+ * Copyright (C) 2013-2016, Markus Sprunck
  *
  * All rights reserved.
  *
@@ -346,6 +346,7 @@ function initDatGui(container) {
 			'Spring Link');
 	f3.add(MELONE_SimulationOptions, 'CHARGE', 5, 40).step(1.0).name('Charge');
 	f3.open();
+	g_gui.close();
 	
 	container.appendChild(g_gui.domElement);
 }
