@@ -61,20 +61,20 @@ function SimpleMotionDetector( object ) {
 		
 		// in degrees
 		this.offsetAlpha = -50.0;		
-		this.offsetGamma = -26.0;
+		this.offsetGamma = -20.0;
 		
 		// just the upper part of the video should be detected
-		this.detectionBorder = 0.95;
+		this.detectionBorder = 0.85;
 		
 		// threshold of detected pixels
 		this.pixelThreshold = 128;
 		
 		// average of all x positions of detected motion 
-		this.averageX = new MovingAverager( 500 );
+		this.averageX = new MovingAverager( 250 );
 		this.averageX.setValue( WIDTH / 2 );
 		
 		// average of all y positions of detected motion 
-		this.averageY = new MovingAverager( 500 );
+		this.averageY = new MovingAverager( 250 );
 		this.averageY.setValue( HEIGHT / 2 );		
 		
 		// show canvas
@@ -106,8 +106,8 @@ function SimpleMotionDetector( object ) {
 			
 			simpleMotionDetector = this;
 		
-			navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia 
-								  || navigator.mozGetUserMedia || navigator.msGetUserMedia;
+			navigator.getUserMedia = navigator.mozGetUserMedia || navigator.getUserMedia || navigator.webkitGetUserMedia 
+								  || navigator.msGetUserMedia;
 								  
 			video = document.createElement( 'video' );
 			if ( navigator.getUserMedia ) { 
