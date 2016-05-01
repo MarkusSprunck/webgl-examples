@@ -56,12 +56,12 @@ function SimpleMotionDetector( object ) {
 		this.object = object;	
 		
 		// amplification factor for rotation (one is almost natural)
-		this.amplificationAlpha = 0.4;
-		this.amplificationGamma = 0.4;	
+		this.amplificationAlpha = 0.3;
+		this.amplificationGamma = 0.3;	
 		
 		// in degrees
-		this.offsetAlpha = -50.0;		
-		this.offsetGamma = -20.0;
+		this.offsetAlpha = -30.0;		
+		this.offsetGamma = -25.0;
 		
 		// just the upper part of the video should be detected
 		this.detectionBorder = 0.85;
@@ -82,9 +82,9 @@ function SimpleMotionDetector( object ) {
 		
 		this.stop = false;
 			
-		videoCanvas = document.createElement( 'canvas' );
-		videoCanvas.width = PIXELS_HORIZONTAL;
-		videoCanvas.height = PIXELS_VERTICAL;
+		this.videoCanvas = document.createElement( 'canvas' );
+		this.videoCanvas.width = PIXELS_HORIZONTAL;
+		this.videoCanvas.height = PIXELS_VERTICAL;
 
 		var canvas = document.createElement( 'canvas' );
 		canvas.width = WIDTH;
@@ -96,13 +96,13 @@ function SimpleMotionDetector( object ) {
 		canvas.hidden = !this.showCanvas;
 		canvas.id="video_canvas";
 		
-		var videoContext = videoCanvas.getContext( '2d' );
+		var videoContext = this.videoCanvas.getContext( '2d' );
 		var APP = {};
 		var simpleMotionDetector;
 		var texture = null;
 		var ctx = canvas.getContext( '2d' );
 		var video;
-		this.stream = {}
+		this.stream;
 		document.body.appendChild( canvas );	
 		
 		SimpleMotionDetector.prototype.init = function() {	
@@ -129,21 +129,11 @@ function SimpleMotionDetector( object ) {
 						simpleMotionDetector.run( );
 					}, 
 					function( e ) {
-						alert( 'getUserMedia did not succeed.\n\ncode=' + e.code );
 					}
 				);
 			} else {
-	 			alert( 'Your browser does not seem to support UserMedia' )
+	 			alert( 'Your browser does not seem to support UserMedia. Use desktop browser like Chrome or Firefox.' )
 			}
-			
-			requestAnimFrame = ( function( ) {
-	 			return 	window.requestAnimationFrame || window.webkitRequestAnimationFrame ||
-	   				window.mozRequestAnimationFrame || window.oRequestAnimationFrame || window.msRequestAnimationFrame ||
-	   				function( /* function FrameRequestCallback */ callback, /* DOMElement Element */ element ) {
-	    					window.setTimeout( callback, 1000/60 );
-	   				};
-			} )( );		
-			
 		}
 		
 		
@@ -189,19 +179,22 @@ function SimpleMotionDetector( object ) {
 		}
 		
 		SimpleMotionDetector.prototype.terminate = function() {	
-			var track = this.stream.getTracks()[0];  
-			track.stop();
+			var stream = this.stream;
+			if (typeof stream !== "undefined" ){
+				var track = stream.getTracks()[0];  
+				track.stop();
+			}
 		}
 			
 		SimpleMotionDetector.prototype.analyseVideo = function() {			
 			videoContext.drawImage( video,0,0, PIXELS_HORIZONTAL, PIXELS_VERTICAL );
-			APP.ctx.drawImage( videoCanvas, 0, 0 );
+			APP.ctx.drawImage( this.videoCanvas, 0, 0 );
 			texture.loadContentsOf( APP.frontCanvas );
 			canvas.draw( texture );
 			canvas.mirror( );
 			canvas.move( );
 			canvas.update( );
-  			APP.ctx.drawImage( videoCanvas, 0, PIXELS_VERTICAL );  		
+  			APP.ctx.drawImage( this.videoCanvas, 0, PIXELS_VERTICAL );  		
 			simpleMotionDetector.analyisMotionPicture( );
 			
 			var _that = this;
