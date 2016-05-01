@@ -30,10 +30,15 @@
 /**
  * Global constants
  */
-var BORDER_LEFT = 8;
-var BORDER_TOP = 8;
-var BORDER_RIGHT = 8;
-var BORDER_BOTTOM = 16;
+var BORDER_LEFT = 0;
+var BORDER_TOP = 0;
+var BORDER_RIGHT = 0;
+var BORDER_BOTTOM = 0;
+
+/**
+ * Just for development to rotate scene
+ */
+var USE_ORBIT_CONTROLS = false;
 
 /**
  * Global variables for rendering
@@ -42,9 +47,7 @@ var g_panelWidthWebGL;
 var g_panelHeightWebGL;
 var g_scene;
 var g_cube_wireframe;
-var g_camera;
-var g_renderer;
-var g_control;
+var g_controls;
 var g_gui;
 var detectorPosition = {
 	x : 0,
@@ -60,16 +63,15 @@ function init() {
 
 	// Add container
 	g_scene = new THREE.Scene();
+	g_scene.fog=new THREE.FogExp2( 0xffffff, 0.0004 );
 	var container = document.getElementById('drawingArea');
 
 	// Add camera
-	HEIGHT = window.innerHeight;
-	WIDTH = window.innerWidth;
+	var HEIGHT = window.innerHeight;
+	var WIDTH = window.innerWidth;
 	g_camera = new THREE.PerspectiveCamera(50, WIDTH / HEIGHT, 1, 2000);
 	g_scene.add(g_camera);
-	g_camera.position.set(0, 150, 500);
-	g_camera.lookAt(0, 150, 0);
-
+	
 	// Add renderer
 	g_renderer = new THREE.WebGLRenderer({
 		alpha : true,
@@ -91,20 +93,33 @@ function init() {
 	g_motionDetector = new SimpleMotionDetector(g_camera);
 	g_motionDetector.init();
 	container.appendChild(g_motionDetector.domElement);
+	
+	if (USE_ORBIT_CONTROLS) {
+		g_controls = new THREE.OrbitControls( g_camera, g_renderer.domElement );
+		g_controls.enableDamping = true;
+		g_controls.dampingFactor = 0.25;
+		g_controls.enableZoom = true;
+		g_camera.position.set(g_camera.position.x, g_camera.position.y + 100, g_camera.position.z + 600);
+	} else {
+		g_camera.position.set(0, 150, 500);
+		g_camera.lookAt(0, 150, 0);
+	}
 
 	// Add dialog to change parameters
 	g_gui = new dat.GUI({
-		autoPlace : false
+		autoPlace : false, width: 312
 	});
-	g_gui.add(g_motionDetector, 'offsetAlpha', -60.0, 0.0, 10).name('offset α');
-	g_gui.add(g_motionDetector, 'offsetGamma', -60.0, 0.0, 10).name('offset γ');
-	g_gui.add(g_motionDetector, 'amplificationAlpha', 0.1, 0.8, 0.1).name('amplification α');
-	g_gui.add(g_motionDetector, 'amplificationGamma', 0.1, 0.8, 0.1).name('amplification γ');
-	g_gui.add(g_motionDetector, 'detectionBorder', 0.25, 1.0, 0.05).name('detection border');
-	g_gui.add(g_motionDetector, 'pixelThreshold', 0, 256, 10).name('pixel threshold');
-	g_gui.add(g_motionDetector.averageX, 'maxLength', 50, 500, 50).name('averager X');
-	g_gui.add(g_motionDetector.averageY, 'maxLength', 50, 500, 50).name('averager Y');
-
+	var folder = g_gui.addFolder('Motion Detector Settings');
+	folder.add(g_motionDetector, 'offsetAlpha', -60.0, 0.0, 10).name('Offset α');
+	folder.add(g_motionDetector, 'offsetGamma', -60.0, 0.0, 10).name('Offset γ');
+	folder.add(g_motionDetector, 'amplificationAlpha', 0.1, 0.8, 0.1).name('Amplification α');
+	folder.add(g_motionDetector, 'amplificationGamma', 0.1, 0.8, 0.1).name('Amplification γ');
+	folder.add(g_motionDetector, 'detectionBorder', 0.25, 1.0, 0.05).name('Detection border');
+	folder.add(g_motionDetector, 'pixelThreshold', 0, 256, 10).name('Pixel threshold');
+	folder.add(g_motionDetector.averageX, 'maxLength', 50, 500, 50).name('Averager X');
+	folder.add(g_motionDetector.averageY, 'maxLength', 50, 500, 50).name('Averager Y');
+	folder.open();
+	
 	g_gui.domElement.style.position = 'absolute';
 	g_gui.domElement.style.right = '' + (BORDER_RIGHT) + 'px';
 	g_gui.domElement.style.top = '' + (BORDER_RIGHT) + 'px';
@@ -147,12 +162,13 @@ function createFloor() {
 
 	var groundMaterial = new THREE.MeshPhongMaterial({
 		shininess : 80,
-		color : 0xafafaf,
-		specular : 0xffffff
+		color : 0xadafad,
+		specular : 0xadafad
 	});
-	floor = new THREE.Mesh(new THREE.PlaneBufferGeometry(1500, 1500), groundMaterial);
+		
+	var floor = new THREE.Mesh(new THREE.PlaneBufferGeometry(6000, 3000), groundMaterial);
 	floor.rotation.x = -Math.PI / 2;
-	floor.position.y = -40;
+	floor.position.y = -45;
 	floor.receiveShadow = true;
 	g_scene.add(floor);
 }
@@ -167,6 +183,10 @@ function animate() {
 	
 	document.getElementById('video_canvas').hidden = g_gui.closed;
 
+	if (USE_ORBIT_CONTROLS) {
+		g_controls.update();
+	}
+	
 	// Move the bear
 	detectorPosition.x = g_motionDetector.offsetAlpha + g_motionDetector.amplificationAlpha * g_motionDetector.averageX.getValue();
 	detectorPosition.y = g_motionDetector.offsetGamma + g_motionDetector.amplificationGamma * g_motionDetector.averageY.getValue();

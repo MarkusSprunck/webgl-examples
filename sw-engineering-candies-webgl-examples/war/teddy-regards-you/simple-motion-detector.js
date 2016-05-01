@@ -45,23 +45,23 @@
 function SimpleMotionDetector( object ) {
 	
 		// number of pixels for analysis
-		var PIXELS_HORIZONTAL = 50; 
-		var PIXELS_VERTICAL   = 50; 
+		var PIXELS_HORIZONTAL = 16 * 4; 
+		var PIXELS_VERTICAL   = 10 * 4; 
 		
 		// size of info window
-		var WIDTH =  245; 
-		var HEIGHT = 200; 
+		var WIDTH =  16 * 19 ; 
+		var HEIGHT = 10 * 19 ; 
 	
 		// expected to be THREE.g_camera object
 		this.object = object;	
 		
 		// amplification factor for rotation (one is almost natural)
-		this.amplificationAlpha = 0.4;
-		this.amplificationGamma = 0.4;	
+		this.amplificationAlpha = 0.25;
+		this.amplificationGamma = 0.25;	
 		
 		// in degrees
-		this.offsetAlpha = -50.0;		
-		this.offsetGamma = -20.0;
+		this.offsetAlpha = -35.0;		
+		this.offsetGamma = -15.0;
 		
 		// just the upper part of the video should be detected
 		this.detectionBorder = 0.85;
@@ -82,27 +82,27 @@ function SimpleMotionDetector( object ) {
 		
 		this.stop = false;
 			
-		videoCanvas = document.createElement( 'canvas' );
-		videoCanvas.width = PIXELS_HORIZONTAL;
-		videoCanvas.height = PIXELS_VERTICAL;
+		this.videoCanvas = document.createElement( 'canvas' );
+		this.videoCanvas.width = PIXELS_HORIZONTAL;
+		this.videoCanvas.height = PIXELS_VERTICAL;
 
 		var canvas = document.createElement( 'canvas' );
 		canvas.width = WIDTH;
 		canvas.height = HEIGHT;
 		canvas.style.position = 'absolute';
-		canvas.style.right = '8px';
-		canvas.style.bottom = '16px';
-		canvas.style.opacity = 1.0;
+		canvas.style.right = '10px';
+		canvas.style.bottom = '10px';
+		canvas.style.opacity = 0.6;
 		canvas.hidden = !this.showCanvas;
 		canvas.id="video_canvas";
 		
-		var videoContext = videoCanvas.getContext( '2d' );
+		var videoContext = this.videoCanvas.getContext( '2d' );
 		var APP = {};
 		var simpleMotionDetector;
 		var texture = null;
 		var ctx = canvas.getContext( '2d' );
 		var video;
-		this.stream = {}
+		this.stream;
 		document.body.appendChild( canvas );	
 		
 		SimpleMotionDetector.prototype.init = function() {	
@@ -129,21 +129,11 @@ function SimpleMotionDetector( object ) {
 						simpleMotionDetector.run( );
 					}, 
 					function( e ) {
-						alert( 'getUserMedia did not succeed.\n\ncode=' + e.code );
 					}
 				);
 			} else {
-	 			alert( 'Your browser does not seem to support UserMedia' )
+	 			alert( 'Your browser does not seem to support UserMedia. Use desktop browser like Chrome or Firefox.' )
 			}
-			
-			requestAnimFrame = ( function( ) {
-	 			return 	window.requestAnimationFrame || window.webkitRequestAnimationFrame ||
-	   				window.mozRequestAnimationFrame || window.oRequestAnimationFrame || window.msRequestAnimationFrame ||
-	   				function( /* function FrameRequestCallback */ callback, /* DOMElement Element */ element ) {
-	    					window.setTimeout( callback, 1000/60 );
-	   				};
-			} )( );		
-			
 		}
 		
 		
@@ -189,19 +179,22 @@ function SimpleMotionDetector( object ) {
 		}
 		
 		SimpleMotionDetector.prototype.terminate = function() {	
-			var track = this.stream.getTracks()[0];  
-			track.stop();
+			var stream = this.stream;
+			if (typeof stream !== "undefined" ){
+				var track = stream.getTracks()[0];  
+				track.stop();
+			}
 		}
 			
 		SimpleMotionDetector.prototype.analyseVideo = function() {			
 			videoContext.drawImage( video,0,0, PIXELS_HORIZONTAL, PIXELS_VERTICAL );
-			APP.ctx.drawImage( videoCanvas, 0, 0 );
+			APP.ctx.drawImage( this.videoCanvas, 0, 0 );
 			texture.loadContentsOf( APP.frontCanvas );
 			canvas.draw( texture );
 			canvas.mirror( );
 			canvas.move( );
 			canvas.update( );
-  			APP.ctx.drawImage( videoCanvas, 0, PIXELS_VERTICAL );  		
+  			APP.ctx.drawImage( this.videoCanvas, 0, PIXELS_VERTICAL );  		
 			simpleMotionDetector.analyisMotionPicture( );
 			
 			var _that = this;
