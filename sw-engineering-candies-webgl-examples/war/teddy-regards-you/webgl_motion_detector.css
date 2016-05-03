@@ -1,0 +1,51 @@
+.main {
+	background: #cbcc9e;
+	padding: 0px;
+	border: 0px;
+	margin: 0px
+}
+
+.div {
+	background: #554433;
+	padding: 10px;
+}
+
+.text {
+	color: #CCC;
+	font: 14px 'Lucida Grande', sans-serif;
+	padding-left: 10px;
+	padding-right: 10px;
+	padding-top: 4px;
+}
+
+.text-red {
+	color: #F00;
+	font: 14px 'Lucida Grande', sans-serif;
+	padding-left: 10px;
+	padding-right: 10px;
+	padding-top: 4px;
+}
+
+.info-box {
+	width: 100%;
+}
+
+td, th {
+	padding: 5px !important;
+}
+
+a {
+	color: #009de9;
+	font: 14px 'Lucida Grande', sans-serif;
+	text-align: right;
+}
+
+span.glyphicon {
+    font-size: 1.3em;  
+}
+
+.btn-circle-on-top {
+	top: 10px;
+	left: 10px;
+	position: absolute;
+}
