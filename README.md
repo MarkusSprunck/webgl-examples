@@ -1,6 +1,10 @@
 WebGL Examples
 --------------
 
+* Teddy Regards You!
+
+  https://webgl-examples.appspot.com/teddy-regards-you/index.html
+  
 * THREE.SimpleDatGuiDemo.html
 
   https://webgl-examples.appspot.com/simple-webgl-gui/THREE.SimpleDatGuiDemo.html
