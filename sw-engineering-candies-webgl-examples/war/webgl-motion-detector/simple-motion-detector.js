@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2013-2016, Markus Sprunck
+ * Copyright (C) 2013-2017, Markus Sprunck
  *
  * All rights reserved.
  *
@@ -108,7 +108,7 @@ function SimpleMotionDetector( object ) {
 			if ( navigator.getUserMedia ) { 
 	 			navigator.getUserMedia( {audio: false, video: true}, 
 					function( stream ) {
-	 				    video.src = window.URL.createObjectURL( stream );
+	 			    		video.srcObject = stream
 						APP.videoWidth = PIXELS_HORIZONTAL;
 						APP.videoHeight = PIXELS_VERTICAL;  
 						APP.frontCanvas = document.createElement( 'canvas' );
