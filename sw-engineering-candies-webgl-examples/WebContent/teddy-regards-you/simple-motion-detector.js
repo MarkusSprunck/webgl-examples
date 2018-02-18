@@ -220,7 +220,20 @@ function SimpleMotionDetector(object) {
 	SimpleMotionDetector.prototype.run = function() {
 		canvas = fx.canvas();
 		texture = canvas.texture(APP.frontCanvas);
-		video.play();
+	    
+	   		var r = confirm("Allow video preview");
+    			if (r == true) {
+     			var promise = video.play();
+				if (promise !== undefined) {
+			    		promise.catch(error => {
+			        		console.log("Auto-play was prevented");
+			    		}).then(() => {
+			    		    console.log("Video started");
+			  	  	});
+				}
+	  		}
+	
+
 		this.analyseVideo();
 	}
 

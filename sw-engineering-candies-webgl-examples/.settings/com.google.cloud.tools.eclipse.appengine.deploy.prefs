@@ -6,4 +6,4 @@ project.bucket=
 project.id=webgl-examples
 project.previousVersion.stop=true
 project.promote=true
-project.version=13
+project.version=16
