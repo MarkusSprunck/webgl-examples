@@ -1,0 +1,9 @@
+account.email=sprunck.markus@gmail.com
+app.yaml.path=src/main/appengine/app.yaml
+eclipse.preferences.version=1
+include.optional.configuration.files=true
+project.bucket=
+project.id=webgl-examples
+project.previousVersion.stop=false
+project.promote=false
+project.version=9
