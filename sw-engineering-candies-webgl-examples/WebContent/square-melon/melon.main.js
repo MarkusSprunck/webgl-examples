@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (C) 2013-2016, Markus Sprunck
+ * Copyright (C) 2013-2018, Markus Sprunck
  *
  * All rights reserved.
  *
@@ -32,7 +32,7 @@
 var BORDER_LEFT = 10;
 var BORDER_TOP = 10;
 var BORDER_RIGHT = 10;
-var BORDER_BOTTOM = 60;
+var BORDER_BOTTOM = 10;
 
 /**
  * Global variables for rendering
@@ -40,7 +40,6 @@ var BORDER_BOTTOM = 60;
 var g_panelWidthWebGL;
 var g_panelHeightWebGL;
 var g_scene;
-var g_cube_wireframe;
 var g_camera;
 var g_renderer;
 var g_control;
@@ -54,7 +53,7 @@ function initWebGL() {
 	"use strict";
 	// Container for WebGL rendering
 	var container = document.getElementById('graphic-container');
-	container.style.background = "#252525";
+	container.style.background = "#444444";
 	initDatGui(container);
 	
 	// Size of drawing
@@ -80,6 +79,7 @@ function initWebGL() {
 		return;
 	}
 	g_renderer.setSize(g_panelWidthWebGL, g_panelHeightWebGL);
+	g_renderer.setClearColor(0x444444);
 	container.appendChild(g_renderer.domElement);
 
 
@@ -104,7 +104,7 @@ function initWebGL() {
 		resetCamera();
 		g_camera.updateProjectionMatrix();
 		g_gui.domElement.style.position = 'absolute';
-		g_gui.domElement.style.left = '' + (BORDER_LEFT) + 'px';
+		g_gui.domElement.style.right = '' + (BORDER_RIGHT) + 'px';
 		g_gui.domElement.style.top = '' + (BORDER_TOP) + 'px';
 	};
 	window.addEventListener('resize', resizeCallback, false);
@@ -128,11 +128,7 @@ function initWebGL() {
 		var geometry = new THREE.SphereGeometry(800, 16, 20);
 		var material = new THREE.MeshLambertMaterial({
 			map : texture,
-			depthTest : true,
-			overdraw : true,
-			castShadow : true,
-			shininess: 20,
-			shading : THREE.SmoothShading
+			depthTest : true
 		});
 		g_melon = new THREE.Mesh(geometry, material);
 		g_melon.geometry.dynamic = true;
@@ -168,9 +164,6 @@ function animate() {
 		MELONE_NBodySimulator.updateMelon(g_melon);
 	}
 
-	// re-draw the box
-	renderCubeWithDottedHiddenLines();
-
 	// update wire frame
 	var nodes = MELONE_NBodySimulator.node_list;
 	for ( var i = 0; i < nodes.length; i++) {
@@ -189,57 +182,7 @@ function renderer() {
 	g_renderer.render(g_scene, g_camera);
 }
 
-/**
- * Render a cube with hidden dotted lines. It is necessary to render the cube
- * several times to make all hidden lines dotted and the visible lines solid.
- */
-function renderCubeWithDottedHiddenLines() {
-	"use strict";
-	if (typeof (g_cube_wireframe) !== "undefined") {
-		g_scene.remove(g_cube_wireframe);
-	}
-	if (MELONE_SimulationOptions.DISPLAY_CUBE) {
-		// Create geometries
-		var a = (MELONE_SimulationOptions.SPHERE_RADIUS + MELONE_SimulationOptions.SPHERE_RADIUS_MINIMUM) * 2;
-		var cube_geometry = new THREE.CubeGeometry(a, a, a);
-		var cube_geometry_wire = convertCubeGeometry2LineGeometry(cube_geometry);
-		// Create materials
-		var material_solid_wireframe = new THREE.MeshBasicMaterial({
-			color : 0x666666,
-			depthTest : true,
-			wireframe : true,
-			polygonOffset : true,
-			polygonOffsetFactor : 1,
-			polygonOffsetUnits : 1
-		});
-		// Render four cubes with same geometry
-		g_cube_wireframe = new THREE.Line(cube_geometry_wire,
-				material_solid_wireframe, THREE.LinePieces);
-		g_scene.add(g_cube_wireframe);
-	}
-}
 
-/**
- * Helper to create a line-geometry from a cube-geometry
- */
-
-function convertCubeGeometry2LineGeometry(input) {
-	"use strict";
-	var geometry = new THREE.Geometry();
-	var vertices = geometry.vertices;
-	for ( var i = 0; i < input.faces.length; i += 2) {
-		var face1 = input.faces[i];
-		var face2 = input.faces[i + 1];
-		var c1 = input.vertices[face1.c].clone();
-		var a1 = input.vertices[face1.a].clone();
-		var a2 = input.vertices[face2.a].clone();
-		var b2 = input.vertices[face2.b].clone();
-		var c2 = input.vertices[face2.c].clone();
-		vertices.push(c1, a1, a2, b2, b2, c2);
-	}
-	geometry.computeLineDistances();
-	return geometry;
-}
 
 /**
  * Renders sphere for the node
@@ -257,10 +200,9 @@ function renderNodeSphere(node) {
 		// Create sphere
 		var material = new THREE.MeshLambertMaterial({
 			reflectivity : 0.9,
-			ambient : 0x3A3A3A,
 			depthTest : true,
 			transparent : true,
-			color : 0xAAAAAA
+			color : 0x444444
 		});
 		node.sphere = new THREE.Mesh(new THREE.SphereGeometry(
 				MELONE_SimulationOptions.SPHERE_RADIUS_MINIMUM), material);
@@ -337,7 +279,6 @@ function initDatGui(container) {
 					g_scene.remove(g_melon);
 				}
 			});
-	f1.add(MELONE_SimulationOptions, 'DISPLAY_CUBE').name('Show Box');
 	f1.open();
 	
 	f3 = g_gui.addFolder('N-Body Simulation');
@@ -346,7 +287,6 @@ function initDatGui(container) {
 			'Spring Link');
 	f3.add(MELONE_SimulationOptions, 'CHARGE', 5, 40).step(1.0).name('Charge');
 	f3.open();
-	g_gui.close();
 	
 	container.appendChild(g_gui.domElement);
 }
