@@ -85,15 +85,12 @@ body {
 </style>
 </head>
 <body>
+
 <script src="./lib/three.min.js"></script>
 <script src="./lib/TrackballControls.js"></script>
 <script src="./lib/stats.min.js"></script>
-<script src="./lib/gentilis_regular.typeface.js"></script>
-<script src="./lib/optimer_regular.typeface.js"></script>
-<!-- Imports for THREE.SimpleDatGui | START -->
-<script src="./lib/helvetiker_regular.typeface.js"></script>
 <script src="./THREE.SimpleDatGui.js"></script>
-<!-- Imports for THREE.SimpleDatGui | END   -->
+
 <span id="forkongithub"><a href="https://github.com/MarkusSprunck/webgl-examples">Fork me on GitHub</a></span>
 <script>
 	var camera, stats, scene, renderer, mesh, gui, trackbarControl, container, hemiLight;
@@ -119,8 +116,22 @@ body {
     var guiBorderRight = 10;
     var guiBorderLeft = 10;
     
-    init();
-    animate();
+ 
+ 	console.log("THREE.SimpleDatGui  99dev - load font");
+ 	var globalfont = null;
+ 	var loader = new THREE.FontLoader();
+    loader.load( 'lib/helvetiker_regular.typeface.json', function ( font ) {
+     	globalfont = font;
+ 	});
+    
+    function statApplication() {
+        console.log("THREE.SimpleDatGui  99dev - load font ready");
+        init();
+        animate();
+    }
+
+    // Prints the font object after 500 ms delay.
+    setTimeout(statApplication, 100);
     
     function init() {
 	    "use strict";
@@ -156,7 +167,6 @@ body {
 	    scene.add(light2);
 	    
 	    // Add content 
-	    
 	    addOrUpdateRotatingText(scene, myOptions.RENDER_TEXT);
 	    
 	    // Add GUI
@@ -174,50 +184,58 @@ body {
 		    }
 	    };
 	    
-	    gui = new THREE.SimpleDatGui({
-	        scene : scene,
-	        camera : camera,
-	        renderer : renderer,
-	        width : guiDefaultWidth,
-	        position : new THREE.Vector3(-295, 200, 80),
-	        scale : 2.0
-	    });
-	    
-	    gui.add(myFunctions, 'RESET_EVENT').name('Reset Position');
-	    gui.add(myOptions, 'TRANPARENT').name('Tranparent').onChange(function(value) {
-		    myOptions.OPACITY = (value) ? 80 : 100;
-	    });
-	    gui.add(myOptions, 'OPACITY', 10, 100).step(5).name('Opacity').onChange(function(value) {
-		    myOptions.TRANPARENT = !(value == 100);
-	    });
-	    gui.add(myOptions, 'RENDER_TEXT').name('Render Text').onChange(function(value) {
-		    addOrUpdateRotatingText(scene, myOptions.RENDER_TEXT);
-	    });
-	    gui.add(myOptions, 'FONT_NAME', [
-	            'Helvetiker', 'Gentilis', 'Optimer'
-	    ]).name('Font Type').onChange(function(value) {
-		    addOrUpdateRotatingText(scene, myOptions.RENDER_TEXT);
-	    });
-	    
-	    var folder1 = gui.addFolder("Advanced Options");
-	    folder1.add(myOptions, 'FONT_SIZE', {
-	        Small : 80,
-	        Medium : 150,
-	        Large : 180,
-	        Huge : 300
-	    }).name('Font Size').onChange(function(value) {
-		    addOrUpdateRotatingText(scene, myOptions.RENDER_TEXT);
-	    });
-	    folder1.add(myOptions, 'ROTATION_SPEED', -5, 5).step(0.5).name('Rotation Speed');
-	    folder1.add(myOptions, 'ROTATION_ANGLE', 0, Math.PI * 2).step(0.1).name('Rotation Angle').onChange(
-	        function(value) {
-		        mesh.rotation.x = myOptions.ROTATION_ANGLE;
-		        addOrUpdateRotatingText(scene, myOptions.RENDER_TEXT);
-	        });
-	    ;
-	    folder1.add(myOptions, 'ROTATION_X_AXIS').name('Rotation Active');
-	    folder1.add(myOptions, 'SHOW_STATS').name('Show Stats');
-	    folder1.open();
+	 
+		    gui = new THREE.SimpleDatGui({
+		        scene : scene,
+		        camera : camera,
+		        renderer : renderer,
+		        width : guiDefaultWidth,
+		        position : new THREE.Vector3(-295, 200, 80),
+		        scale : 2.0,
+		        globalfont : globalfont
+		    });
+		    
+  		    gui.add(myFunctions, 'RESET_EVENT').name('Reset Position');
+		    gui.add(myOptions, 'TRANPARENT').name('Tranparent').onChange(function(value) {
+			    myOptions.OPACITY = (value) ? 80 : 100;
+		    });
+		    gui.add(myOptions, 'OPACITY', 10, 100).step(5).name('Opacity').onChange(function(value) {
+			    myOptions.TRANPARENT = !(value == 100);
+		    });
+ 		    gui.add(myOptions, 'RENDER_TEXT').name('Render Text').onChange(function(value) {
+ 			    addOrUpdateRotatingText(scene, myOptions.RENDER_TEXT);
+ 		    });
+		    gui.add(myOptions, 'FONT_NAME', [
+		            'Helvetiker', 'Gentilis', 'Optimer'
+		    ]).name('Font Type').onChange(function(value) {
+		    	 var geometry
+		 	    var loader = new THREE.FontLoader();
+		 		loader.load( 'lib/' + myOptions.FONT_NAME.toLowerCase() + '_regular.typeface.json', function (font) {
+		 			globalfont = font;
+		 		});
+  			    addOrUpdateRotatingText(scene, myOptions.RENDER_TEXT);
+  		    });
+		    
+		    var folder1 = gui.addFolder("Advanced Options");
+		    folder1.add(myOptions, 'FONT_SIZE', {
+		        Small : 80,
+		        Medium : 150,
+		        Large : 180,
+		        Huge : 300
+		    }).name('Font Size').onChange(function(value) {
+			    addOrUpdateRotatingText(scene, myOptions.RENDER_TEXT);
+		    });
+ 		    folder1.add(myOptions, 'ROTATION_SPEED', -5, 5).step(0.5).name('Rotation Speed');
+		    folder1.add(myOptions, 'ROTATION_ANGLE', 0, Math.PI * 2).step(0.1).name('Rotation Angle').onChange(
+		        function(value) {
+			        mesh.rotation.x = myOptions.ROTATION_ANGLE;
+			        addOrUpdateRotatingText(scene, myOptions.RENDER_TEXT);
+		        });
+		    ;
+		    folder1.add(myOptions, 'ROTATION_X_AXIS').name('Rotation Active');
+		    folder1.add(myOptions, 'SHOW_STATS').name('Show Stats');
+		    folder1.open();
+
 	    
 	    // Add event listeners
 	    window.addEventListener('resize', onWindowResize, false);
@@ -248,6 +266,8 @@ body {
 	    document.body.appendChild(stats.domElement);
 	    
 	    onWindowResize();
+	    
+	 
     }
 
     function onWindowResize() {
@@ -264,12 +284,11 @@ body {
 	    
 	    requestAnimationFrame(animate);
 	    
-	    gui.setOpacity(myOptions.OPACITY);
+ 	    gui.setOpacity(myOptions.OPACITY);
 	    gui.update();
 	    
 	    if (myOptions.ROTATION_X_AXIS) {
-		    mesh.rotation.x = (mesh.rotation.x + 0.005 * myOptions.ROTATION_SPEED)
-		        % (Math.PI * 2);
+		    mesh.rotation.x = (mesh.rotation.x + 0.005 * myOptions.ROTATION_SPEED) % (Math.PI * 2);
 		    myOptions.ROTATION_ANGLE = mesh.rotation.x;
 	    }
 	    
@@ -297,11 +316,12 @@ body {
 		    console.log("myOptions.FONT_NAME === undefined");
 	    }
 	    
-	    var geometry = new THREE.TextGeometry(myOptions.RENDER_TEXT, {
-	        height : myOptions.FONT_SIZE / 10,
-	        size : myOptions.FONT_SIZE,
-	        font : myOptions.FONT_NAME.toLowerCase()
-	    });
+		var geometry = new THREE.TextGeometry( myOptions.RENDER_TEXT , {
+			font: globalfont,
+			size: myOptions.FONT_SIZE,
+			height: myOptions.FONT_SIZE / 10
+		} );
+	
 	    var material = new THREE.MeshPhongMaterial({
 		    color : 0x1ed36f
 	    });
@@ -315,7 +335,10 @@ body {
 	    mesh.translateX(-geometry.textWidth / 2);
 	    
 	    scene.add(mesh);
+	
+	   
     }
 </script>
+
 </body>
 </html>
