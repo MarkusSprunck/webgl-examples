@@ -18,15 +18,19 @@ THREE.SimpleDatGui = function(parameters) {
         (typeof parameters.scene === "undefined")) {
         console.err("THREE.SimpleDatGui - missing parameter scene");
     }
+    
     if ((typeof parameters.camera === "undefined")) {
         console.err("THREE.SimpleDatGui - missing parameter camera");
     }
+    
     if ("PerspectiveCamera" !== parameters.camera.type) {
         console.warn("THREE.SimpleDatGui - non perspective camera supported");
     }
+    
     if ((typeof parameters.renderer === "undefined")) {
         console.err("THREE.SimpleDatGui - missing parameter renderer");
     }
+    
     if ((typeof parameters.font === "undefined")) {
         console.err("THREE.SimpleDatGui - missing parameter font");
     }
@@ -251,6 +255,11 @@ THREE.SimpleDatGui.__internals = function(gui) {
     window.addEventListener('keypress', function(event) {
         gui._private.onKeyPressEvt(event);
     }.bind(gui));
+    
+    window.addEventListener('touchstart', function(event) {
+        gui._private.mouseDown = true;
+        gui._private.onMouseDownEvt(event);
+     }.bind(gui));
 
     window.addEventListener('keyup', function(event) {
         if (this._private.isKeyShift(that.getCharacterCode(event))) {
@@ -365,7 +374,7 @@ THREE.SimpleDatGui.__internals.prototype.onMouseMoveEvt = function(event) {
                 this.gui.renderer.domElement.style.cursor = "pointer";
             } else if (element.isPropertyNumber() &&
                 typeof intersects[0].object.isTextValueField === "undefined") {
-                this.gui.renderer.domElement.style.cursor = "w-resize";
+                this.gui.renderer.domElement.style.cursor = "ew-resize";
                 this.gui._private.focus = null;
             } else if (element.isTextControl()) {
                 this.gui.renderer.domElement.style.cursor = "text";
@@ -377,7 +386,7 @@ THREE.SimpleDatGui.__internals.prototype.onMouseMoveEvt = function(event) {
                 this.gui.mouse.setMouse("default");
             } else if (element.isPropertyNumber() &&
                 typeof intersects[0].object.isTextValueField === "undefined") {
-                this.gui.mouse.setMouse("w-resize");
+                this.gui.mouse.setMouse("ew-resize");
             } else if (element.isTextControl()) {
                 this.gui.mouse.setMouse("text");
             } else {
@@ -1655,7 +1664,7 @@ THREE.SimpleDatGuiControl.prototype.executeCallback = function(event) {
 
 THREE.SimpleDatGuiControl.prototype.listen = function() {
 
-    // console.warn('The listen method is depricated.');
+    // console.warn('The listen method is deprecated.');
     return this;
 }
 

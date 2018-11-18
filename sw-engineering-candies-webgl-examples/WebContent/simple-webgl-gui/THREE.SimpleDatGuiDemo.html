@@ -8,7 +8,13 @@ body {
 	margin: 0px;
 	background-color: #444444;
 	overflow: hidden;
-	padding:10px
+	padding:0px
+}
+#world {
+  position: absolute;
+  overflow: hidden;
+  width: 100%;
+  height: 100%;
 }
 
 #forkongithub a {
@@ -110,12 +116,7 @@ body {
 	    };
     }
     var myOptions = myOptionsDefinition();
-    
-    var guiDefaultWidth = 300;
-    var guiBorderTop = 10;
-    var guiBorderRight = 10;
-    var guiBorderLeft = 10;
-    
+      
     init();
     animate();
     
@@ -133,15 +134,14 @@ body {
 	    renderer.autoClear = false;
 	    document.body.appendChild(renderer.domElement);
 	    
-	    camera = new THREE.PerspectiveCamera(70, window.innerWidth
-	        / window.innerHeight, 1, 10000);
-	    camera.position.z = 500;
+	    camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 10000);
+	    camera.position.z = 1000;
 	    camera.lookAt(new THREE.Vector3(0, 0, 0));
+	    camera.updateProjectionMatrix();
 	    
 	    scene = new THREE.Scene();
 	    
 	    // Add lights
-	    
 	    var light1 = new THREE.PointLight(0xFFFFFF);
 	    light1.position.set(-300, 300, 2 * camera.position.z);
 	    light1.lookAt(new THREE.Vector3(0, 0, 0));
@@ -156,13 +156,12 @@ body {
 	    addOrUpdateRotatingText(scene, myOptions.RENDER_TEXT);
 	    
 	    // Add GUI
-	    
 	    var myFunctions = {
 		    RESET_EVENT : function() {
 			    trackbarControl.reset();
 			    camera.position.x = 0;
 			    camera.position.y = 0;
-			    camera.position.z = 500;
+			    camera.position.z = 1000;
 			    camera.rotation.x = 0;
 			    camera.rotation.y = 0;
 			    camera.rotation.z = 0;
@@ -178,7 +177,7 @@ body {
 		        scene : scene,
 		        camera : camera,
 		        renderer : renderer,
-		        width : guiDefaultWidth,
+		        width : 300,
 		        position : new THREE.Vector3(-295, 200, 80),
 		        scale : 2.0,
 		        font : loaded_font
@@ -245,13 +244,10 @@ body {
 	    trackbarControl.dynamicDampingFactor = 0.15;
 	    
 	    // Add performance display
-	    
 	    stats = new Stats();
 	    stats.domElement.style.position = 'absolute';
-	    stats.domElement.style.top = ''
-	        + guiBorderTop + 'px';
-	    stats.domElement.style.right = ''
-	        + guiBorderRight + 'px';
+	    stats.domElement.style.top   = '10px';
+	    stats.domElement.style.right = '10px';
 	    stats.domElement.style.zIndex = 100;
 	    document.body.appendChild(stats.domElement);
 	    
@@ -268,8 +264,7 @@ body {
     function onWindowResize() {
 	    "use strict";
 	    
-	    camera.aspect = window.innerWidth
-	        / window.innerHeight;
+	    camera.aspect = window.innerWidth / window.innerHeight;
 	    camera.updateProjectionMatrix();
 	    renderer.setSize(window.innerWidth, window.innerHeight);
     }
@@ -331,13 +326,10 @@ body {
 	    mesh.rotation.x = oldRotationX;
 	    
 	    geometry.computeBoundingBox();
-	    geometry.textWidth = geometry.boundingBox.max.x
-	        - geometry.boundingBox.min.x;
+	    geometry.textWidth = geometry.boundingBox.max.x - geometry.boundingBox.min.x;
 	    mesh.translateX(-geometry.textWidth / 2);
 	    
 	    scene.add(mesh);
-	
-	   
     }
 </script>
 
