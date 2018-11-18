@@ -85,15 +85,15 @@ body {
 </style>
 </head>
 <body>
-
-<script src="./lib/three.min.js"></script>
-<script src="./lib/TrackballControls.js"></script>
-<script src="./lib/stats.min.js"></script>
-<script src="./THREE.SimpleDatGui.js"></script>
+ 
+<script src="lib/stats.min.js"></script>
+<script src="lib/three.js"></script>
+<script src="lib/TrackballControls.js"></script>
+<script src="THREE.SimpleDatGui.js"></script>
 
 <span id="forkongithub"><a href="https://github.com/MarkusSprunck/webgl-examples">Fork me on GitHub</a></span>
 <script>
-	var camera, stats, scene, renderer, mesh, gui, trackbarControl, container, hemiLight;
+	var camera, stats, scene, renderer, mesh, gui, trackbarControl, container, hemiLight, globalfont;
     
     function myOptionsDefinition() {
 	    "use strict";
@@ -116,22 +116,8 @@ body {
     var guiBorderRight = 10;
     var guiBorderLeft = 10;
     
- 
- 	console.log("THREE.SimpleDatGui  99dev - load font");
- 	var globalfont = null;
- 	var loader = new THREE.FontLoader();
-    loader.load( 'lib/helvetiker_regular.typeface.json', function ( font ) {
-     	globalfont = font;
- 	});
-    
-    function statApplication() {
-        console.log("THREE.SimpleDatGui  99dev - load font ready");
-        init();
-        animate();
-    }
-
-    // Prints the font object after 500 ms delay.
-    setTimeout(statApplication, 100);
+    init();
+    animate();
     
     function init() {
 	    "use strict";
@@ -184,15 +170,18 @@ body {
 		    }
 	    };
 	    
-	 
-		    gui = new THREE.SimpleDatGui({
+	    console.log("THREE.SimpleDatGui  98 - load font | start");
+	 	var loader = new THREE.FontLoader();
+	    loader.load( 'font/helvetiker_regular.typeface.json', function ( loaded_font ) {
+	     
+	    	gui = new THREE.SimpleDatGui({
 		        scene : scene,
 		        camera : camera,
 		        renderer : renderer,
 		        width : guiDefaultWidth,
 		        position : new THREE.Vector3(-295, 200, 80),
 		        scale : 2.0,
-		        globalfont : globalfont
+		        font : loaded_font
 		    });
 		    
   		    gui.add(myFunctions, 'RESET_EVENT').name('Reset Position');
@@ -210,7 +199,7 @@ body {
 		    ]).name('Font Type').onChange(function(value) {
 		    	 var geometry
 		 	    var loader = new THREE.FontLoader();
-		 		loader.load( 'lib/' + myOptions.FONT_NAME.toLowerCase() + '_regular.typeface.json', function (font) {
+		 		loader.load( 'font/' + myOptions.FONT_NAME.toLowerCase() + '_regular.typeface.json', function (font) {
 		 			globalfont = font;
 		 		});
   			    addOrUpdateRotatingText(scene, myOptions.RENDER_TEXT);
@@ -231,11 +220,12 @@ body {
 			        mesh.rotation.x = myOptions.ROTATION_ANGLE;
 			        addOrUpdateRotatingText(scene, myOptions.RENDER_TEXT);
 		        });
-		    ;
 		    folder1.add(myOptions, 'ROTATION_X_AXIS').name('Rotation Active');
 		    folder1.add(myOptions, 'SHOW_STATS').name('Show Stats');
 		    folder1.open();
-
+		    console.log("THREE.SimpleDatGui  98 - load font | end");
+		});
+		 
 	    
 	    // Add event listeners
 	    window.addEventListener('resize', onWindowResize, false);
@@ -265,9 +255,14 @@ body {
 	    stats.domElement.style.zIndex = 100;
 	    document.body.appendChild(stats.domElement);
 	    
+	    // Render default text
+	    var loader = new THREE.FontLoader();
+ 		loader.load( 'font/' + myOptions.FONT_NAME.toLowerCase() + '_regular.typeface.json', function (font) {
+ 			globalfont = font;
+ 			addOrUpdateRotatingText(scene, myOptions.RENDER_TEXT);
+ 		});
+ 		    
 	    onWindowResize();
-	    
-	 
     }
 
     function onWindowResize() {
@@ -284,10 +279,12 @@ body {
 	    
 	    requestAnimationFrame(animate);
 	    
- 	    gui.setOpacity(myOptions.OPACITY);
-	    gui.update();
+	    if (typeof gui !== "undefined") {
+ 	    	gui.setOpacity(myOptions.OPACITY);
+	    	gui.update();
+	    }
 	    
-	    if (myOptions.ROTATION_X_AXIS) {
+	    if (typeof mesh !== "undefined" && myOptions.ROTATION_X_AXIS) {
 		    mesh.rotation.x = (mesh.rotation.x + 0.005 * myOptions.ROTATION_SPEED) % (Math.PI * 2);
 		    myOptions.ROTATION_ANGLE = mesh.rotation.x;
 	    }
@@ -304,6 +301,10 @@ body {
 
     function addOrUpdateRotatingText(scene, value) {
 	    "use strict";
+	    
+	    if (typeof globalfont === "undefined") {
+	    	return;
+	    }
 	    
 	    var oldRotationX = 0;
 	    

@@ -1,24 +1,6 @@
-/*******************************************************************************
- * Copyright (C) 2015-2018, Markus Sprunck All rights reserved. Redistribution and
- * use in source and binary forms, with or without modification, are permitted
- * provided that the following conditions are met: - Redistributions of source
- * code must retain the above copyright notice, this list of conditions and the
- * following disclaimer. - Redistributions in binary form must reproduce the
- * above copyright notice, this list of conditions and the following disclaimer
- * in the documentation and/or other materials provided with the distribution. -
- * The name of its contributor may be used to endorse or promote products
- * derived from this software without specific prior written permission. THIS
- * SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- ******************************************************************************/
+/**
+ * @author Markus Sprunck / https://www.sw-engineering-candies.com
+
 "use strict";
 
 /**
@@ -29,7 +11,7 @@
  */
 THREE.SimpleDatGui = function(parameters) {
 
-    console.log('THREE.SimpleDatGui  99dev');
+    console.log('THREE.SimpleDatGui  98');
 
     // Assign mandatory parameter
     if ((typeof parameters === "undefined") ||
@@ -45,14 +27,14 @@ THREE.SimpleDatGui = function(parameters) {
     if ((typeof parameters.renderer === "undefined")) {
         console.err("THREE.SimpleDatGui - missing parameter renderer");
     }
-    if ((typeof parameters.globalfont === "undefined")) {
-        console.err("THREE.SimpleDatGui - missing parameter globalfont");
+    if ((typeof parameters.font === "undefined")) {
+        console.err("THREE.SimpleDatGui - missing parameter font");
     }
 
     this.scene = parameters.scene;
     this.camera = parameters.camera;
     this.renderer = parameters.renderer;
-    this.globalfont = parameters.globalfont;
+    this.font = parameters.font;
 
     // Assign optional parameter
     this.width = (parameters.width !== undefined) ? parameters.width * parameters.scale : 300;
@@ -287,7 +269,7 @@ THREE.SimpleDatGui.__internals = function(gui) {
 THREE.SimpleDatGui.prototype.getOptions = function() {
 
     var scale = this.scale;
-    var globalfont = this.globalfont;
+    var font = this.font;
     var area_size = new THREE.Vector3(this.width, 20 * scale, 2.0 * scale);
     var delta_z = 0.3 * scale;
     var delta_z_order = 0.4 * scale;
@@ -305,7 +287,7 @@ THREE.SimpleDatGui.prototype.getOptions = function() {
         transparent: true
     };
     var font_param = {
-        font: globalfont,
+        font: font,
         size: font_size,
         height: delta_z
     };
@@ -335,7 +317,7 @@ THREE.SimpleDatGui.prototype.getOptions = function() {
         LABEL_OFFSET_Y: 4 * scale,
         MATERIAL: matrial,
         FONT_PARAM: font_param,
-        GLOBAL_FONT: globalfont,
+        GLOBAL_FONT: font,
         COLOR_VALUE_FIELD: '0x303030',
         COLOR_CURSOR: '0xFFFF00',
         COLOR_LABEL: '0xFFFFFF',
@@ -343,7 +325,8 @@ THREE.SimpleDatGui.prototype.getOptions = function() {
         COLOR_COMBOBOX_AREA: '0xFFFFFF',
         COLOR_COMBOBOX_AREA_SELECTED: '0x33FF66',
         COLOR_COMBOBOX_AREA_SELECTED_FRAME: '0x33FF66',
-        COLOR_COMBOBOX_TEXT: '0x111111',
+        COLOR_COMBOBOX_TEXT: '0x111111',    
+        COLOR_CHECKBOX_TEXT: '0x222222',
         COLOR_COMBOBOX_ARROW: '0x000000',
         COLOR_BASE_CLOSE_BUTTON: '0x121212',
         COLOR_SELECTED: '0x010101',
@@ -1140,12 +1123,9 @@ THREE.SimpleDatGuiControl.__internals.prototype.createCheckBoxes = function(even
     that.wBoxUnChecked = new THREE.Mesh(_geometry, new THREE.MeshBasicMaterial($.MATERIAL));
     that.wBoxUnChecked.visible = false;
     that.wBoxUnChecked.updateRendering = function(index) {
-        var x = $.TAB_1.x +
-            $.CHECKBOX.x / 2;
-        var y = $.AREA.y *
-            (-0.5 - index);
-        var z = $.AREA.z +
-            $.DELTA_Z_ORDER;
+        var x = $.TAB_1.x + $.CHECKBOX.x / 2;
+        var y = $.AREA.y * (-0.5 - index);
+        var z = $.AREA.z + $.DELTA_Z_ORDER;
         internal.rotateAndTranslateElement(this, $, x, y, z);
 
         this.material.opacity = that.parent._private.opacityGui * 0.01;
@@ -1155,22 +1135,18 @@ THREE.SimpleDatGuiControl.__internals.prototype.createCheckBoxes = function(even
     that.parent.scene.add(that.wBoxUnChecked);
 
     // CREATE CHECKBOX MARKER
-    var _geometry = new THREE.ShapeGeometry($.GLOBAL_FONT.generateShapes("X", $.FONT, $.DELTA_Z));
+    var _geometry = new THREE.ShapeGeometry($.GLOBAL_FONT.generateShapes("x", $.FONT, $.DELTA_Z));
     that.wBoxChecked = new THREE.Mesh(_geometry, new THREE.MeshBasicMaterial($.MATERIAL));
     that.wBoxChecked.visible = false;
-    that.wBoxChecked.material.color.setHex($.COLOR_COMBOBOX_TEXT);
+    that.wBoxChecked.material.color.setHex($.COLOR_CHECKBOX_TEXT);
     that.wBoxChecked.updateRendering = function(index) {
-        var x = $.TAB_1.x +
-            $.CHECKBOX.x / 2 - 3 * $.SCALE;
-        var y = $.AREA.y *
-            (-0.5 - index) - 3.5 * $.SCALE;
-        var z = $.AREA.z +
-            $.DELTA_Z_ORDER * 3;
+        var x = $.TAB_1.x + $.CHECKBOX.x / 2 - 3 * $.SCALE;
+        var y = $.AREA.y * (-0.5 - index) - 3.5 * $.SCALE;
+        var z = $.AREA.z + $.DELTA_Z_ORDER * 3;
         internal.rotateAndTranslateElement(this, $, x, y, z);
 
         this.material.opacity = that.parent._private.opacityGui * 0.01;
-        this.visible = that.isVisible() &&
-            that.object[that.property] && !that.isClosed;
+        this.visible = that.isVisible() && that.object[that.property] && !that.isClosed;
     };
     that.parent.scene.add(that.wBoxChecked);
 }
@@ -1266,17 +1242,13 @@ THREE.SimpleDatGuiControl.__internals.prototype.createMarker = function() {
         that.wMarker.material.color.setHex($.COLOR_MARKER_NUMBER);
     }
     that.wMarker.updateRendering = function(index) {
-        var x = $.MARKER.x /
-            2 - 0.1 * $.SCALE;
-        var y = -$.AREA.y /
-            2 - $.AREA.y * index;
-        var z = $.AREA.z /
-            2 + $.DELTA_Z_ORDER;
+        var x = $.MARKER.x / 2 - 0.1 * $.SCALE;
+        var y =  -$.AREA.y / 2 - $.AREA.y * index;
+        var z =   $.AREA.z / 2 + $.DELTA_Z_ORDER;
         internal.rotateAndTranslateElement(this, $, x, y, z);
 
         this.material.opacity = that.parent._private.opacityGui * 0.01;
-        this.material.visible = that.isVisible() &&
-            !that.isClosed;
+        this.material.visible = that.isVisible() && !that.isClosed;
         if (that.isCloseButton) {
             var isSelected = (that.parent._private != null) ? that.parent._private.selected === that : false;
             that.wMarker.material.color.setHex((isSelected) ? $.COLOR_MARKER_CLOSE_SELECTED : $.COLOR_MARKER_CLOSE);
