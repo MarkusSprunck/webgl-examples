@@ -1,1 +1,5 @@
 /.DS_Store
+/sw-engineering-candies-webgl-examples/src/main/appengine/app.war
+/sw-engineering-candies-webgl-examples/target/
+/.idea/
+/.mvn/
